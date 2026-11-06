@@ -141,6 +141,28 @@ class Acceso(Base):
             self.assertEqual(ingresar(f"n{numero}@ejemplo.test", "contrasena-mala")[0], 401)
         self.assertEqual(ingresar("otro@ejemplo.test", "contrasena-mala")[0], 429)
 
+    def _fallos_con_ip_reenviada(self, cadena):
+        for numero in range(20):
+            pedir("POST", "/api/login", {"email": f"n{numero}@ejemplo.test", "clave": "contrasena-mala"},
+                  cabeceras={"X-Forwarded-For": cadena.format(numero=numero)})
+
+    def test_sin_intermediario_se_ignora_la_ip_reenviada(self):
+        self._fallos_con_ip_reenviada("10.0.0.{numero}")
+        self.assertEqual(ingresar("otro@ejemplo.test", "contrasena-mala")[0], 429)
+
+    def test_con_intermediario_el_limite_es_por_ip_real_y_no_se_falsea(self):
+        os.environ["PROXY_CONFIABLE"] = "1"
+        self.addCleanup(os.environ.pop, "PROXY_CONFIABLE")
+        # Inventar valores a la izquierda no cambia la IP que escribe el intermediario.
+        self._fallos_con_ip_reenviada("10.0.0.{numero}, 203.0.113.7")
+        estado = pedir("POST", "/api/login", {"email": "otro@ejemplo.test", "clave": "contrasena-mala"},
+                       cabeceras={"X-Forwarded-For": "203.0.113.7"})[0]
+        self.assertEqual(estado, 429)
+        # Otra persona, con otra IP, no queda bloqueada.
+        estado = pedir("POST", "/api/login", {"email": "otro@ejemplo.test", "clave": "contrasena-mala"},
+                       cabeceras={"X-Forwarded-For": "203.0.113.8"})[0]
+        self.assertEqual(estado, 401)
+
     def test_los_intentos_no_guardan_correo_ni_ip_en_claro(self):
         ingresar("persona@ejemplo.test", "contrasena-mala")
         with _db.transaccion() as cursor:

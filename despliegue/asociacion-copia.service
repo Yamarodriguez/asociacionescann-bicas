@@ -1,0 +1,11 @@
+[Unit]
+Description=Copia de seguridad de la base de datos
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=asociacion
+Group=asociacion
+UMask=0077
+EnvironmentFile=/opt/asociacion/.env
+ExecStart=/bin/sh -c 'pg_dump --format=custom --file=/var/backups/asociacion/copia-$(date +%%Y%%m%%d).dump "$DATABASE_URL" && find /var/backups/asociacion -name "copia-*.dump" -mtime +7 -delete'

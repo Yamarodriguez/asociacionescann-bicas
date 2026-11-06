@@ -56,4 +56,4 @@ Están documentadas en `.env.example`. Los secretos reales van solo en `.env`, q
 
 ## Despliegue
 
-Todavía no está desplegado. Los pasos se añadirán aquí cuando se decida si habrá un sistema o dos.
+Todavía no está desplegado. Los pasos y archivos están en la carpeta `despliegue/`, empezando por [despliegue/LEEME.md](despliegue/LEEME.md). Aún no se han probado en un servidor real.

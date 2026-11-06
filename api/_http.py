@@ -2,6 +2,7 @@
 import hmac
 import json
 import logging
+import os
 from http import cookies
 
 from . import _auth, _config, _db
@@ -162,6 +163,14 @@ def exigir_sesion(manejador, tipo, roles=None, csrf=False):
 
 
 def ip_cliente(manejador):
+    """IP real de quien pide. Detras del intermediario, cuenta solo el ultimo valor,
+
+    que es el que escribe el propio intermediario y el visitante no puede falsear.
+    """
+    if os.environ.get("PROXY_CONFIABLE") == "1":
+        reenviada = manejador.headers.get("X-Forwarded-For", "").split(",")[-1].strip()
+        if reenviada:
+            return reenviada
     return manejador.client_address[0]
 
 
