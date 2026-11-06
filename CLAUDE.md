@@ -41,6 +41,6 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Diseño
 
-- Propuestas y capturas en `diseno/`. `web/estilos.css` tiene A, B y la mezcla, que es el diseño por defecto.
-- El selector de `web/app.js` y `web/tema.js` solo existen para comparar. Se retiran cuando se elija uno, junto con las letras que dejen de usarse.
+- 2026-11-06: se eligió el diseño A, Institución cercana: crema y verde, con detalles dorados, en Fraunces y DM Sans. Las demás propuestas quedan en `diseno/`.
+- El gris secundario es `#5f645a`, más oscuro que el del encargo, porque aquel no llegaba al contraste AA.
 - Las letras van en `web/fuentes/`, con su licencia. No se cargan desde servicios externos.

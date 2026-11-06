@@ -70,47 +70,7 @@ async function cargarSitio() {
   }
 }
 
-// Selector para comparar disenos. Se retirara cuando se elija uno.
-function crearSelectorTema() {
-  const aviso = document.querySelector('.aviso-prototipo');
-  if (!aviso) return;
-  const opciones = [['a', 'Diseño A'], ['b', 'Diseño B'], ['mezcla', 'Mezcla']];
-  const selector = document.createElement('div');
-  selector.className = 'selector-tema';
-  selector.setAttribute('role', 'group');
-  selector.setAttribute('aria-label', 'Elegir diseño de prueba');
-  const botones = opciones.map(([valor, texto]) => {
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.textContent = texto;
-    boton.dataset.valor = valor;
-    boton.addEventListener('click', () => {
-      if (valor === 'mezcla') delete document.documentElement.dataset.tema;
-      else document.documentElement.dataset.tema = valor;
-      try {
-        localStorage.setItem('tema', valor);
-      } catch {
-        // El cambio sigue activo en esta pantalla.
-      }
-      marcar();
-    });
-    return boton;
-  });
-  function marcar() {
-    const actual = document.documentElement.dataset.tema || 'mezcla';
-    for (const boton of botones) {
-      const activo = boton.dataset.valor === actual;
-      boton.classList.toggle('secundario', !activo);
-      boton.setAttribute('aria-pressed', String(activo));
-    }
-  }
-  selector.append(...botones);
-  aviso.after(selector);
-  marcar();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  crearSelectorTema();
   activarSalir();
   cargarSitio();
 });

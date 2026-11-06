@@ -435,6 +435,12 @@ class Servidor(Base):
         _, hoja, _ = pedir("GET", "/estilos.css")
         self.assertNotIn("http", hoja)
 
+    def test_el_selector_temporal_de_diseno_ya_no_existe(self):
+        self.assertEqual(pedir("GET", "/tema.js")[0], 404)
+        self.assertEqual(pedir("GET", "/fuentes/ibm-plex-sans-400.woff2")[0], 404)
+        _, codigo, _ = pedir("GET", "/app.js")
+        self.assertNotIn("selector-tema", codigo)
+
     def test_las_paginas_del_prototipo_cargan(self):
         for ruta in ("/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html"):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
