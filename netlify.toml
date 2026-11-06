@@ -1,0 +1,24 @@
+# Publica solo las pantallas. El servidor en Python no se ejecuta en Netlify.
+[build]
+  publish = "web"
+
+# Sin servidor, las rutas de datos responden con un aviso claro.
+[[redirects]]
+  from = "/api/*"
+  to = "/no-disponible.json"
+  status = 503
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+
+[[headers]]
+  for = "/fuentes/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
