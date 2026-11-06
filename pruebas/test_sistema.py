@@ -1,27 +1,44 @@
 """Pruebas de punta a punta contra el servidor y una base de datos real de pruebas."""
+import atexit
 import datetime as dt
 import http.client
 import json
 import os
 import re
+import subprocess
 import threading
 import unittest
 
-from api import _auth, _config, _db, _email
+from herramientas import _auth, _config, _db
 
 os.environ["DATABASE_URL_ACTIVA"] = _config.req("DATABASE_URL_PRUEBAS")
 os.environ["CORREO_MODO"] = "archivo"
 
 import psycopg2  # noqa: E402
 
-import servidor  # noqa: E402
-from api import migrate  # noqa: E402
+from herramientas import migrate  # noqa: E402
 from scripts import purgar_bajas  # noqa: E402
 
 PUERTO = 8091
 ORIGEN = f"http://127.0.0.1:{PUERTO}"
 CLAVE = "clave-de-prueba-1"
 HASH_CLAVE = None
+_servidor = None
+
+
+def arrancar_servidor():
+    """Arranca una vez el servidor real, el mismo codigo que corre en Netlify."""
+    global _servidor
+    if _servidor is not None:
+        return
+    entorno = {**os.environ, "PUERTO": str(PUERTO), "CORREO_MODO": "archivo"}
+    _servidor = subprocess.Popen(
+        ["node", "scripts/servidor_local.mjs"], cwd=_config.RAIZ, env=entorno,
+        stdout=subprocess.PIPE, text=True, encoding="utf-8")
+    atexit.register(_servidor.terminate)
+    linea = _servidor.stdout.readline()
+    if "SISTEMA LISTO" not in linea:
+        raise RuntimeError("El servidor no arranco")
 
 
 def pedir(metodo, ruta, datos=None, galleta=None, csrf=None, origen=ORIGEN, cabeceras=None):
@@ -91,14 +108,10 @@ class Base(unittest.TestCase):
         _db.cerrar_pool()
         migrate.aplicar()
         HASH_CLAVE = HASH_CLAVE or _auth.hashear_clave(CLAVE)
-        cls.http = servidor.crear(PUERTO)
-        cls.hilo = threading.Thread(target=cls.http.serve_forever, daemon=True)
-        cls.hilo.start()
+        arrancar_servidor()
 
     @classmethod
     def tearDownClass(cls):
-        cls.http.shutdown()
-        cls.http.server_close()
         _db.cerrar_pool()
 
     def setUp(self):
@@ -143,27 +156,11 @@ class Acceso(Base):
             self.assertEqual(ingresar(f"n{numero}@ejemplo.test", "contrasena-mala")[0], 401)
         self.assertEqual(ingresar("otro@ejemplo.test", "contrasena-mala")[0], 429)
 
-    def _fallos_con_ip_reenviada(self, cadena):
+    def test_una_ip_inventada_no_salta_el_limite(self):
         for numero in range(20):
             pedir("POST", "/api/login", {"email": f"n{numero}@ejemplo.test", "clave": "contrasena-mala"},
-                  cabeceras={"X-Forwarded-For": cadena.format(numero=numero)})
-
-    def test_sin_intermediario_se_ignora_la_ip_reenviada(self):
-        self._fallos_con_ip_reenviada("10.0.0.{numero}")
+                  cabeceras={"X-Forwarded-For": f"10.0.0.{numero}"})
         self.assertEqual(ingresar("otro@ejemplo.test", "contrasena-mala")[0], 429)
-
-    def test_con_intermediario_el_limite_es_por_ip_real_y_no_se_falsea(self):
-        os.environ["PROXY_CONFIABLE"] = "1"
-        self.addCleanup(os.environ.pop, "PROXY_CONFIABLE")
-        # Inventar valores a la izquierda no cambia la IP que escribe el intermediario.
-        self._fallos_con_ip_reenviada("10.0.0.{numero}, 203.0.113.7")
-        estado = pedir("POST", "/api/login", {"email": "otro@ejemplo.test", "clave": "contrasena-mala"},
-                       cabeceras={"X-Forwarded-For": "203.0.113.7"})[0]
-        self.assertEqual(estado, 429)
-        # Otra persona, con otra IP, no queda bloqueada.
-        estado = pedir("POST", "/api/login", {"email": "otro@ejemplo.test", "clave": "contrasena-mala"},
-                       cabeceras={"X-Forwarded-For": "203.0.113.8"})[0]
-        self.assertEqual(estado, 401)
 
     def test_los_intentos_no_guardan_correo_ni_ip_en_claro(self):
         ingresar("persona@ejemplo.test", "contrasena-mala")
@@ -447,6 +444,11 @@ class WebPublica(Base):
         respuesta.read()
         conexion.close()
         self.assertIn("immutable", respuesta.headers["Cache-Control"])
+
+    def test_la_carga_de_datos_inventados_exige_el_secreto(self):
+        self.assertEqual(pedir("POST", "/api/preparar_demo", {})[0], 403)
+        estado = pedir("POST", "/api/preparar_demo", {}, cabeceras={"X-Demo-Secreto": "falso"})[0]
+        self.assertEqual(estado, 403)
 
 
 class Portal(Base):
@@ -832,12 +834,6 @@ class Recuperacion(Base):
 
 
 class Correos(Base):
-    def test_las_plantillas_no_mencionan_la_actividad(self):
-        for asunto, texto in _email.PLANTILLAS.values():
-            contenido = f"{asunto} {texto}".lower()
-            for palabra in ("cannabis", "gramo", "variedad", "reprocann"):
-                self.assertNotIn(palabra, contenido)
-
     def test_la_solicitud_envia_un_correo_neutro(self):
         alta()
         ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
@@ -897,14 +893,6 @@ class Servidor(Base):
         estado, _, cabeceras = pedir("POST", "/api/login", {"relleno": "x" * 70000})
         self.assertEqual(estado, 413)
         self.assertEqual(cabeceras["Connection"], "close")
-
-    def test_migrar_exige_el_secreto(self):
-        self.assertEqual(pedir("POST", "/api/migrate", {})[0], 403)
-        estado, cuerpo, _ = pedir(
-            "POST", "/api/migrate", {},
-            cabeceras={"X-Migrate-Secret": _config.req("MIGRATE_SECRET")})
-        self.assertEqual(estado, 200)
-        self.assertEqual(cuerpo["aplicadas"], [])
 
     def test_las_letras_salen_del_propio_sistema(self):
         conexion = http.client.HTTPConnection("127.0.0.1", PUERTO, timeout=10)

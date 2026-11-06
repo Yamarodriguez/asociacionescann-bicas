@@ -18,8 +18,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - 2026-11-06: sistema completo, construido por etapas (Fase 0).
 - 2026-11-06: prototipo a nombre de la responsable y solo con datos inventados. Los datos reales exigen pasar antes las cuentas a la asociación.
 - 2026-11-06: el servidor se ejecuta como un proceso normal, no en Vercel. Vercel pide aprobación escrita para información sanitaria protegida y Supabase prohíbe distribuir sustancias controladas. Fuentes en la Fase 1.
-- 2026-11-06: la responsable pidió subir todo a Netlify. Netlify no ejecuta Python, así que `netlify.toml` publica solo `web/`; acceso, contacto y datos no funcionan allí sin reescribir el servidor.
-- 2026-11-06: antes se había elegido un solo sistema en Hetzner y el código en GitHub. Sigue pendiente de que el abogado admita datos fuera de Argentina.
+- 2026-11-06: todo va en Netlify por decisión expresa de la responsable, avisada de sus condiciones sobre información sanitaria protegida y de su veto a criterio propio. Sustituye a Hetzner: el servidor pasó de Python a JavaScript. Es solo para datos inventados hasta resolver esos puntos con el abogado. 
 - 2026-11-06: repositorio de GitHub público por decisión expresa de la responsable, avisada de lo que queda visible. Nunca subir secretos, datos reales ni material del cliente.
 - El módulo de reservas no se construye hasta que el abogado responda las preguntas 1 a 6 de la Fase 0.
 - No se guardan fotos de documentos ni datos médicos, salvo decisión con el abogado.
@@ -33,8 +32,8 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 - Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
-- Falta en Fase 2: repositorio remoto y despliegue de pruebas, que requieren las cuentas. `despliegue/` está preparado, pero sin probar en un servidor real.
-- Seguridad hecha en local (Fase 7). Falta repetir la restauración en el servidor real.
+- Código en GitHub. Falta publicar en Netlify y comprobarlo.
+- Seguridad hecha en local (Fase 7). Falta repetir la restauración en la base publicada.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
 ## Lecciones
@@ -52,11 +51,12 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 ## Fase 5
 
 - Portal, cuotas, publicaciones, configuración, recuperación de contraseña, exportación y borrado real hechos con datos inventados.
+- `scripts/purgar_bajas.py` y las copias de `scripts/copia.py` se ejecutan a mano contra la base.
 - El aval y el QR del carné van detrás de `aval_activo` y `carne_qr_activo`: dependen del abogado. El QR lleva un código al azar y aún no hay pantalla que lo lea.
 - Los documentos son texto. Subir archivos PDF queda pendiente.
 - Las votaciones online, los recibos y la firma digital no están construidos: dependen del abogado.
-- `scripts/purgar_bajas.py` debe programarse en el servidor cuando se fije el plazo de retención.
-- Para Fase 7: enviar los correos en segundo plano, para que el tiempo de respuesta de `/api/recuperar` no revele si la cuenta existe.
+- El borrado definitivo debe programarse cuando se fije el plazo de retención.
+- Con correo real, enviar en segundo plano (`context.waitUntil`) para que el tiempo de respuesta no revele si la cuenta existe.
 
 ## Fase 7
 
@@ -66,4 +66,11 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Copias propias cifradas con `scripts/copia.py`, porque el PostgreSQL local no trae `pg_dump`. `npm run todo` restaura una copia real y compara cada tabla. Sin `COPIA_CLAVE` no se recupera nada.
 - Los registros solo guardan tipo de error, ruta y línea: los mensajes de la base pueden contener datos personales.
 - Revisar dependencias con `pip-audit` antes de cada publicación. Hoy: sin vulnerabilidades conocidas.
-- Pendiente fuera del prototipo: repetir la restauración en el servidor y guardar copias fuera de él.
+- Pendiente fuera del prototipo: repetir la restauración en la base publicada y guardar copias fuera de Netlify.
+
+## Estructura tras pasar a Netlify
+
+- `web/`: pantallas. `servidor/`: lógica en JavaScript. `netlify/functions/api.mjs`: función que atiende `/api/*`.
+- `netlify/database/migrations/`: migraciones que Netlify aplica al publicar.
+- `scripts/servidor_local.mjs` imita Netlify en local. `herramientas/` y `pruebas/` siguen en Python: atacan al servidor desde fuera y comparten formato de hash, sesiones y cifrado.
+- Una ruta nueva debe añadirse a `servidor/app.mjs` y clasificarse en `pruebas/test_seguridad.py`.

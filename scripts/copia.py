@@ -20,7 +20,7 @@ from urllib.parse import urlsplit, urlunsplit
 import psycopg2
 from psycopg2 import sql
 
-from api import _cifrado, _config, _db, migrate
+from herramientas import _cifrado, _config, _db, migrate
 
 CLAVE = "COPIA_CLAVE"
 BASE_RESTAURACION = "asociacion_restauracion"

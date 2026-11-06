@@ -48,8 +48,9 @@ Si todo va bien, termina con `TODO CORRECTO: 0 fallos`. Si algo falla, se detien
 | Carpeta | Contenido |
 | --- | --- |
 | `web/` | Pantallas |
-| `api/` | Rutas y seguridad del servidor |
-| `migraciones/` | Estructura de la base de datos |
+| `servidor/` | Rutas y seguridad del servidor |
+| `netlify/` | Función de Netlify y migraciones de la base |
+| `herramientas/` | Utilidades para pruebas y mantenimiento |
 | `pruebas/` | Comprobaciones automáticas |
 | `scripts/` | Arranque, datos de prueba y validador |
 
@@ -59,4 +60,4 @@ Están documentadas en `.env.example`. Los secretos reales van solo en `.env`, q
 
 ## Despliegue
 
-Todavía no está desplegado. Los pasos y archivos están en la carpeta `despliegue/`, empezando por [despliegue/LEEME.md](despliegue/LEEME.md). Aún no se han probado en un servidor real.
+Se publica en Netlify. Los pasos están en [despliegue/LEEME.md](despliegue/LEEME.md).

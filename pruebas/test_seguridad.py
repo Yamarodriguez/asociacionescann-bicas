@@ -1,14 +1,13 @@
 """Permisos de todas las rutas, doble factor, auditoria y copias."""
 import http.client
-import logging
+import json
 import os
-import threading
+import subprocess
 from unittest import mock
 
 import psycopg2
 
-import servidor
-from api import _auth, _cifrado, _config, _db, _dosfa, _email, _http
+from herramientas import _auth, _cifrado, _config, _db, _dosfa
 from pruebas.test_sistema import (
     CLAVE, ORIGEN, PUERTO, Base, alta, crear_admin, ingresar, pedir, sesion_de,
 )
@@ -23,7 +22,7 @@ ROLES = (
 PUBLICAS = {
     ("GET", "/api/sesion"), ("GET", "/api/publico"), ("POST", "/api/contacto"), ("POST", "/api/login"),
     ("POST", "/api/login_2fa"), ("POST", "/api/logout"), ("POST", "/api/solicitud"),
-    ("POST", "/api/recuperar"), ("POST", "/api/recuperar_cambiar"), ("POST", "/api/migrate"),
+    ("POST", "/api/recuperar"), ("POST", "/api/recuperar_cambiar"), ("POST", "/api/preparar_demo"),
 }
 DE_SOCIO = {
     ("GET", "/api/socio_portal"), ("POST", "/api/socio_portal"),
@@ -57,7 +56,10 @@ class Matriz(Base):
 
     def test_todas_las_rutas_estan_clasificadas(self):
         clasificadas = PUBLICAS | DE_SOCIO | set(DE_EQUIPO)
-        self.assertEqual(set(servidor.RUTAS), clasificadas)
+        orden = "import('./servidor/app.mjs').then((m) => console.log(JSON.stringify(Object.keys(m.RUTAS))))"
+        salida = subprocess.run(
+            ["node", "-e", orden], cwd=_config.RAIZ, capture_output=True, text=True, check=True).stdout
+        self.assertEqual({tuple(r.split(" ")) for r in json.loads(salida)}, clasificadas)
 
     def test_sin_sesion_toda_ruta_privada_responde_401(self):
         for metodo, ruta in DE_SOCIO | set(DE_EQUIPO):
@@ -116,12 +118,6 @@ class DobleFactor(Base):
     def segundo_paso(self, previa, codigo):
         estado, cuerpo, cabeceras = pedir("POST", "/api/login_2fa", {"codigo": codigo}, galleta=previa)
         return estado, cuerpo, cabeceras.get("Set-Cookie", "")
-
-    def test_el_codigo_cumple_el_estandar(self):
-        # Vector de prueba del RFC 6238 (SHA-1, instante 59).
-        import base64
-        secreto = base64.b32encode(b"12345678901234567890").decode()
-        self.assertEqual(_dosfa.codigo(secreto, 1, 8), "94287082")
 
     def test_con_doble_factor_la_contrasena_no_basta(self):
         email, *_ = self.activar()
@@ -198,10 +194,6 @@ class DobleFactor(Base):
                        galleta=galleta, csrf=csrf)[0]
         self.assertEqual(estado, 403)
 
-    def test_el_nombre_en_el_telefono_es_neutro(self):
-        uri = _dosfa.uri_aplicacion("ABC", "persona@ejemplo.test").lower()
-        for palabra in ("cannabis", "asociacion", "reprocann"):
-            self.assertNotIn(palabra, uri)
 
 
 class Auditoria(Base):
@@ -231,41 +223,6 @@ class Auditoria(Base):
 
 
 class Privacidad(Base):
-    def test_los_registros_no_guardan_datos_personales(self):
-        registros = []
-
-        class Captura(logging.Handler):
-            def emit(self, registro):
-                registros.append(registro.getMessage() + str(registro.exc_info))
-
-        captura = Captura()
-        _http.log.addHandler(captura)
-        self.addCleanup(_http.log.removeHandler, captura)
-        error = RuntimeError("Key (email)=(secreta@ejemplo.test) already exists")
-        with mock.patch.object(_db, "configuracion", side_effect=error):
-            estado, cuerpo, _ = pedir("GET", "/api/publico?email=secreta@ejemplo.test")
-        self.assertEqual(estado, 500)
-        self.assertNotIn("secreta", str(cuerpo))
-        self.assertTrue(registros)
-        self.assertNotIn("secreta", " ".join(registros))
-        self.assertIn("RuntimeError", " ".join(registros))
-
-    def test_el_correo_real_no_retrasa_la_respuesta_ni_la_rompe(self):
-        hilos = []
-
-        def falso(*_):
-            hilos.append(threading.current_thread())
-            raise OSError("servidor de correo caido")
-
-        with mock.patch.dict(os.environ, {"CORREO_MODO": "smtp"}), \
-                mock.patch.object(_email, "_enviar_smtp", side_effect=falso):
-            _email.enviar("persona@ejemplo.test", "solicitud_recibida")
-            for hilo in threading.enumerate():
-                if hilo.name == "correo":
-                    hilo.join(5)
-        self.assertEqual(len(hilos), 1)
-        self.assertNotEqual(hilos[0], threading.main_thread())
-
     def test_las_solicitudes_se_limitan_por_ip(self):
         for numero in range(10):
             self.assertEqual(alta(email=f"p{numero}@ejemplo.test", documento=str(numero))[0], 202)

@@ -28,7 +28,8 @@ function terminar(codigo, ultimaLinea) {
 }
 
 const pasosSinBd = [
-  ['Sintaxis de Python', PYTHON, ['-m', 'compileall', '-q', 'api', 'servidor.py', 'scripts', 'pruebas']],
+  ['Pruebas internas del servidor', process.execPath, ['--test', 'pruebas/nodo.test.mjs']],
+  ['Sintaxis de Python', PYTHON, ['-m', 'compileall', '-q', 'herramientas', 'scripts', 'pruebas']],
   ['Validador de pantallas y palabras', PYTHON, ['-m', 'scripts.validar']],
 ];
 

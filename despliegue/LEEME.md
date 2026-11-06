@@ -1,74 +1,42 @@
-# Publicar la versión de prueba
+# Publicar en Netlify
 
 Esta versión lleva solo datos inventados y está marcada para que los buscadores no la indexen.
 
-**Estado:** estos pasos aún no se han probado en un servidor real. La primera instalación servirá de prueba.
+**Estado:** la función se probó empaquetada en local, pero aún no se ha publicado en Netlify.
 
-## Lo que necesitas
+## 1. Conectar el proyecto
 
-1. Una cuenta de Hetzner.
-2. Una clave SSH en tu ordenador, para entrar al servidor sin contraseña.
-3. Una dirección web. HTTPS es obligatorio, porque las sesiones solo funcionan con conexión segura. Para una prueba sirve `IP.nip.io`, sin comprar un dominio.
+1. Entra en Netlify y crea un proyecto importando el repositorio de GitHub.
+2. Elige la rama `fase-2-esqueleto`. La configuración ya está en `netlify.toml`.
 
-## 1. Crear tu clave SSH
+## 2. Cargar las claves
 
-Ejecuta esto en tu ordenador y acepta las opciones por defecto:
+1. En tu ordenador, ejecuta `npm run netlify:variables`. Se crea `.dev/variables-netlify.env`, fuera de Git.
+2. En Netlify, abre **Project configuration > Environment variables > Import from a .env file**.
+3. Pega el contenido de ese archivo. No lo compartas ni lo subas a ningún sitio.
 
-```bash
-ssh-keygen -t ed25519
-```
+## 3. Publicar
 
-Después muestra la parte pública, que es la única que se comparte:
+1. Lanza un despliegue. Netlify crea la base de datos y aplica las migraciones de `netlify/database/migrations/`.
+2. Si la base no se crea sola, abre **Data & Storage > Database > Create a database manually** y vuelve a desplegar.
 
-```bash
-type %USERPROFILE%\.ssh\id_ed25519.pub
-```
+## 4. Cargar los datos inventados
 
-## 2. Crear el servidor
+Envía un `POST` a `/api/preparar_demo` con la cabecera `X-Demo-Secreto` y el valor `DEMO_SECRETO`, con el mismo `Origin` que la web. Las cuentas usan `DEMO_CLAVE` como contraseña.
 
-En Hetzner, crea un servidor con estos datos:
+## Límites de esta versión
 
-- Ubicación: Alemania.
-- Sistema: Ubuntu 24.04.
-- Tipo: 4 GB de memoria.
-- Copias de seguridad: activadas.
-- Clave SSH: pega la parte pública del paso anterior.
-
-## 3. Instalar
-
-Entra al servidor, sustituyendo `IP`:
-
-```bash
-ssh root@IP
-```
-
-Dentro del servidor, ejecuta estas órdenes una a una. Sustituye `IP` en la última:
-
-```bash
-apt-get update -q && apt-get install -y -q git
-```
-
-```bash
-git clone --branch fase-2-esqueleto https://github.com/Yamarodriguez/asociacionescann-bicas.git /opt/asociacion
-```
-
-```bash
-bash /opt/asociacion/despliegue/instalar.sh https://github.com/Yamarodriguez/asociacionescann-bicas.git IP.nip.io fase-2-esqueleto
-```
-
-## Después de instalar
-
-- La contraseña de las cuentas inventadas queda en `/opt/asociacion/.dev/credenciales_prueba.txt`.
-- Los correos no se envían: quedan en `/opt/asociacion/.dev/correos/`.
-- Hay una copia diaria cifrada de la base en `/var/backups/asociacion`, con 7 días de conservación.
-- Guarda `COPIA_CLAVE`, de `/opt/asociacion/.env`, fuera del servidor: sin esa clave las copias no se pueden recuperar.
+- No se envían correos, así que la recuperación de contraseña no llega a ningún sitio.
+- El borrado definitivo de bajas se ejecuta a mano con `scripts/purgar_bajas.py`.
+- Las copias automáticas de Netlify dependen del plan: 3 días en el gratuito.
 
 ## Antes de usar datos reales
 
 - Pasar las cuentas a la asociación.
-- Tener la confirmación del abogado sobre guardar datos fuera de Argentina.
-- Usar un dominio propio en lugar de `nip.io`.
-- Cambiar `ENTORNO` a `produccion`, configurar el correo real y eliminar los datos inventados.
+- Resolver con el abogado si los datos pueden estar en este proveedor y país. Netlify no publica en esta guía la región de su base de datos.
+- Revisar las condiciones de Netlify: prohíben guardar información sanitaria protegida sin un acuerdo firmado.
+- No usar vistas previas de despliegue con la base real: copian los datos de producción.
+- Usar un dominio propio y un servicio de correo real.
 - Dejar `dosfa_obligatorio` en `true`: los datos inventados lo apagan.
-- Repetir la prueba de restauración en el servidor.
-- Guardar una copia en otro lugar: las de este servidor se pierden si se pierde el servidor.
+- Probar la restauración de una copia en la base publicada y guardar copias fuera de Netlify.
+- Eliminar los datos inventados y retirar la ruta `/api/preparar_demo`.

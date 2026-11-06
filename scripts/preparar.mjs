@@ -22,13 +22,7 @@ if (existsSync('.env')) {
     `SESION_SECRETO_SOCIOS=${s()}`,
     `SESION_SECRETO_ADMINS=${s()}`,
     `HUELLAS_SECRETO=${s()}`,
-    `MIGRATE_SECRET=${s()}`,
     'CORREO_MODO=archivo',
-    'SMTP_HOST=',
-    'SMTP_PUERTO=587',
-    'SMTP_USUARIO=',
-    'SMTP_CLAVE=',
-    'SMTP_REMITENTE=',
     '',
   ].join('\n'), { mode: 0o600 });
   console.log('.env creado con secretos nuevos.');

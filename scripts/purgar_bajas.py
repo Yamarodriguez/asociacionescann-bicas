@@ -5,7 +5,7 @@ Con --seco solo informa. Las cuotas quedan sin persona asociada.
 """
 import sys
 
-from api import _db
+from herramientas import _db
 
 
 def purgar(seco=False):

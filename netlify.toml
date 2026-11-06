@@ -1,13 +1,16 @@
-# Publica solo las pantallas. El servidor en Python no se ejecuta en Netlify.
+# Pantallas en web/ y servidor en netlify/functions/.
+# Netlify aplica solo las migraciones de netlify/database/migrations/ al publicar.
 [build]
   publish = "web"
 
-# Sin servidor, las rutas de datos responden con un aviso claro.
-[[redirects]]
-  from = "/api/*"
-  to = "/no-disponible.json"
-  status = 503
-  force = true
+[build.environment]
+  NPM_FLAGS = "--omit=dev"
+  NODE_VERSION = "24"
+
+[functions]
+  node_bundler = "esbuild"
+  # Estas librerias se incluyen tal cual: empaquetarlas puede romper sus cargas internas.
+  external_node_modules = ["pg", "qrcode", "@netlify/database"]
 
 [[headers]]
   for = "/*"

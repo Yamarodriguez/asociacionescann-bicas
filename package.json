@@ -9,10 +9,15 @@
     "bd": "node scripts/bd_local.mjs",
     "dev": "node scripts/dev.mjs",
     "todo": "node scripts/todo.mjs",
+    "netlify:variables": "node scripts/variables_netlify.mjs",
     "copia:probar": "node scripts/copia_probar.mjs"
   },
   "devDependencies": {
     "embedded-postgres": "^18.1.0-beta.16",
     "pg": "^8.23.1"
+  },
+  "dependencies": {
+    "@netlify/database": "^2.0.3",
+    "qrcode": "^1.5.4"
   }
 }

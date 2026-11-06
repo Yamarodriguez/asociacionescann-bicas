@@ -1,8 +1,7 @@
-"""Aplica las migraciones pendientes. Por red exige MIGRATE_SECRET."""
-import hmac
+"""Aplica las migraciones en la base local. En Netlify se aplican solas al publicar."""
 import sys
 
-from . import _config, _db, _http
+from . import _config, _db
 
 
 def aplicar():
@@ -16,20 +15,12 @@ def aplicar():
         )
         cursor.execute("SELECT nombre FROM migraciones_aplicadas")
         hechas = {fila["nombre"] for fila in cursor.fetchall()}
-        for ruta in sorted((_config.RAIZ / "migraciones").glob("*.sql")):
+        for ruta in sorted((_config.RAIZ / "netlify" / "database" / "migrations").glob("*.sql")):
             if ruta.name not in hechas:
                 cursor.execute(ruta.read_text(encoding="utf-8"))
                 cursor.execute("INSERT INTO migraciones_aplicadas (nombre) VALUES (%s)", (ruta.name,))
                 aplicadas.append(ruta.name)
     return aplicadas
-
-
-def post(manejador):
-    _http.comprobar_origen(manejador)
-    recibido = manejador.headers.get("X-Migrate-Secret", "")
-    if not hmac.compare_digest(recibido, _config.req("MIGRATE_SECRET")):
-        raise _http.ErrorHttp(403, "No permitido.")
-    _http.json_respuesta(manejador, 200, {"aplicadas": aplicar()})
 
 
 if __name__ == "__main__":

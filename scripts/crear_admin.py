@@ -5,7 +5,7 @@ Uso: python -m scripts.crear_admin correo rol [--seco]
 import getpass
 import sys
 
-from api import _auth, _db
+from herramientas import _auth, _db
 
 ROLES = {
     "comision_directiva", "secretaria", "tesoreria", "director_medico",

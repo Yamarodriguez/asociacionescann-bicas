@@ -38,7 +38,10 @@ formulario.addEventListener('submit', async (evento) => {
   const boton = formulario.querySelector('button[type=submit]');
   boton.disabled = true;
   try {
-    await pedir('/api/admin_publicaciones', Object.fromEntries(new FormData(formulario)));
+    const datos = Object.fromEntries(new FormData(formulario));
+    // La fecha viaja con su zona horaria, para que no cambie en el servidor.
+    if (datos.tipo === 'asamblea') datos.fecha = new Date(datos.fecha).toISOString();
+    await pedir('/api/admin_publicaciones', datos);
     formulario.reset();
     actualizarTipo();
     mostrarMensaje(mensaje, 'Publicado.', 'exito');

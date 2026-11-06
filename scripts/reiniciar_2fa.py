@@ -5,7 +5,7 @@ Requiere acceso al servidor y deja rastro en la auditoria.
 """
 import sys
 
-from api import _db
+from herramientas import _db
 
 
 def main():

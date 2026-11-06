@@ -9,12 +9,13 @@ RAIZ = Path(__file__).resolve().parent.parent
 WEB = RAIZ / "web"
 PROHIBIDAS = re.compile(r"\b(clientes?|compras?|ventas?|tiendas?|carritos?)\b", re.IGNORECASE)
 RASTREO = re.compile(r"adsbygoogle|googletagmanager|google-analytics|facebook\.net|fbq\(|gtag\(", re.IGNORECASE)
+CODIGO_SERVIDOR = RAIZ / "servidor"
 CORREO_PROHIBIDAS = re.compile(r"cannabis|gramos?\b|variedad|cogollo|flores", re.IGNORECASE)
 TERAPEUTICAS = re.compile(r"\b(cura|curar|sana|alivia|beneficios?|efectos?)\b", re.IGNORECASE)
 FUENTES_OFICIALES = ("https://servicios.infoleg.gob.ar/", "https://www.argentina.gob.ar/")
 AVISO_BORRADOR = "BORRADOR: revisar con asesoría legal"
 SECRETO = re.compile(r"postgresql://[^:\s]+:[^@\s<{]+@|BEGIN (RSA |EC )?PRIVATE KEY")
-DIRECTORIOS_TEXTO = ("api", "web", "scripts", "migraciones", "pruebas")
+DIRECTORIOS_TEXTO = ("servidor", "netlify", "herramientas", "web", "scripts", "pruebas")
 ESTE_ARCHIVO = Path(__file__).resolve()
 
 
@@ -98,12 +99,13 @@ def revisar_codigo():
         for patron in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval("):
             if patron in texto:
                 fallos.append(f"{ruta.name}: uso prohibido de {patron}")
-    for ruta in sorted((RAIZ / "api").glob("*.py")):
+    for ruta in sorted(CODIGO_SERVIDOR.glob("*.mjs")):
         texto = ruta.read_text(encoding="utf-8")
-        if re.search(r"execute\(\s*f[\"']", texto):
-            fallos.append(f"{ruta.name}: SQL montado con texto")
-        if "log.exception" in texto:
-            fallos.append(f"{ruta.name}: log.exception puede guardar datos personales")
+        for consulta in re.findall(r"\bq\(\s*`([^`]*)`", texto):
+            if "${" in consulta and "COLUMNAS_CSV" not in consulta and "CUOTAS" not in consulta:
+                fallos.append(f"{ruta.name}: SQL montado con texto")
+        if re.search(r"console\.(log|error|warn)\((?!describirError)", texto):
+            fallos.append(f"{ruta.name}: un registro podria guardar datos personales")
     return fallos
 
 
@@ -120,10 +122,10 @@ def revisar_palabras():
     legal = (WEB / "legal.html").read_text(encoding="utf-8")
     if legal.count(AVISO_BORRADOR) < 4:
         fallos.append("legal.html: cada texto debe llevar el aviso de borrador")
-    correo = (RAIZ / "api" / "_email.py").read_text(encoding="utf-8")
-    plantillas = correo.split("PLANTILLAS = {", 1)[1].split("\n}\n", 1)[0]
+    correo = (CODIGO_SERVIDOR / "correo.mjs").read_text(encoding="utf-8")
+    plantillas = correo.split("PLANTILLAS = {", 1)[1].split("\n};\n", 1)[0]
     for coincidencia in CORREO_PROHIBIDAS.finditer(plantillas):
-        fallos.append(f"_email.py: palabra prohibida en correos: {coincidencia.group()}")
+        fallos.append(f"correo.mjs: palabra prohibida en correos: {coincidencia.group()}")
     return fallos
 
 
@@ -143,11 +145,8 @@ def revisar_secretos():
             texto = ruta.read_text(encoding="utf-8")
             if SECRETO.search(texto):
                 fallos.append(f"{ruta.name}: parece contener un secreto")
-            if "Access-Control-Allow-Origin" in texto and ruta.suffix != ".py":
+            if "Access-Control-Allow-Origin" in texto and ruta != ESTE_ARCHIVO and ruta.parent.name != "pruebas":
                 fallos.append(f"{ruta.name}: cabecera de origen abierto")
-    for ruta in (RAIZ / "api").glob("*.py"):
-        if "Access-Control-Allow-Origin" in ruta.read_text(encoding="utf-8"):
-            fallos.append(f"{ruta.name}: cabecera de origen abierto")
     return fallos
 
 
