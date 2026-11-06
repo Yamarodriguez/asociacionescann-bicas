@@ -38,3 +38,9 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 - Toda ruta debe consumir el cuerpo del pedido antes de responder. Si no, sus bytes contaminan el siguiente pedido de la misma conexión. Lo resuelve `_http.ejecutar`.
 - Una base local huérfana puede ocupar el puerto sin responder. `scripts/_comun.mjs` la detecta con una consulta real, no solo mirando el puerto.
+
+## Diseño
+
+- Propuestas y capturas en `diseno/`. `web/estilos.css` tiene A, B y la mezcla, que es el diseño por defecto.
+- El selector de `web/app.js` y `web/tema.js` solo existen para comparar. Se retiran cuando se elija uno, junto con las letras que dejen de usarse.
+- Las letras van en `web/fuentes/`, con su licencia. No se cargan desde servicios externos.

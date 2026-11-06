@@ -23,12 +23,22 @@ async function aprobar(socio, boton) {
   }
 }
 
+function celdaEstado(estado) {
+  const td = document.createElement('td');
+  td.dataset.etiqueta = 'Estado';
+  const etiqueta = document.createElement('span');
+  etiqueta.className = `etiqueta ${estado}`;
+  etiqueta.textContent = estado;
+  td.append(etiqueta);
+  return td;
+}
+
 function fila(socio) {
   const tr = document.createElement('tr');
   tr.append(
     celda('Nombre', `${socio.nombre} ${socio.apellido}`),
     celda('Documento', `${socio.tipo_documento} ${socio.numero_documento}`),
-    celda('Estado', socio.estado),
+    celdaEstado(socio.estado),
     celda('Número', socio.numero_socio ?? '—'),
   );
   const acciones = document.createElement('td');

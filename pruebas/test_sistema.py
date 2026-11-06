@@ -423,6 +423,18 @@ class Servidor(Base):
         self.assertEqual(estado, 200)
         self.assertEqual(cuerpo["aplicadas"], [])
 
+    def test_las_letras_salen_del_propio_sistema(self):
+        conexion = http.client.HTTPConnection("127.0.0.1", PUERTO, timeout=10)
+        conexion.request("GET", "/fuentes/fraunces.woff2")
+        respuesta = conexion.getresponse()
+        cuerpo = respuesta.read()
+        conexion.close()
+        self.assertEqual(respuesta.status, 200)
+        self.assertEqual(respuesta.headers["Content-Type"], "font/woff2")
+        self.assertTrue(cuerpo.startswith(b"wOF2"))
+        _, hoja, _ = pedir("GET", "/estilos.css")
+        self.assertNotIn("http", hoja)
+
     def test_las_paginas_del_prototipo_cargan(self):
         for ruta in ("/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html"):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)

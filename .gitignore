@@ -17,3 +17,8 @@ informes/*
 # Material del cliente: puede contener datos reales
 *.pdf
 Prompt_proyecto_asociacion.md
+
+# Material temporal de las propuestas de diseno
+diseno/.marco-*.html
+diseno/*.html
+diseno/fuentes/

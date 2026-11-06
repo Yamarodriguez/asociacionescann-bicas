@@ -7,7 +7,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from api import _config, _http, admin_socios, login, logout, migrate, sesion, solicitud
 
 WEB = _config.RAIZ / "web"
-EXTENSIONES = {".html", ".css", ".js", ".json", ".svg", ".ico"}
+EXTENSIONES = {".html", ".css", ".js", ".json", ".svg", ".ico", ".woff2"}
+TIPOS_BINARIOS = {".woff2": "font/woff2"}
 # Las pantallas y rutas del modulo de reservas no existen mientras este apagado.
 RUTAS = {
     ("GET", "/api/sesion"): sesion.get,
@@ -63,9 +64,11 @@ class Manejador(BaseHTTPRequestHandler):
             _http.json_respuesta(self, 404, {"error": "No encontrado."})
             return
         cuerpo = destino.read_bytes()
-        tipo = mimetypes.guess_type(destino.name)[0] or "application/octet-stream"
+        tipo = TIPOS_BINARIOS.get(destino.suffix)
+        if tipo is None:
+            tipo = f"{mimetypes.guess_type(destino.name)[0] or 'text/plain'}; charset=utf-8"
         self.send_response(200)
-        self.send_header("Content-Type", f"{tipo}; charset=utf-8")
+        self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(cuerpo)))
         self.send_header("Cache-Control", "no-cache")
         _http.cabeceras_seguridad(self)
