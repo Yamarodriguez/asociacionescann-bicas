@@ -44,7 +44,7 @@ if (!existsSync(PYTHON)) {
 }
 const instalar = spawnSync(
   PYTHON,
-  ['-m', 'pip', 'install', '-q', '--disable-pip-version-check', '-r', 'requirements.txt'],
+  ['-m', 'pip', 'install', '-q', '--disable-pip-version-check', '-r', 'herramientas/requirements.txt'],
   { stdio: 'inherit' },
 );
 process.exit(instalar.status ?? 1);
