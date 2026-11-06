@@ -42,6 +42,7 @@ if [ ! -f "$DESTINO/.env" ]; then
 ENTORNO=pruebas
 PUERTO=8080
 PROXY_CONFIABLE=1
+SITIO_URL=https://${DOMINIO}
 DATABASE_URL=postgresql://asociacion:${CLAVE_BD}@127.0.0.1:5432/asociacion
 SESION_SECRETO_SOCIOS=$(openssl rand -hex 32)
 SESION_SECRETO_ADMINS=$(openssl rand -hex 32)

@@ -16,6 +16,7 @@ import psycopg2  # noqa: E402
 
 import servidor  # noqa: E402
 from api import migrate  # noqa: E402
+from scripts import purgar_bajas  # noqa: E402
 
 PUERTO = 8091
 ORIGEN = f"http://127.0.0.1:{PUERTO}"
@@ -102,7 +103,7 @@ class Base(unittest.TestCase):
 
     def setUp(self):
         with _db.transaccion() as cursor:
-            cursor.execute("TRUNCATE contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
             cursor.execute("UPDATE configuracion SET valor = '18' WHERE clave = 'edad_minima'")
         ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
         ruta.unlink(missing_ok=True)
@@ -366,7 +367,7 @@ class WebPublica(Base):
             cursor.execute("UPDATE configuracion SET valor = '21' WHERE clave = 'edad_minima'")
         estado, cuerpo, _ = pedir("GET", "/api/publico")
         self.assertEqual(estado, 200)
-        self.assertEqual(cuerpo, {"edad_minima": 21})
+        self.assertEqual(cuerpo, {"edad_minima": 21, "aval_activo": False})
 
     def test_el_contacto_guarda_el_mensaje_sin_la_ip_en_claro(self):
         self.assertEqual(contacto()[0], 202)
@@ -445,6 +446,388 @@ class WebPublica(Base):
         respuesta.read()
         conexion.close()
         self.assertIn("immutable", respuesta.headers["Cache-Control"])
+
+
+class Portal(Base):
+    def socio_activo(self, email="activa@ejemplo.test", documento="22222222"):
+        alta(email=email, documento=documento)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT id FROM socios WHERE email = %s", (email,))
+            socio_id = cursor.fetchone()["id"]
+        admin, _ = crear_admin("secretaria", f"sec-{documento}@ejemplo.test")
+        galleta, csrf = sesion_de(admin)
+        pedir("POST", "/api/admin_socios", {"socio_id": socio_id, "identidad_verificada": True},
+              galleta=galleta, csrf=csrf)
+        return socio_id
+
+    def test_un_socio_nunca_ve_datos_de_otro(self):
+        uno = self.socio_activo()
+        self.socio_activo("otra@ejemplo.test", "33333333")
+        galleta, _ = sesion_de("otra@ejemplo.test")
+        for ruta in (f"/api/socio_portal?socio_id={uno}", f"/api/socio_exportar?socio_id={uno}&id={uno}"):
+            estado, cuerpo, _ = pedir("GET", ruta, galleta=galleta)
+            self.assertEqual(estado, 200)
+            self.assertIn("otra@ejemplo.test", str(cuerpo))
+            self.assertNotIn("activa@ejemplo.test", str(cuerpo))
+            self.assertNotIn("22222222", str(cuerpo))
+
+    def test_cuentas_sin_acceso_no_ven_el_portal(self):
+        self.assertEqual(pedir("GET", "/api/socio_portal")[0], 401)
+        alta()
+        pendiente, _ = sesion_de("persona@ejemplo.test")
+        self.assertEqual(pedir("GET", "/api/socio_portal", galleta=pendiente)[0], 403)
+        self.socio_activo()
+        activo, _ = sesion_de("activa@ejemplo.test")
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE socios SET estado = 'suspendido' WHERE email = 'activa@ejemplo.test'")
+        self.assertEqual(pedir("GET", "/api/socio_portal", galleta=activo)[0], 403)
+
+    def test_el_qr_no_lleva_datos_personales(self):
+        self.socio_activo()
+        galleta, _ = sesion_de("activa@ejemplo.test")
+        primero = pedir("GET", "/api/socio_portal", galleta=galleta)[1]
+        segundo = pedir("GET", "/api/socio_portal", galleta=galleta)[1]
+        self.assertTrue(primero["qr"].startswith("data:image/svg+xml"))
+        self.assertEqual(primero["qr"], segundo["qr"])
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT carne_token FROM socios WHERE email = 'activa@ejemplo.test'")
+            token = cursor.fetchone()["carne_token"]
+        for dato in ("Prueba", "Inventada", "22222222", "activa"):
+            self.assertNotIn(dato, token)
+        self.assertNotIn("carne_token", primero["perfil"])
+
+    def test_el_qr_se_puede_apagar(self):
+        self.socio_activo()
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'carne_qr_activo'")
+        self.addCleanup(self._encender_qr)
+        galleta, _ = sesion_de("activa@ejemplo.test")
+        self.assertIsNone(pedir("GET", "/api/socio_portal", galleta=galleta)[1]["qr"])
+
+    def _encender_qr(self):
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = 'true' WHERE clave = 'carne_qr_activo'")
+
+    def test_el_socio_solo_cambia_su_telefono(self):
+        self.socio_activo()
+        galleta, csrf = sesion_de("activa@ejemplo.test")
+        estado = pedir("POST", "/api/socio_portal", {"telefono": "123", "nombre": "Otro", "estado": "baja"},
+                       galleta=galleta, csrf=csrf)[0]
+        self.assertEqual(estado, 200)
+        self.assertEqual(pedir("POST", "/api/socio_portal", {"telefono": "1"}, galleta=galleta)[0], 403)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT telefono, nombre, estado FROM socios WHERE email = 'activa@ejemplo.test'")
+            fila = cursor.fetchone()
+        self.assertEqual((fila["telefono"], fila["nombre"], fila["estado"]), ("123", "Prueba", "activo"))
+
+    def test_exportar_entrega_los_datos_propios_sin_secretos_y_deja_rastro(self):
+        self.socio_activo()
+        galleta, _ = sesion_de("activa@ejemplo.test")
+        estado, cuerpo, cabeceras = pedir("GET", "/api/socio_exportar", galleta=galleta)
+        self.assertEqual(estado, 200)
+        self.assertIn("attachment", cabeceras["Content-Disposition"])
+        self.assertEqual(cabeceras["Cache-Control"], "no-store")
+        self.assertEqual(cuerpo["numero_documento"], "22222222")
+        self.assertIn("cuotas", cuerpo)
+        for secreto in ("clave_hash", "sesion_version", "carne_token"):
+            self.assertNotIn(secreto, cuerpo)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT count(*) AS total FROM auditoria WHERE accion = 'datos_exportados'")
+            self.assertEqual(cursor.fetchone()["total"], 1)
+
+    def test_pedir_la_baja_exige_la_contrasena(self):
+        self.socio_activo()
+        galleta, csrf = sesion_de("activa@ejemplo.test")
+        mala = pedir("POST", "/api/socio_baja", {"clave": "mala-clave-123"}, galleta=galleta, csrf=csrf)
+        self.assertEqual(mala[0], 403)
+        buena = pedir("POST", "/api/socio_baja", {"clave": CLAVE}, galleta=galleta, csrf=csrf)
+        self.assertEqual(buena[0], 200)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT estado, baja_solicitada_en FROM socios WHERE email = 'activa@ejemplo.test'")
+            fila = cursor.fetchone()
+        self.assertEqual(fila["estado"], "activo")
+        self.assertIsNotNone(fila["baja_solicitada_en"])
+
+    def test_el_aval_solo_se_exige_si_esta_activado(self):
+        self.assertEqual(alta()[0], 202)
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = 'true' WHERE clave = 'aval_activo'")
+        self.addCleanup(self._apagar_aval)
+        self.assertEqual(alta(email="b@ejemplo.test", documento="2")[0], 422)
+        self.assertEqual(alta(email="c@ejemplo.test", documento="3", avalista_numero_socio="x")[0], 422)
+        self.assertEqual(alta(email="d@ejemplo.test", documento="4", avalista_numero_socio="7")[0], 202)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT avalista_numero_socio FROM socios WHERE email = 'd@ejemplo.test'")
+            self.assertEqual(cursor.fetchone()["avalista_numero_socio"], 7)
+
+    def _apagar_aval(self):
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'aval_activo'")
+
+
+class Cuotas(Portal):
+    def registrar(self, galleta, csrf, socio_id, **extra):
+        datos = {
+            "socio_id": socio_id, "periodo": "2026-02", "importe": "1500.50",
+            "pagado_en": "2026-02-03", "metodo": "efectivo",
+        }
+        datos.update(extra)
+        return pedir("POST", "/api/admin_cuotas", datos, galleta=galleta, csrf=csrf)
+
+    def test_tesoreria_registra_y_actualiza_la_vigencia(self):
+        socio_id = self.socio_activo()
+        email, admin_id = crear_admin("tesoreria")
+        galleta, csrf = sesion_de(email)
+        estado, cuerpo, _ = self.registrar(galleta, csrf, socio_id)
+        self.assertEqual(estado, 200)
+        self.assertEqual(cuerpo["cuota_vigente_hasta"], "2026-02-28")
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT importe, registrado_por FROM cuotas")
+            fila = cursor.fetchone()
+        self.assertEqual(str(fila["importe"]), "1500.50")
+        self.assertEqual(fila["registrado_por"], admin_id)
+
+    def test_un_periodo_no_se_registra_dos_veces(self):
+        socio_id = self.socio_activo()
+        email, _ = crear_admin("tesoreria")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(self.registrar(galleta, csrf, socio_id)[0], 200)
+        self.assertEqual(self.registrar(galleta, csrf, socio_id)[0], 409)
+
+    def test_datos_de_cuota_invalidos_se_rechazan(self):
+        socio_id = self.socio_activo()
+        email, _ = crear_admin("tesoreria")
+        galleta, csrf = sesion_de(email)
+        for extra in ({"importe": "-1"}, {"importe": "0"}, {"importe": "abc"}, {"importe": "1.999"},
+                      {"importe": "NaN"}, {"periodo": "2026-13"}, {"metodo": "tarjeta"},
+                      {"pagado_en": "ayer"}):
+            self.assertEqual(self.registrar(galleta, csrf, socio_id, **extra)[0], 422, extra)
+
+    def test_quien_no_es_de_tesoreria_no_registra(self):
+        socio_id = self.socio_activo()
+        for rol in ("secretaria", "dispensador", "cultivador"):
+            email, _ = crear_admin(rol, f"{rol}-c@ejemplo.test")
+            galleta, csrf = sesion_de(email)
+            self.assertEqual(self.registrar(galleta, csrf, socio_id)[0], 403, rol)
+            self.assertEqual(pedir("GET", "/api/admin_cuotas", galleta=galleta)[0], 403, rol)
+        socio, csrf = sesion_de("activa@ejemplo.test")
+        self.assertEqual(self.registrar(socio, csrf, socio_id)[0], 401)
+
+    def test_las_vencidas_se_marcan(self):
+        self.socio_activo()
+        email, _ = crear_admin("tesoreria")
+        galleta, _ = sesion_de(email)
+        self.assertTrue(pedir("GET", "/api/admin_cuotas", galleta=galleta)[1]["socios"][0]["vencida"])
+        self.assertEqual(pedir("GET", "/api/admin_resumen", galleta=galleta)[1]["vencidas"], 1)
+
+
+class Panel(Portal):
+    def accion(self, galleta, csrf, socio_id, accion):
+        return pedir("POST", "/api/admin_socios", {"socio_id": socio_id, "accion": accion},
+                     galleta=galleta, csrf=csrf)
+
+    def test_suspender_reactivar_y_dar_de_baja(self):
+        socio_id = self.socio_activo()
+        email, _ = crear_admin("comision_directiva")
+        galleta, csrf = sesion_de(email)
+        socio, _ = sesion_de("activa@ejemplo.test")
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "suspender")[0], 200)
+        self.assertEqual(pedir("GET", "/api/socio_portal", galleta=socio)[0], 403)
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "suspender")[0], 409)
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "reactivar")[0], 200)
+        self.assertEqual(pedir("GET", "/api/socio_portal", galleta=socio)[0], 200)
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "baja")[0], 200)
+        self.assertEqual(pedir("GET", "/api/sesion", galleta=socio)[0], 401)
+        self.assertEqual(ingresar("activa@ejemplo.test")[0], 401)
+
+    def test_rechazar_borra_los_datos_de_la_solicitud(self):
+        alta()
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT id FROM socios")
+            socio_id = cursor.fetchone()["id"]
+        email, _ = crear_admin("secretaria")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "rechazar")[0], 200)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT count(*) AS total FROM socios")
+            self.assertEqual(cursor.fetchone()["total"], 0)
+            cursor.execute("SELECT count(*) AS total FROM auditoria WHERE accion = 'solicitud_rechazada'")
+            self.assertEqual(cursor.fetchone()["total"], 1)
+
+    def test_una_accion_desconocida_se_rechaza(self):
+        socio_id = self.socio_activo()
+        email, _ = crear_admin("secretaria")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(self.accion(galleta, csrf, socio_id, "borrar_todo")[0], 422)
+
+    def test_el_csv_neutraliza_formulas_y_tiene_permisos(self):
+        alta(nombre="=HYPERLINK(1)", documento="44444444")
+        self.assertEqual(pedir("GET", "/api/admin_socios_csv")[0], 401)
+        email, _ = crear_admin("dispensador")
+        galleta, _ = sesion_de(email)
+        self.assertEqual(pedir("GET", "/api/admin_socios_csv", galleta=galleta)[0], 403)
+        email, admin_id = crear_admin("secretaria")
+        galleta, _ = sesion_de(email)
+        estado, cuerpo, cabeceras = pedir("GET", "/api/admin_socios_csv", galleta=galleta)
+        self.assertEqual(estado, 200)
+        self.assertIn("'=HYPERLINK(1)", cuerpo)
+        self.assertNotIn(";=HYPERLINK", cuerpo)
+        self.assertEqual(cabeceras["Cache-Control"], "no-store")
+        self.assertNotIn("scrypt", cuerpo)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT admin_id FROM auditoria WHERE accion = 'socios_exportados'")
+            self.assertEqual(cursor.fetchone()["admin_id"], admin_id)
+
+    def test_publicar_tiene_permisos_y_llega_a_los_socios_activos(self):
+        self.socio_activo()
+        datos = {"tipo": "comunicado", "titulo": "Aviso", "cuerpo": "<b>Hola</b>"}
+        self.assertEqual(pedir("POST", "/api/admin_publicaciones", datos)[0], 401)
+        email, _ = crear_admin("tesoreria")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(pedir("POST", "/api/admin_publicaciones", datos, galleta=galleta, csrf=csrf)[0], 403)
+        email, _ = crear_admin("comision_directiva")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(pedir("POST", "/api/admin_publicaciones", datos, galleta=galleta, csrf=csrf)[0], 200)
+        asamblea = {"tipo": "asamblea", "titulo": "Ordinaria", "fecha": "2027-01-10T18:00",
+                    "lugar": "Sede", "cuerpo": "Orden"}
+        self.assertEqual(pedir("POST", "/api/admin_publicaciones", asamblea, galleta=galleta, csrf=csrf)[0], 200)
+        for tipo in ("documento", "acta"):
+            pieza = {"tipo": tipo, "titulo": tipo, "cuerpo": "Texto"}
+            self.assertEqual(pedir("POST", "/api/admin_publicaciones", pieza, galleta=galleta, csrf=csrf)[0], 200)
+        mal = {"tipo": "otro", "titulo": "x", "cuerpo": "y"}
+        self.assertEqual(pedir("POST", "/api/admin_publicaciones", mal, galleta=galleta, csrf=csrf)[0], 422)
+        socio, _ = sesion_de("activa@ejemplo.test")
+        portal = pedir("GET", "/api/socio_portal", galleta=socio)[1]
+        self.assertEqual(portal["comunicados"][0]["cuerpo"], "<b>Hola</b>")
+        for lista in ("asambleas", "documentos", "actas"):
+            self.assertTrue(portal[lista], lista)
+
+    def test_configuracion_solo_para_la_comision_y_con_limites(self):
+        email, _ = crear_admin("secretaria")
+        galleta, csrf = sesion_de(email)
+        self.assertEqual(pedir("GET", "/api/admin_configuracion", galleta=galleta)[0], 403)
+        email, _ = crear_admin("comision_directiva")
+        galleta, csrf = sesion_de(email)
+        cambio = lambda clave, valor: pedir(  # noqa: E731
+            "POST", "/api/admin_configuracion", {"clave": clave, "valor": valor}, galleta=galleta, csrf=csrf)[0]
+        self.assertEqual(cambio("edad_minima", "21"), 200)
+        self.assertEqual(pedir("GET", "/api/publico")[1]["edad_minima"], 21)
+        self.assertEqual(cambio("edad_minima", "5"), 422)
+        self.assertEqual(cambio("edad_minima", "abc"), 422)
+        self.assertEqual(cambio("aval_activo", "quizas"), 422)
+        self.assertEqual(cambio("clave_inventada", "1"), 403)
+
+    def test_las_reservas_no_se_activan_desde_el_panel(self):
+        email, _ = crear_admin("comision_directiva")
+        galleta, csrf = sesion_de(email)
+        estado = pedir("POST", "/api/admin_configuracion", {"clave": "modulo_reservas_activo", "valor": "true"},
+                       galleta=galleta, csrf=csrf)[0]
+        self.assertEqual(estado, 403)
+        with _db.transaccion() as cursor:
+            self.assertEqual(_db.configuracion(cursor, "modulo_reservas_activo"), "false")
+
+    def test_el_resumen_depende_del_rol(self):
+        email, _ = crear_admin("dispensador")
+        galleta, _ = sesion_de(email)
+        self.assertEqual(pedir("GET", "/api/admin_resumen", galleta=galleta)[1], {"rol": "dispensador"})
+
+
+class Borrado(Portal):
+    def test_purgar_en_seco_no_cambia_nada_y_luego_borra_de_verdad(self):
+        socio_id = self.socio_activo()
+        email, _ = crear_admin("tesoreria")
+        galleta, csrf = sesion_de(email)
+        pedir("POST", "/api/admin_cuotas", {
+            "socio_id": socio_id, "periodo": "2026-02", "importe": "10", "pagado_en": "2026-02-03",
+            "metodo": "efectivo"}, galleta=galleta, csrf=csrf)
+        with _db.transaccion() as cursor:
+            cursor.execute(
+                "UPDATE socios SET estado = 'baja', baja_en = now() - interval '2 days' WHERE id = %s",
+                (socio_id,))
+            cursor.execute("UPDATE configuracion SET valor = '30' WHERE clave = 'retencion_baja_dias'")
+        self.addCleanup(self._retencion_cero)
+        self.assertEqual(purgar_bajas.purgar(), 0)
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = '1' WHERE clave = 'retencion_baja_dias'")
+        self.assertEqual(purgar_bajas.purgar(seco=True), 1)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT count(*) AS total FROM socios WHERE id = %s", (socio_id,))
+            self.assertEqual(cursor.fetchone()["total"], 1)
+        self.assertEqual(purgar_bajas.purgar(), 1)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT count(*) AS total FROM socios WHERE id = %s", (socio_id,))
+            self.assertEqual(cursor.fetchone()["total"], 0)
+            cursor.execute("SELECT socio_id, importe FROM cuotas")
+            cuota = cursor.fetchone()
+            cursor.execute("SELECT count(*) AS total FROM auditoria WHERE socio_id = %s", (socio_id,))
+            rastros = cursor.fetchone()["total"]
+        self.assertIsNone(cuota["socio_id"])
+        self.assertEqual(rastros, 0)
+
+    def _retencion_cero(self):
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = '0' WHERE clave = 'retencion_baja_dias'")
+
+
+class Recuperacion(Base):
+    def correo(self):
+        ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
+        return [json.loads(linea) for linea in ruta.read_text(encoding="utf-8").splitlines()]
+
+    def pedir_enlace(self, email="persona@ejemplo.test"):
+        respuesta = pedir("POST", "/api/recuperar", {"email": email})
+        return respuesta, self.correo()[-1]["texto"].rsplit("#t=", 1)[-1]
+
+    def cambiar(self, token, clave="clave-nueva-2026"):
+        return pedir("POST", "/api/recuperar_cambiar", {"token": token, "clave": clave})
+
+    def test_no_revela_si_el_correo_existe(self):
+        alta()
+        conocido = pedir("POST", "/api/recuperar", {"email": "persona@ejemplo.test"})
+        desconocido = pedir("POST", "/api/recuperar", {"email": "nadie@ejemplo.test"})
+        self.assertEqual(conocido[:2], desconocido[:2])
+        self.assertEqual(conocido[0], 202)
+
+    def test_el_enlace_cambia_la_clave_una_vez_y_cierra_sesiones(self):
+        alta()
+        galleta, _ = sesion_de("persona@ejemplo.test")
+        _, token = self.pedir_enlace()
+        self.assertEqual(self.cambiar(token)[0], 200)
+        self.assertEqual(pedir("GET", "/api/sesion", galleta=galleta)[0], 401)
+        self.assertEqual(ingresar("persona@ejemplo.test")[0], 401)
+        self.assertEqual(ingresar("persona@ejemplo.test", "clave-nueva-2026")[0], 200)
+        self.assertEqual(self.cambiar(token, "otra-clave-2026")[0], 400)
+
+    def test_el_enlace_caduca_y_no_se_guarda_en_claro(self):
+        alta()
+        _, token = self.pedir_enlace()
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT token_hash FROM recuperaciones")
+            self.assertNotEqual(cursor.fetchone()["token_hash"], token)
+            cursor.execute("UPDATE recuperaciones SET expira_en = now() - interval '1 minute'")
+        self.assertEqual(self.cambiar(token)[0], 400)
+
+    def test_contrasena_corta_y_codigo_falso_se_rechazan(self):
+        alta()
+        _, token = self.pedir_enlace()
+        self.assertEqual(self.cambiar(token, "corta")[0], 422)
+        self.assertEqual(self.cambiar("codigo-falso")[0], 400)
+
+    def test_limita_los_enlaces_por_hora(self):
+        alta()
+        for _ in range(5):
+            pedir("POST", "/api/recuperar", {"email": "persona@ejemplo.test"})
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT count(*) AS total FROM recuperaciones")
+            self.assertEqual(cursor.fetchone()["total"], 3)
+
+    def test_el_correo_es_neutro_y_el_codigo_no_llega_al_servidor_en_la_direccion(self):
+        alta()
+        self.pedir_enlace()
+        ultimo = self.correo()[-1]
+        self.assertIn("recuperar.html#t=", ultimo["texto"])
+        for palabra in ("cannabis", "gramo", "variedad", "reprocann"):
+            self.assertNotIn(palabra, ultimo["texto"].lower())
 
 
 class Correos(Base):
@@ -543,7 +926,8 @@ class Servidor(Base):
     def test_las_paginas_del_prototipo_cargan(self):
         for ruta in (
             "/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html",
-            "/admin_contactos.html", "/legal.html", "/portada.js",
+            "/admin_contactos.html", "/legal.html", "/portada.js", "/recuperar.html", "/admin_cuotas.html",
+            "/admin_comunicados.html", "/admin_configuracion.html",
         ):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
 

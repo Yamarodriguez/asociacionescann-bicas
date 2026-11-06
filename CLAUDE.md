@@ -32,7 +32,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
 - Falta en Fase 2: repositorio remoto y despliegue de pruebas, que requieren las cuentas. `despliegue/` está preparado, pero sin probar en un servidor real.
-- Falta para seguridad: 2FA, recuperación de contraseña, exportación de datos y copias.
+- Falta para seguridad: 2FA y restauración probada de copias.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
 ## Lecciones
@@ -46,3 +46,12 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - 2026-11-06: se eligió el diseño A, Institución cercana: crema y verde, con detalles dorados, en Fraunces y DM Sans. Las demás propuestas quedan en `diseno/`.
 - El gris secundario es `#5f645a`, más oscuro que el del encargo, porque aquel no llegaba al contraste AA.
 - Las letras van en `web/fuentes/`, con su licencia. No se cargan desde servicios externos.
+
+## Fase 5
+
+- Portal, cuotas, publicaciones, configuración, recuperación de contraseña, exportación y borrado real hechos con datos inventados.
+- El aval y el QR del carné van detrás de `aval_activo` y `carne_qr_activo`: dependen del abogado. El QR lleva un código al azar y aún no hay pantalla que lo lea.
+- Los documentos son texto. Subir archivos PDF queda pendiente.
+- Las votaciones online, los recibos y la firma digital no están construidos: dependen del abogado.
+- `scripts/purgar_bajas.py` debe programarse en el servidor cuando se fije el plazo de retención.
+- Para Fase 7: enviar los correos en segundo plano, para que el tiempo de respuesta de `/api/recuperar` no revele si la cuenta existe.

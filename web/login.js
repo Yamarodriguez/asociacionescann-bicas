@@ -50,6 +50,11 @@ formSolicitud.addEventListener('submit', (evento) => {
   });
 });
 
+pedir('/api/publico').then(({ aval_activo: aval }) => {
+  document.getElementById('campo-aval').classList.toggle('oculto', !aval);
+  document.getElementById('avalista_numero_socio').required = aval;
+}).catch(() => {});
+
 leerSesion().then((sesion) => {
   if (sesion) location.href = destinoDe(sesion);
 }).catch(() => {});

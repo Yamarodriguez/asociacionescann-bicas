@@ -5,8 +5,9 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from api import (
-    _config, _http, admin_contactos, admin_socios, contacto, login, logout, migrate, publico,
-    sesion, solicitud,
+    _config, _http, admin_configuracion, admin_contactos, admin_cuotas, admin_publicaciones,
+    admin_resumen, admin_socios, contacto, login, logout, migrate, publico, recuperar, sesion,
+    socio_baja, socio_exportar, socio_portal, solicitud,
 )
 
 WEB = _config.RAIZ / "web"
@@ -18,7 +19,21 @@ RUTAS = {
     ("GET", "/api/publico"): publico.get,
     ("GET", "/api/admin_socios"): admin_socios.get,
     ("POST", "/api/admin_socios"): admin_socios.post,
+    ("GET", "/api/admin_socios_csv"): admin_socios.csv_socios,
     ("GET", "/api/admin_contactos"): admin_contactos.get,
+    ("GET", "/api/admin_resumen"): admin_resumen.get,
+    ("GET", "/api/admin_cuotas"): admin_cuotas.get,
+    ("POST", "/api/admin_cuotas"): admin_cuotas.post,
+    ("GET", "/api/admin_publicaciones"): admin_publicaciones.get,
+    ("POST", "/api/admin_publicaciones"): admin_publicaciones.post,
+    ("GET", "/api/admin_configuracion"): admin_configuracion.get,
+    ("POST", "/api/admin_configuracion"): admin_configuracion.post,
+    ("GET", "/api/socio_portal"): socio_portal.get,
+    ("POST", "/api/socio_portal"): socio_portal.actualizar,
+    ("GET", "/api/socio_exportar"): socio_exportar.get,
+    ("POST", "/api/socio_baja"): socio_baja.post,
+    ("POST", "/api/recuperar"): recuperar.pedir,
+    ("POST", "/api/recuperar_cambiar"): recuperar.cambiar,
     ("POST", "/api/contacto"): contacto.post,
     ("POST", "/api/login"): login.post,
     ("POST", "/api/logout"): logout.post,

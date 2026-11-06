@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Publicaciones · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_comunicados.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Publicaciones</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+
+    <form id="form-publicacion" class="tarjeta">
+      <h2>Publicar para socios activos</h2>
+      <div class="campo">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" name="tipo">
+          <option value="comunicado">Comunicado</option>
+          <option value="documento">Documento</option>
+          <option value="asamblea">Asamblea</option>
+          <option value="acta">Acta</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" maxlength="200" required>
+      </div>
+      <div id="campos-asamblea" class="rejilla-campos oculto">
+        <div class="campo">
+          <label for="fecha">Fecha y hora</label>
+          <input id="fecha" name="fecha" type="datetime-local">
+        </div>
+        <div class="campo">
+          <label for="lugar">Lugar</label>
+          <input id="lugar" name="lugar" maxlength="200">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="cuerpo" id="etiqueta-cuerpo">Texto</label>
+        <textarea id="cuerpo" name="cuerpo" rows="7" required></textarea>
+      </div>
+      <button type="submit">Publicar</button>
+    </form>
+
+    <section class="tarjeta">
+      <h2>Publicado</h2>
+      <p id="estado-lista" class="cargando">Cargando…</p>
+      <div id="lista"></div>
+    </section>
+  </main>
+</body>
+</html>

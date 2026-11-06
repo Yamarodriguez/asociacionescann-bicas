@@ -2,6 +2,8 @@ const mensaje = document.getElementById('mensaje');
 const estadoLista = document.getElementById('estado-lista');
 const tabla = document.getElementById('tabla');
 const filas = document.getElementById('filas');
+const buscar = document.getElementById('buscar');
+let socios = [];
 
 function celda(etiqueta, texto) {
   const td = document.createElement('td');
@@ -10,12 +12,29 @@ function celda(etiqueta, texto) {
   return td;
 }
 
-async function aprobar(socio, boton) {
+function celdaEstado(socio) {
+  const td = document.createElement('td');
+  td.dataset.etiqueta = 'Estado';
+  const etiqueta = document.createElement('span');
+  etiqueta.className = `etiqueta ${socio.estado}`;
+  etiqueta.textContent = socio.estado;
+  td.append(etiqueta);
+  if (socio.baja_solicitada_en && socio.estado !== 'baja') {
+    const aviso = document.createElement('span');
+    aviso.className = 'etiqueta pendiente';
+    aviso.textContent = 'pidió la baja';
+    td.append(' ', aviso);
+  }
+  return td;
+}
+
+async function ejecutar(socio, accion, boton, extra = {}) {
   boton.disabled = true;
   try {
-    const respuesta = await pedir('/api/admin_socios', {
-      socio_id: socio.id, identidad_verificada: true });
-    mostrarMensaje(mensaje, `Solicitud aprobada. Número de socio: ${respuesta.numero_socio}.`, 'exito');
+    const respuesta = await pedir('/api/admin_socios', { socio_id: socio.id, accion, ...extra });
+    const texto = respuesta.numero_socio
+      ? `Solicitud aprobada. Número de socio: ${respuesta.numero_socio}.` : respuesta.mensaje;
+    mostrarMensaje(mensaje, texto, 'exito');
     await cargar();
   } catch (error) {
     mostrarMensaje(mensaje, error.message);
@@ -23,27 +42,38 @@ async function aprobar(socio, boton) {
   }
 }
 
-function celdaEstado(estado) {
-  const td = document.createElement('td');
-  td.dataset.etiqueta = 'Estado';
-  const etiqueta = document.createElement('span');
-  etiqueta.className = `etiqueta ${estado}`;
-  etiqueta.textContent = estado;
-  td.append(etiqueta);
-  return td;
+function boton(texto, clase, alPulsar) {
+  const elemento = document.createElement('button');
+  elemento.type = 'button';
+  elemento.textContent = texto;
+  if (clase) elemento.className = clase;
+  elemento.addEventListener('click', () => alPulsar(elemento));
+  return elemento;
 }
 
-function fila(socio) {
-  const tr = document.createElement('tr');
-  tr.append(
-    celda('Nombre', `${socio.nombre} ${socio.apellido}`),
-    celda('Documento', `${socio.tipo_documento} ${socio.numero_documento}`),
-    celdaEstado(socio.estado),
-    celda('Número', socio.numero_socio ?? '—'),
-  );
+// Lo que se borra o da de baja pide un segundo clic.
+function botonConfirmado(texto, socio, accion) {
+  const elemento = boton(texto, 'peligro', () => {
+    if (elemento.dataset.armado) {
+      ejecutar(socio, accion, elemento);
+      return;
+    }
+    elemento.dataset.armado = 'si';
+    elemento.textContent = 'Confirmar';
+  });
+  return elemento;
+}
+
+function accionesDe(socio) {
   const acciones = document.createElement('td');
   acciones.className = 'acciones';
   if (socio.estado === 'pendiente') {
+    if (socio.avalista_numero_socio) {
+      const aval = document.createElement('p');
+      aval.className = 'nota';
+      aval.textContent = `Aval: socio ${socio.avalista_numero_socio}`;
+      acciones.append(aval);
+    }
     const casilla = document.createElement('div');
     casilla.className = 'casilla';
     const marca = document.createElement('input');
@@ -53,26 +83,55 @@ function fila(socio) {
     etiqueta.htmlFor = marca.id;
     etiqueta.textContent = 'Verifiqué la edad y la identidad en persona';
     casilla.append(marca, etiqueta);
-
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.textContent = 'Aprobar';
-    boton.disabled = true;
-    marca.addEventListener('change', () => { boton.disabled = !marca.checked; });
-    boton.addEventListener('click', () => aprobar(socio, boton));
-    acciones.append(casilla, boton);
+    const aprobar = boton('Aprobar', '', (b) => ejecutar(socio, 'aprobar', b, { identidad_verificada: true }));
+    aprobar.disabled = true;
+    marca.addEventListener('change', () => { aprobar.disabled = !marca.checked; });
+    acciones.append(casilla, aprobar, ' ', botonConfirmado('Rechazar', socio, 'rechazar'));
   }
-  tr.append(acciones);
+  if (socio.estado === 'activo') {
+    acciones.append(boton('Suspender', 'secundario', (b) => ejecutar(socio, 'suspender', b)), ' ');
+  }
+  if (socio.estado === 'suspendido') {
+    acciones.append(boton('Reactivar', 'secundario', (b) => ejecutar(socio, 'reactivar', b)), ' ');
+  }
+  if (socio.estado === 'activo' || socio.estado === 'suspendido') {
+    acciones.append(botonConfirmado('Dar de baja', socio, 'baja'));
+  }
+  return acciones;
+}
+
+function fila(socio) {
+  const tr = document.createElement('tr');
+  const hasta = socio.cuota_vigente_hasta
+    ? new Date(socio.cuota_vigente_hasta).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : '—';
+  tr.append(
+    celda('Nombre', `${socio.nombre} ${socio.apellido}`),
+    celda('Documento', `${socio.tipo_documento} ${socio.numero_documento}`),
+    celdaEstado(socio),
+    celda('Número', socio.numero_socio ?? '—'),
+    celda('Cuota hasta', hasta),
+    accionesDe(socio),
+  );
   return tr;
 }
 
-async function cargar() {
-  const { socios } = await pedir('/api/admin_socios');
-  filas.replaceChildren(...socios.map(fila));
-  tabla.classList.toggle('oculto', socios.length === 0);
-  estadoLista.classList.toggle('oculto', socios.length > 0);
-  estadoLista.textContent = 'Todavía no hay solicitudes.';
+function pintar() {
+  // La busqueda ocurre en el navegador: nada personal viaja en la direccion.
+  const texto = buscar.value.trim().toLowerCase();
+  const visibles = socios.filter((s) => !texto
+    || `${s.nombre} ${s.apellido} ${s.numero_documento} ${s.numero_socio ?? ''}`.toLowerCase().includes(texto));
+  filas.replaceChildren(...visibles.map(fila));
+  tabla.classList.toggle('oculto', visibles.length === 0);
+  estadoLista.className = visibles.length ? 'oculto' : 'estado-vacio';
+  estadoLista.textContent = socios.length ? 'Ningún socio coincide con la búsqueda.' : 'Todavía no hay solicitudes.';
 }
+
+async function cargar() {
+  ({ socios } = await pedir('/api/admin_socios'));
+  pintar();
+}
+
+buscar.addEventListener('input', pintar);
 
 async function iniciar() {
   try {
@@ -83,7 +142,7 @@ async function iniciar() {
     }
     await cargar();
   } catch (error) {
-    estadoLista.classList.add('oculto');
+    estadoLista.className = 'oculto';
     mostrarMensaje(mensaje, error.message);
   }
 }

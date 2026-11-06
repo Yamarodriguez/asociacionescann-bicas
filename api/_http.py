@@ -77,6 +77,18 @@ def consumir_cuerpo(manejador):
         raise ErrorHttp(400, "Pedido inválido.")
 
 
+def archivo_respuesta(manejador, contenido, tipo, nombre):
+    """Entrega una descarga privada que el navegador no debe guardar."""
+    manejador.send_response(200)
+    manejador.send_header("Content-Type", tipo)
+    manejador.send_header("Content-Length", str(len(contenido)))
+    manejador.send_header("Content-Disposition", f'attachment; filename="{nombre}"')
+    manejador.send_header("Cache-Control", "no-store")
+    cabeceras_seguridad(manejador)
+    manejador.end_headers()
+    manejador.wfile.write(contenido)
+
+
 def leer_json(manejador):
     if not manejador.cuerpo:
         raise ErrorHttp(400, "Pedido inválido.")

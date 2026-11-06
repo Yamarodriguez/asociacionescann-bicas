@@ -75,6 +75,21 @@ def revisar_pantallas():
     return fallos
 
 
+def revisar_identificadores():
+    """Cada elemento que el codigo busca por id debe existir en su pantalla."""
+    fallos = []
+    busqueda = re.compile(r"""getElementById\(['"]([\w-]+)['"]\)""")
+    for script in sorted(WEB.glob("*.js")):
+        pantalla = WEB / f"{script.stem}.html"
+        if not pantalla.exists():
+            continue
+        html = pantalla.read_text(encoding="utf-8")
+        for identificador in busqueda.findall(script.read_text(encoding="utf-8")):
+            if f'id="{identificador}"' not in html:
+                fallos.append(f"{script.name}: no existe el elemento {identificador} en {pantalla.name}")
+    return fallos
+
+
 def revisar_palabras():
     fallos = []
     for ruta in sorted(WEB.iterdir()):
@@ -120,7 +135,7 @@ def revisar_secretos():
 
 
 def main():
-    fallos = revisar_pantallas() + revisar_palabras() + revisar_secretos()
+    fallos = revisar_pantallas() + revisar_identificadores() + revisar_palabras() + revisar_secretos()
     for fallo in fallos:
         print("FALLO:", fallo)
     print(f"{len(fallos)} fallos en el validador")

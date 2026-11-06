@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Cuotas · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_cuotas.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Cuotas</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+
+    <form id="form-cuota" class="tarjeta">
+      <h2>Registrar un pago</h2>
+      <p class="nota">Registro manual de pagos en efectivo o por transferencia.</p>
+      <div class="rejilla-campos">
+        <div class="campo">
+          <label for="socio_id">Socio</label>
+          <select id="socio_id" name="socio_id" required></select>
+        </div>
+        <div class="campo">
+          <label for="periodo">Período</label>
+          <input id="periodo" name="periodo" type="month" required>
+        </div>
+        <div class="campo">
+          <label for="importe">Importe (ARS)</label>
+          <input id="importe" name="importe" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required>
+        </div>
+        <div class="campo">
+          <label for="pagado_en">Fecha de pago</label>
+          <input id="pagado_en" name="pagado_en" type="date" required>
+        </div>
+        <div class="campo">
+          <label for="metodo">Método</label>
+          <select id="metodo" name="metodo" required>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit">Registrar pago</button>
+    </form>
+
+    <section class="tarjeta">
+      <h2>Estado de los socios</h2>
+      <p id="estado-lista" class="cargando">Cargando…</p>
+      <table id="tabla" class="oculto">
+        <thead>
+          <tr>
+            <th scope="col">Número</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Cuota hasta</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="filas"></tbody>
+      </table>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Últimos pagos</h2>
+      <div id="pagos"></div>
+    </section>
+  </main>
+</body>
+</html>

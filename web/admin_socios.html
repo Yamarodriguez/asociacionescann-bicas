@@ -21,6 +21,13 @@
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
     <section class="tarjeta">
+      <div class="herramientas">
+        <div class="campo">
+          <label for="buscar">Buscar por nombre, documento o número</label>
+          <input id="buscar" type="search" autocomplete="off">
+        </div>
+        <a class="boton secundario" href="/api/admin_socios_csv">Descargar CSV</a>
+      </div>
       <p id="estado-lista" class="cargando">Cargando…</p>
       <table id="tabla" class="oculto">
         <thead>
@@ -29,6 +36,7 @@
             <th scope="col">Documento</th>
             <th scope="col">Estado</th>
             <th scope="col">Número</th>
+            <th scope="col">Cuota hasta</th>
             <th scope="col">Acción</th>
           </tr>
         </thead>

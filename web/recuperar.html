@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Recuperar contraseña · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/recuperar.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <h1>Recuperar contraseña</h1>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+
+    <form id="form-pedir" class="tarjeta">
+      <div class="campo">
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="username" required>
+      </div>
+      <button type="submit">Enviar enlace</button>
+    </form>
+
+    <form id="form-cambiar" class="tarjeta oculto">
+      <div class="campo">
+        <label for="clave">Contraseña nueva (mínimo 10 caracteres)</label>
+        <input id="clave" name="clave" type="password" minlength="10" autocomplete="new-password" required>
+      </div>
+      <button type="submit">Cambiar contraseña</button>
+    </form>
+
+    <a href="/login.html">Volver a ingresar</a>
+  </main>
+</body>
+</html>

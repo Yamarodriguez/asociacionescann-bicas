@@ -46,10 +46,18 @@ def post(manejador):
     nombre = _texto(datos, "nombre")
     apellido = _texto(datos, "apellido")
     numero = _texto(datos, "numero_documento", 30)
+    avalista = datos.get("avalista_numero_socio") or None
+    if avalista is not None:
+        if not isinstance(avalista, (str, int)) or not str(avalista).isdigit() or len(str(avalista)) > 12:
+            raise _http.ErrorHttp(422, "Revisá el número de socio que te avala.")
+        avalista = int(avalista)
     clave_hash = _auth.hashear_clave(clave)
 
     creado = False
     with _db.transaccion() as cursor:
+        # El aval lo comprueba el equipo: asi no se revela que numeros existen.
+        if _db.configuracion(cursor, "aval_activo") == "true" and avalista is None:
+            raise _http.ErrorHttp(422, "Necesitás indicar el número de socio que te avala.")
         minima = int(_db.configuracion(cursor, "edad_minima"))
         if _edad(nacimiento, dt.date.today()) < minima:
             raise _http.ErrorHttp(422, f"Tenés que tener al menos {minima} años para solicitar el alta.")
@@ -57,10 +65,11 @@ def post(manejador):
             cursor.execute("SAVEPOINT alta")
             cursor.execute(
                 "INSERT INTO socios (email, clave_hash, nombre, apellido, fecha_nacimiento,"
-                " tipo_documento, numero_documento, telefono, consentimiento_en,"
-                " estatutos_aceptados_en) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,now(),now())"
+                " tipo_documento, numero_documento, telefono, avalista_numero_socio,"
+                " consentimiento_en, estatutos_aceptados_en)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,now(),now())"
                 " RETURNING id",
-                (email, clave_hash, nombre, apellido, nacimiento, tipo, numero, telefono),
+                (email, clave_hash, nombre, apellido, nacimiento, tipo, numero, telefono, avalista),
             )
             socio_id = cursor.fetchone()["id"]
             _db.auditar(cursor, "solicitud_creada", "socio", socio_id, socio_id=socio_id)

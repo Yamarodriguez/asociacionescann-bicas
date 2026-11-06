@@ -110,6 +110,26 @@ a { color: var(--leaf-deep); }
 
 .pie a { display: inline-block; padding: 0.625rem 0; }
 
+.carne { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.qr { background: #fff; border: 1px solid var(--line); border-radius: var(--radio); }
+.espaciada { margin-top: 0.75rem; }
+
+details { padding: 0.5rem 0; border-top: 1px solid var(--line); }
+details:first-child { border-top: 0; }
+summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; }
+
+.peligro { background: transparent; border-color: var(--danger); color: #8c2a20; }
+.peligro:hover { background: #fbebe9; }
+
+.herramientas { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; margin-bottom: 1rem; }
+.herramientas .campo { flex: 1 1 16rem; margin: 0; }
+
+.rejilla-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0 1rem; }
+
+.menu-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.tarjeta-menu { display: block; margin: 0; color: var(--ink); text-decoration: none; }
+.tarjeta-menu:hover { border-color: var(--leaf); }
+
 dialog {
   width: min(28rem, calc(100vw - 2rem));
   padding: 1.5rem;

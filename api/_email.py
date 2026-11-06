@@ -18,11 +18,17 @@ PLANTILLAS = {
         "Tu solicitud fue aprobada",
         "Tu solicitud fue aprobada. Ya podés ingresar al portal.",
     ),
+    "recuperar_clave": (
+        "Cambiá tu contraseña",
+        "Pediste cambiar tu contraseña. Usá este enlace, que vence pronto y sirve una sola vez:",
+    ),
 }
 
 
-def enviar(destinatario, plantilla):
+def enviar(destinatario, plantilla, enlace=None):
     asunto, texto = PLANTILLAS[plantilla]
+    if enlace:
+        texto = f"{texto}\n\n{enlace}"
     if os.environ.get("CORREO_MODO", "archivo") == "archivo":
         _guardar_en_archivo(destinatario, asunto, texto)
         return

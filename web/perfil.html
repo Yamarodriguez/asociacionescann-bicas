@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Mi perfil · Prototipo</title>
+  <title>Mi portal · Prototipo</title>
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/perfil.js" defer></script>
@@ -16,12 +16,71 @@
       <h1>Hola, <span id="nombre">socio</span></h1>
       <button type="button" id="salir" class="secundario">Salir</button>
     </div>
-    <div id="error" class="mensaje" role="alert"></div>
-    <section class="tarjeta">
-      <h2>Tu carné</h2>
-      <p>Número de socio: <strong id="numero">…</strong></p>
-      <p class="nota">Cuota, comunicados y documentos llegarán en la siguiente etapa.</p>
-    </section>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <section class="tarjeta carne">
+        <div>
+          <h2>Tu carné</h2>
+          <p>Número de socio: <strong id="numero"></strong></p>
+          <p>Alta: <span id="alta"></span></p>
+        </div>
+        <img id="qr" class="qr oculto" alt="Código QR del carné" width="150" height="150">
+      </section>
+
+      <section class="tarjeta">
+        <h2>Tu cuota</h2>
+        <p id="cuota-estado"></p>
+        <div id="cuotas"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Comunicados</h2>
+        <div id="comunicados"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Documentos</h2>
+        <div id="documentos"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Asambleas</h2>
+        <div id="asambleas"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Actas</h2>
+        <div id="actas"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Tus datos</h2>
+        <p><span id="nombre-completo"></span><br><span id="correo"></span></p>
+        <form id="form-telefono">
+          <div class="campo">
+            <label for="telefono">Teléfono (opcional)</label>
+            <input id="telefono" name="telefono" type="tel" maxlength="30" autocomplete="tel">
+          </div>
+          <button type="submit" class="secundario">Guardar teléfono</button>
+        </form>
+        <p class="nota espaciada">Para cambiar otro dato, escribí a la administración.</p>
+        <a class="boton secundario" href="/api/socio_exportar">Descargar mis datos</a>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Pedir la baja</h2>
+        <p id="baja-pedida" class="oculto">Ya recibimos tu pedido de baja. La administración lo va a tramitar.</p>
+        <form id="form-baja">
+          <div class="campo">
+            <label for="baja-clave">Confirmá con tu contraseña</label>
+            <input id="baja-clave" name="clave" type="password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="peligro">Pedir la baja</button>
+        </form>
+      </section>
+    </div>
   </main>
 </body>
 </html>

@@ -11,18 +11,14 @@
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="pagina pagina-ancha">
     <div class="cabecera">
       <h1>Panel</h1>
       <button type="button" id="salir" class="secundario">Salir</button>
     </div>
     <div id="error" class="mensaje" role="alert"></div>
-    <section id="bloque-socios" class="tarjeta oculto">
-      <h2>Solicitudes pendientes</h2>
-      <p class="contador" id="pendientes">…</p>
-      <a class="boton" href="/admin_socios.html">Ver socios</a>
-      <a class="boton secundario" href="/admin_contactos.html">Mensajes de contacto</a>
-    </section>
+    <p id="cargando" class="cargando">Cargando…</p>
+    <div id="menu" class="menu-panel"></div>
     <section id="bloque-sin-permisos" class="tarjeta oculto">
       <p>Tu rol todavía no tiene pantallas en este prototipo.</p>
     </section>

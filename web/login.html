@@ -30,6 +30,7 @@
         <input id="ingreso-clave" name="clave" type="password" autocomplete="current-password" required>
       </div>
       <button type="submit">Ingresar</button>
+      <p class="espaciada"><a href="/recuperar.html">Olvidé mi contraseña</a></p>
     </form>
 
     <form id="form-solicitud" class="tarjeta oculto">
@@ -70,6 +71,10 @@
       <div class="campo">
         <label for="clave">Contraseña (mínimo 10 caracteres)</label>
         <input id="clave" name="clave" type="password" minlength="10" autocomplete="new-password" required>
+      </div>
+      <div class="campo oculto" id="campo-aval">
+        <label for="avalista_numero_socio">Número del socio que te avala</label>
+        <input id="avalista_numero_socio" name="avalista_numero_socio" inputmode="numeric">
       </div>
       <div class="casilla">
         <input id="consentimiento" name="consentimiento" type="checkbox" required>
