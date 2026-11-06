@@ -1,5 +1,5 @@
 // Crea datos inventados para el prototipo. Se puede repetir sin duplicar nada.
-import { hashearClave } from './seguridad.mjs';
+import { hashearClave, verificarClave } from './seguridad.mjs';
 import { transaccion } from './db.mjs';
 
 export const EQUIPO = [
@@ -150,6 +150,24 @@ export async function prepararDemo(clave) {
   });
 }
 
+// Las cuentas inventadas siempre usan la clave configurada, aunque se crearan con otra.
+async function alinearClave(clave) {
+  const distintas = await transaccion((q) => q(
+    `SELECT clave_hash FROM admins WHERE email = ANY($1) UNION SELECT clave_hash FROM socios WHERE email = ANY($1)`, [CUENTAS],
+  ));
+  const viejas = [];
+  for (const { clave_hash: guardada } of distintas) {
+    if (!(await verificarClave(clave, guardada))) viejas.push(guardada);
+  }
+  if (!viejas.length) return;
+  const hash = await hashearClave(clave);
+  await transaccion(async (q) => {
+    await q('UPDATE admins SET clave_hash = $1 WHERE email = ANY($2) AND clave_hash = ANY($3)', [hash, CUENTAS, viejas]);
+    await q('UPDATE socios SET clave_hash = $1 WHERE email = ANY($2) AND clave_hash = ANY($3)', [hash, CUENTAS, viejas]);
+    await q('DELETE FROM intentos_login');
+  });
+}
+
 let revisada = false;
 
 // En la version publicada de prueba, los datos inventados se cargan solos una vez.
@@ -160,5 +178,6 @@ export async function cargarDemoSiFalta() {
      OR NOT EXISTS (SELECT 1 FROM vencimientos) AS falta`,
   ));
   if (falta) await prepararDemo(process.env.DEMO_CLAVE);
+  await alinearClave(process.env.DEMO_CLAVE);
   revisada = true;
 }

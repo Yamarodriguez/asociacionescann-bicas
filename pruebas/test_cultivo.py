@@ -230,7 +230,7 @@ class Textos(unittest.TestCase):
 
 
 class DemoAutomatica(Base):
-    def test_en_pruebas_los_datos_inventados_se_cargan_solos_una_vez(self):
+    def entrar_en_servidor_de_prueba(self):
         puerto = 8092
         entorno = {
             **os.environ, "PUERTO": str(puerto), "ENTORNO": "pruebas", "DEMO_CLAVE": "clave-demo-2026",
@@ -254,7 +254,14 @@ class DemoAutomatica(Base):
         respuesta = conexion.getresponse()
         respuesta.read()
         conexion.close()
-        self.assertEqual(respuesta.status, 200)
+        return respuesta.status
+
+    def test_una_cuenta_creada_con_otra_clave_pasa_a_usar_la_configurada(self):
+        crear_admin(COORDINADOR, "coordinador.prueba@ejemplo.test")
+        self.assertEqual(self.entrar_en_servidor_de_prueba(), 200)
+
+    def test_en_pruebas_los_datos_inventados_se_cargan_solos_una_vez(self):
+        self.assertEqual(self.entrar_en_servidor_de_prueba(), 200)
         with _db.transaccion() as cursor:
             cursor.execute("SELECT count(*) AS total FROM lotes")
             self.assertEqual(cursor.fetchone()["total"], 1)
