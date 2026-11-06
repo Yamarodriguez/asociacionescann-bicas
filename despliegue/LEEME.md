@@ -6,10 +6,9 @@ Esta versión lleva solo datos inventados y está marcada para que los buscadore
 
 ## Lo que necesitas
 
-1. Una cuenta de GitHub con un repositorio **privado** y vacío.
-2. Una cuenta de Hetzner.
-3. Una clave SSH en tu ordenador, para entrar al servidor sin contraseña.
-4. Una dirección web. HTTPS es obligatorio, porque las sesiones solo funcionan con conexión segura. Para una prueba sirve `IP.nip.io`, sin comprar un dominio.
+1. Una cuenta de Hetzner.
+2. Una clave SSH en tu ordenador, para entrar al servidor sin contraseña.
+3. Una dirección web. HTTPS es obligatorio, porque las sesiones solo funcionan con conexión segura. Para una prueba sirve `IP.nip.io`, sin comprar un dominio.
 
 ## 1. Crear tu clave SSH
 
@@ -35,7 +34,7 @@ En Hetzner, crea un servidor con estos datos:
 - Copias de seguridad: activadas.
 - Clave SSH: pega la parte pública del paso anterior.
 
-## 3. Dar acceso de lectura al código
+## 3. Instalar
 
 Entra al servidor, sustituyendo `IP`:
 
@@ -43,32 +42,18 @@ Entra al servidor, sustituyendo `IP`:
 ssh root@IP
 ```
 
-Dentro del servidor, crea una clave solo para descargar el código:
-
-```bash
-ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519
-```
-
-```bash
-cat ~/.ssh/id_ed25519.pub
-```
-
-En GitHub, abre el repositorio y entra en **Settings > Deploy keys > Add deploy key**. Pega esa línea y deja **sin marcar** el permiso de escritura.
-
-## 4. Instalar
-
-Sigue dentro del servidor. Sustituye `USUARIO`, `REPOSITORIO` e `IP`:
+Dentro del servidor, ejecuta estas órdenes una a una. Sustituye `IP` en la última:
 
 ```bash
 apt-get update -q && apt-get install -y -q git
 ```
 
 ```bash
-GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" git clone --branch fase-2-esqueleto git@github.com:USUARIO/REPOSITORIO.git /opt/asociacion
+git clone --branch fase-2-esqueleto https://github.com/Yamarodriguez/asociacionescann-bicas.git /opt/asociacion
 ```
 
 ```bash
-bash /opt/asociacion/despliegue/instalar.sh git@github.com:USUARIO/REPOSITORIO.git IP.nip.io fase-2-esqueleto
+bash /opt/asociacion/despliegue/instalar.sh https://github.com/Yamarodriguez/asociacionescann-bicas.git IP.nip.io fase-2-esqueleto
 ```
 
 ## Después de instalar

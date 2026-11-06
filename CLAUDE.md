@@ -19,6 +19,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - 2026-11-06: prototipo a nombre de la responsable y solo con datos inventados. Los datos reales exigen pasar antes las cuentas a la asociación.
 - 2026-11-06: el servidor se ejecuta como un proceso normal, no en Vercel. Vercel pide aprobación escrita para información sanitaria protegida y Supabase prohíbe distribuir sustancias controladas. Fuentes en la Fase 1.
 - 2026-11-06: un solo sistema en Hetzner y el código en GitHub, sin Netlify. `web/` podría publicarse aparte más adelante. Sigue pendiente de que el abogado admita datos fuera de Argentina.
+- 2026-11-06: repositorio de GitHub público por decisión expresa de la responsable, avisada de lo que queda visible. Nunca subir secretos, datos reales ni material del cliente.
 - El módulo de reservas no se construye hasta que el abogado responda las preguntas 1 a 6 de la Fase 0.
 - No se guardan fotos de documentos ni datos médicos, salvo decisión con el abogado.
 
