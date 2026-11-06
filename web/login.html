@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Ingresar · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/login.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <h1>Portal de socios</h1>
+    <div class="pestanas">
+      <button type="button" id="ver-ingreso">Ingresar</button>
+      <button type="button" id="ver-solicitud" class="secundario">Solicitar el alta</button>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+
+    <form id="form-ingreso" class="tarjeta">
+      <h2>Ingresar</h2>
+      <div class="campo">
+        <label for="ingreso-email">Correo electrónico</label>
+        <input id="ingreso-email" name="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="campo">
+        <label for="ingreso-clave">Contraseña</label>
+        <input id="ingreso-clave" name="clave" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Ingresar</button>
+    </form>
+
+    <form id="form-solicitud" class="tarjeta oculto">
+      <h2>Solicitar el alta</h2>
+      <p class="nota">Tu solicitud queda pendiente hasta que verifiquemos tu identidad en persona.</p>
+      <div class="campo">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" name="nombre" autocomplete="given-name" required>
+      </div>
+      <div class="campo">
+        <label for="apellido">Apellido</label>
+        <input id="apellido" name="apellido" autocomplete="family-name" required>
+      </div>
+      <div class="campo">
+        <label for="fecha_nacimiento">Fecha de nacimiento</label>
+        <input id="fecha_nacimiento" name="fecha_nacimiento" type="date" autocomplete="bday" required>
+      </div>
+      <div class="campo">
+        <label for="tipo_documento">Tipo de documento</label>
+        <select id="tipo_documento" name="tipo_documento" required>
+          <option value="DNI">DNI</option>
+          <option value="Pasaporte">Pasaporte</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="numero_documento">Número de documento</label>
+        <input id="numero_documento" name="numero_documento" required>
+      </div>
+      <div class="campo">
+        <label for="telefono">Teléfono (opcional)</label>
+        <input id="telefono" name="telefono" type="tel" autocomplete="tel">
+      </div>
+      <div class="campo">
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Contraseña (mínimo 10 caracteres)</label>
+        <input id="clave" name="clave" type="password" minlength="10" autocomplete="new-password" required>
+      </div>
+      <div class="casilla">
+        <input id="consentimiento" name="consentimiento" type="checkbox" required>
+        <label for="consentimiento">Acepto la política de privacidad (borrador de prototipo).</label>
+      </div>
+      <div class="casilla">
+        <input id="estatutos" name="estatutos" type="checkbox" required>
+        <label for="estatutos">Acepto los estatutos (borrador de prototipo).</label>
+      </div>
+      <button type="submit">Enviar solicitud</button>
+    </form>
+  </main>
+</body>
+</html>

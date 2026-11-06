@@ -1,0 +1,47 @@
+"""Envio de correo detras de un solo modulo. Los textos no describen la actividad."""
+import json
+import os
+import smtplib
+import ssl
+import time
+from email.message import EmailMessage
+from html import escape
+
+from . import _config
+
+PLANTILLAS = {
+    "solicitud_recibida": (
+        "Recibimos tu solicitud",
+        "Recibimos tu solicitud. Te vamos a avisar por este medio cuando esté revisada.",
+    ),
+    "solicitud_aprobada": (
+        "Tu solicitud fue aprobada",
+        "Tu solicitud fue aprobada. Ya podés ingresar al portal.",
+    ),
+}
+
+
+def enviar(destinatario, plantilla):
+    asunto, texto = PLANTILLAS[plantilla]
+    if os.environ.get("CORREO_MODO", "archivo") == "archivo":
+        _guardar_en_archivo(destinatario, asunto, texto)
+        return
+    mensaje = EmailMessage()
+    mensaje["Subject"] = asunto
+    mensaje["From"] = _config.req("SMTP_REMITENTE")
+    mensaje["To"] = destinatario
+    mensaje.set_content(texto)
+    mensaje.add_alternative(f"<p>{escape(texto)}</p>", subtype="html")
+    with smtplib.SMTP(_config.req("SMTP_HOST"), int(_config.req("SMTP_PUERTO")), timeout=15) as smtp:
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.login(_config.req("SMTP_USUARIO"), _config.req("SMTP_CLAVE"))
+        smtp.send_message(mensaje)
+
+
+def _guardar_en_archivo(destinatario, asunto, texto):
+    carpeta = _config.RAIZ / ".dev" / "correos"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    with (carpeta / "enviados.jsonl").open("a", encoding="utf-8") as archivo:
+        archivo.write(json.dumps(
+            {"fecha": time.time(), "para": destinatario, "asunto": asunto, "texto": texto},
+            ensure_ascii=False) + "\n")

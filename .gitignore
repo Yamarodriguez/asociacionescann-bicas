@@ -1,0 +1,19 @@
+# Secretos y configuracion local: nunca en Git
+.env
+.env.*
+!.env.example
+
+# Dependencias y datos locales
+node_modules/
+.venv/
+.dev/
+__pycache__/
+*.pyc
+
+# Informes generados
+informes/*
+!informes/.gitkeep
+
+# Material del cliente: puede contener datos reales
+*.pdf
+Prompt_proyecto_asociacion.md

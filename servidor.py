@@ -1,0 +1,85 @@
+"""Servidor del sistema: entrega las paginas y las rutas de la API."""
+import logging
+import mimetypes
+import os
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from api import _config, _http, admin_socios, login, logout, migrate, sesion, solicitud
+
+WEB = _config.RAIZ / "web"
+EXTENSIONES = {".html", ".css", ".js", ".json", ".svg", ".ico"}
+# Las pantallas y rutas del modulo de reservas no existen mientras este apagado.
+RUTAS = {
+    ("GET", "/api/sesion"): sesion.get,
+    ("GET", "/api/admin_socios"): admin_socios.get,
+    ("POST", "/api/admin_socios"): admin_socios.post,
+    ("POST", "/api/login"): login.post,
+    ("POST", "/api/logout"): logout.post,
+    ("POST", "/api/solicitud"): solicitud.post,
+    ("POST", "/api/migrate"): migrate.post,
+}
+
+
+def _no_encontrado(manejador):
+    _http.json_respuesta(manejador, 404, {"error": "No encontrado."})
+
+
+class Manejador(BaseHTTPRequestHandler):
+    server_version = "Asociacion"
+    sys_version = ""
+    protocol_version = "HTTP/1.1"
+    # Un cliente que deja de enviar datos no retiene un hilo para siempre.
+    timeout = 30
+
+    def log_message(self, *argumentos):
+        # Sin URL ni datos personales en los registros.
+        return
+
+    def _ruta(self):
+        return self.path.split("?", 1)[0]
+
+    def _api(self, metodo):
+        funcion = RUTAS.get((metodo, self._ruta()), _no_encontrado)
+        _http.ejecutar(self, funcion)
+
+    def do_POST(self):
+        self._api("POST")
+
+    def do_GET(self):
+        ruta = self._ruta()
+        if ruta.startswith("/api/"):
+            self._api("GET")
+            return
+        self._estatico("/index.html" if ruta == "/" else ruta)
+
+    def _estatico(self, ruta):
+        destino = (WEB / ruta.lstrip("/")).resolve()
+        valido = (
+            destino.is_relative_to(WEB)
+            and destino.suffix in EXTENSIONES
+            and destino.is_file()
+        )
+        if not valido:
+            _http.json_respuesta(self, 404, {"error": "No encontrado."})
+            return
+        cuerpo = destino.read_bytes()
+        tipo = mimetypes.guess_type(destino.name)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", f"{tipo}; charset=utf-8")
+        self.send_header("Content-Length", str(len(cuerpo)))
+        self.send_header("Cache-Control", "no-cache")
+        _http.cabeceras_seguridad(self)
+        self.end_headers()
+        self.wfile.write(cuerpo)
+
+
+def crear(puerto, anfitrion="127.0.0.1"):
+    return ThreadingHTTPServer((anfitrion, puerto), Manejador)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    migrate.aplicar()
+    puerto = int(os.environ.get("PUERTO", "8080"))
+    print(f"SISTEMA LISTO en http://localhost:{puerto}", flush=True)
+    crear(puerto).serve_forever()

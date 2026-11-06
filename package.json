@@ -1,0 +1,17 @@
+{
+  "name": "asociacion-sistema",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototipo del sistema de la asociacion. Solo datos inventados.",
+  "type": "module",
+  "scripts": {
+    "preparar": "node scripts/preparar.mjs",
+    "bd": "node scripts/bd_local.mjs",
+    "dev": "node scripts/dev.mjs",
+    "todo": "node scripts/todo.mjs"
+  },
+  "devDependencies": {
+    "embedded-postgres": "^18.1.0-beta.16",
+    "pg": "^8.23.1"
+  }
+}
