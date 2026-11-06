@@ -24,6 +24,7 @@ echo "== Usuario sin privilegios"
 id -u "$USUARIO" >/dev/null 2>&1 || useradd --system --home "$DESTINO" --shell /usr/sbin/nologin "$USUARIO"
 
 echo "== Codigo"
+git config --global --add safe.directory "$DESTINO"
 if [ -d "$DESTINO/.git" ]; then
   git -C "$DESTINO" fetch --quiet origin "$RAMA"
   git -C "$DESTINO" checkout --quiet "$RAMA"
@@ -55,8 +56,8 @@ ENV
   umask 022
   sudo -u postgres psql -v ON_ERROR_STOP=1 -v clave="$CLAVE_BD" <<'SQL'
 CREATE ROLE asociacion LOGIN PASSWORD :'clave';
-CREATE DATABASE asociacion OWNER asociacion;
 SQL
+  sudo -u postgres createdb --owner=asociacion asociacion
 fi
 mkdir -p "$DESTINO/.dev" /var/backups/asociacion
 chown -R "$USUARIO:$USUARIO" "$DESTINO" /var/backups/asociacion
