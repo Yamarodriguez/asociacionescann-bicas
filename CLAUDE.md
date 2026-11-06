@@ -32,7 +32,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 - Hecho: base de datos, sesiones, solicitud, aprobación manual, panel, portal, cultivo con tareas e inventario, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
-- Publicado en Netlify (`asociacionescannabis`) tras contraseña de sitio, sin comprobar desde fuera: falta confirmar que se importaron las variables de `.dev/variables-netlify.env`.
+- Publicado en Netlify (`asociacionescannabis`) tras contraseña de sitio. 2026-11-06: la responsable entró con la cuenta de coordinación, así que las variables están importadas y los datos inventados cargados.
 - Seguridad hecha en local (Fase 7). Falta repetir la restauración en la base publicada.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
