@@ -3,8 +3,11 @@ import { auditar, transaccion } from './db.mjs';
 import { enviar } from './correo.mjs';
 import { ErrorHttp, archivo, exigirSesion, json, leerJson } from './http.mjs';
 import { fechaValida } from './rutas_acceso.mjs';
-import { contadoresCultivo } from './rutas_cultivo.mjs';
+import { contadorTareas, contadoresCultivo } from './rutas_cultivo.mjs';
+import { contadoresCumplimiento } from './rutas_cumplimiento.mjs';
+import { asentarEnCaja, contarMora } from './rutas_finanzas.mjs';
 import { dataUriQr } from './rutas_socio.mjs';
+import { celdaCsv, opcion } from './validar.mjs';
 import {
   cifrarTexto, descifrarTexto, generarCodigosRecuperacion, generarSecretoTotp, hashCodigo, uriTotp, verificarTotp,
 } from './seguridad.mjs';
@@ -12,6 +15,7 @@ import {
 const SOCIOS = ['comision_directiva', 'secretaria'];
 const CUOTAS = ['comision_directiva', 'tesoreria'];
 const COMISION = ['comision_directiva'];
+const SEGMENTOS = ['todos', 'al_dia', 'morosos'];
 const METODOS = ['efectivo', 'transferencia'];
 const COLUMNAS_CSV = [
   'numero_socio', 'nombre', 'apellido', 'tipo_documento', 'numero_documento', 'email', 'telefono',
@@ -24,6 +28,8 @@ const EDITABLES = {
   carne_qr_activo: ['interruptor'],
   modulo_cultivo_activo: ['interruptor'],
   plantas_autorizadas: ['entero', 0, 100000],
+  mora_suspension_meses: ['entero', 0, 60],
+  pedido_aprobacion_monto: ['entero', 0, 1000000000],
   retencion_baja_dias: ['entero', 0, 3650],
   contacto_retencion_dias: ['entero', 1, 365],
   login_max_por_email: ['entero', 3, 20],
@@ -44,13 +50,6 @@ export async function socios(c) {
     );
   });
   return json(200, { socios: filas });
-}
-
-// Evita que una hoja de calculo ejecute un texto como formula.
-function celdaCsv(valor) {
-  let texto = valor === null || valor === undefined ? '' : String(valor instanceof Date ? valor.toISOString() : valor);
-  if (['=', '+', '-', '@', '\t', '\r'].includes(texto[0])) texto = `'${texto}`;
-  return /[;"\n\r]/.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
 }
 
 export async function sociosCsv(c) {
@@ -152,10 +151,12 @@ export async function resumen(c) {
         `SELECT count(*) AS vencidas FROM socios WHERE estado = 'activo'
          AND (cuota_vigente_hasta IS NULL OR cuota_vigente_hasta < current_date)`,
       );
-      Object.assign(salida, fila);
+      Object.assign(salida, fila, { en_mora: await contarMora(q) });
     }
+    salida.tareas_hoy = await contadorTareas(q, admin.rol, admin.id);
+    Object.assign(salida, await contadoresCumplimiento(q, admin.rol, admin.id));
     const [{ valor }] = await q("SELECT valor FROM configuracion WHERE clave = 'modulo_cultivo_activo'");
-    if (valor === 'true') Object.assign(salida, await contadoresCultivo(q, admin.rol, admin.id));
+    if (valor === 'true') Object.assign(salida, await contadoresCultivo(q, admin.rol));
   });
   return json(200, salida);
 }
@@ -202,6 +203,9 @@ export async function registrarCuota(c) {
          SELECT (max(periodo) + interval '1 month' - interval '1 day')::date FROM cuotas WHERE socio_id = $1)
        WHERE id = $1 RETURNING cuota_vigente_hasta`, [socioId],
     );
+    await asentarEnCaja(q, admin.id, {
+      dia: pagadoEn, tipo: 'ingreso', categoria: 'Cuotas', concepto: `Cuota ${periodo}`, importe: monto, metodo, cuotaId: filas[0].id,
+    });
     await auditar(q, 'cuota_registrada', 'cuota', { entidadId: filas[0].id, adminId: admin.id });
     return fila.cuota_vigente_hasta;
   });
@@ -211,7 +215,7 @@ export async function registrarCuota(c) {
 export async function publicaciones(c) {
   await exigirSesion(c, 'admin', { roles: SOCIOS });
   const datos = await transaccion(async (q) => ({
-    comunicados: await q('SELECT id, titulo, publicado_en FROM comunicados ORDER BY publicado_en DESC LIMIT 100'),
+    comunicados: await q('SELECT id, titulo, publicado_en, segmento FROM comunicados ORDER BY publicado_en DESC LIMIT 100'),
     documentos: await q('SELECT id, titulo, publicado_en FROM documentos ORDER BY publicado_en DESC LIMIT 100'),
     asambleas: await q('SELECT id, titulo, fecha, lugar FROM asambleas ORDER BY fecha DESC LIMIT 100'),
     actas: await q('SELECT id, titulo, publicado_en FROM actas ORDER BY publicado_en DESC LIMIT 100'),
@@ -236,8 +240,8 @@ export async function publicar(c) {
     let filas;
     if (tipo === 'comunicado') {
       filas = await q(
-        'INSERT INTO comunicados (titulo, cuerpo, autor_id) VALUES ($1, $2, $3) RETURNING id',
-        [titulo, textoPublicacion(datos, 'cuerpo', 20000), admin.id],
+        'INSERT INTO comunicados (titulo, cuerpo, autor_id, segmento) VALUES ($1, $2, $3, $4) RETURNING id',
+        [titulo, textoPublicacion(datos, 'cuerpo', 20000), admin.id, datos.segmento ? opcion(datos, 'segmento', SEGMENTOS) : 'todos'],
       );
     } else if (tipo === 'documento') {
       filas = await q(

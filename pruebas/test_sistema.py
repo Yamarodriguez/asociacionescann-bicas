@@ -116,7 +116,7 @@ class Base(unittest.TestCase):
 
     def setUp(self):
         with _db.transaccion() as cursor:
-            cursor.execute("TRUNCATE movimientos_insumo, insumos, equipos, tareas, plantillas_tarea, analisis, registros_lote, lotes, geneticas, salas, recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE movimientos_caja, cierres_caja, presupuestos, vencimientos, lecturas_procedimiento, procedimiento_versiones, procedimientos, capacitacion_asistentes, capacitaciones, turnos, fichajes, notas_traspaso, proyectos, tareas_recurrentes, averias, pedido_lineas, pedidos_proveedor, proveedores, plantas, movimientos_insumo, insumos, equipos, tareas, plantillas_tarea, analisis, registros_lote, lotes, geneticas, salas, recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
             cursor.execute("UPDATE configuracion SET valor = '18' WHERE clave = 'edad_minima'")
             cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'")
             cursor.execute("UPDATE configuracion SET valor = 'true' WHERE clave = 'modulo_cultivo_activo'")
@@ -728,7 +728,8 @@ class Panel(Portal):
     def test_el_resumen_depende_del_rol(self):
         email, _ = crear_admin("dispensador")
         galleta, _ = sesion_de(email)
-        self.assertEqual(pedir("GET", "/api/admin_resumen", galleta=galleta)[1], {"rol": "dispensador"})
+        self.assertEqual(
+            set(pedir("GET", "/api/admin_resumen", galleta=galleta)[1]), {"rol", "tareas_hoy", "procedimientos_sin_leer"})
 
 
 class Borrado(Portal):
@@ -914,7 +915,9 @@ class Servidor(Base):
             "/admin_contactos.html", "/legal.html", "/portada.js", "/recuperar.html", "/admin_cuotas.html",
             "/admin_comunicados.html", "/admin_configuracion.html", "/admin_seguridad.html",
             "/admin_auditoria.html", "/admin_cultivo.html", "/admin_lote.html",
-            "/admin_tareas.html", "/admin_inventario.html",
+            "/admin_tareas.html", "/admin_inventario.html", "/admin_finanzas.html", "/admin_mora.html",
+            "/admin_cumplimiento.html", "/admin_informe.html", "/admin_equipo.html", "/admin_calendario.html",
+            "/admin_abastecimiento.html", "/admin_etiquetas.html",
         ):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
 

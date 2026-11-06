@@ -6,6 +6,7 @@ const camposAsamblea = document.getElementById('campos-asamblea');
 function actualizarTipo() {
   const esAsamblea = formulario.tipo.value === 'asamblea';
   camposAsamblea.classList.toggle('oculto', !esAsamblea);
+  document.getElementById('campo-segmento').classList.toggle('oculto', formulario.tipo.value !== 'comunicado');
   formulario.fecha.required = esAsamblea;
   formulario.lugar.required = esAsamblea;
   document.getElementById('etiqueta-cuerpo').textContent = esAsamblea ? 'Orden del día' : 'Texto';

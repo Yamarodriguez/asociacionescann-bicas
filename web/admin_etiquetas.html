@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Etiquetas · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/admin_etiquetas.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo no-imprimir">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera no-imprimir">
+      <h1 id="titulo">Etiquetas</h1>
+      <div>
+        <a class="boton secundario" id="volver" href="/admin_cultivo.html">Volver al lote</a>
+        <button type="button" id="imprimir" class="secundario">Imprimir</button>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+    <div id="contenido" class="oculto">
+      <div id="etiquetas" class="etiquetas"></div>
+    </div>
+  </main>
+</body>
+</html>

@@ -70,15 +70,25 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Cultivo, tareas e inventario
 
-- Módulo tras `modulo_cultivo_activo`: apagado por defecto, responde 404 y solo los datos inventados lo encienden.
+- Módulo tras `modulo_cultivo_activo`: apagado por defecto, responde 404 y solo los datos inventados lo encienden. Las tareas quedan fuera del interruptor porque también son administrativas: con el módulo apagado se ocultan solo las de lotes.
 - Lo real exige ver el certificado REPROCANN y la respuesta del abogado: registrar cifras distintas de las declaradas es un riesgo crítico de la Fase 0.
 - Reservas y dispensa siguen sin construir: dependen de las preguntas 1 a 6 al abogado.
 - `plantas_autorizadas` avisa pero no bloquea, y sale del certificado. Sin notas de efecto, por la regla 7.
 - Sin fotos, sensores, WhatsApp ni IA por ahora.
 
+## Gestión interna
+
+- Finanzas: los movimientos no se borran, se anulan con motivo. Una cuota registrada entra sola en la caja. Un día cerrado no admite cambios.
+- La mora la propone el sistema y la suspende la comisión. `mora_suspension_meses` en 0 lo deja apagado: depende de los estatutos.
+- Un pedido a proveedor sin todos sus costes no se aprueba: a coste cero saltaría el monto de la comisión. En pantalla se dice «pedido» y «abastecimiento», nunca la palabra prohibida del encargo.
+- No hay tareas programadas en el servidor: las recurrentes y los mantenimientos se crean al consultar, con índices que impiden duplicados.
+- `moverStock` es el único punto que cambia el stock.
+- El informe de inspección es un modelo sin datos personales de socios: el formato lo fija el abogado.
+- Sin hacer aún: conciliación bancaria, coste por lote, checklist con foto, tiempo por tarea, comparativa por cultivador, mesas dentro de la sala, tiempos medios por genética y recordatorios por correo (faltan correo real y adjuntar archivos).
+
 ## Estructura tras pasar a Netlify
 
-- `web/`: pantallas. `servidor/`: lógica en JavaScript. `netlify/functions/api.mjs`: función que atiende `/api/*`.
+- `web/`: pantallas, con piezas comunes en `web/gestion.js`. `servidor/`: lógica en JavaScript, con las comprobaciones de datos en `servidor/validar.mjs`. `netlify/functions/api.mjs`: función que atiende `/api/*`.
 - `netlify/database/migrations/`: migraciones que Netlify aplica al publicar.
 - `scripts/servidor_local.mjs` imita Netlify en local. `herramientas/` y `pruebas/` siguen en Python: atacan al servidor desde fuera y comparten formato de hash, sesiones y cifrado.
 - Una ruta nueva debe añadirse a `servidor/app.mjs` y clasificarse en `pruebas/test_seguridad.py`.

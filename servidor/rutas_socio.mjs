@@ -39,7 +39,12 @@ export async function portal(c) {
       perfil,
       token: qr,
       cuotas: await q(`${CUOTAS} ORDER BY periodo DESC`, [socio.id]),
-      comunicados: await q('SELECT id, titulo, cuerpo, publicado_en FROM comunicados ORDER BY publicado_en DESC LIMIT 50'),
+      comunicados: await q(
+        `SELECT c.id, c.titulo, c.cuerpo, c.publicado_en FROM comunicados c JOIN socios s ON s.id = $1
+         WHERE c.segmento = 'todos' OR (c.segmento = 'morosos') =
+           (s.cuota_vigente_hasta IS NULL OR s.cuota_vigente_hasta < current_date)
+         ORDER BY c.publicado_en DESC LIMIT 50`, [socio.id],
+      ),
       documentos: await q('SELECT id, titulo, contenido, publicado_en FROM documentos ORDER BY publicado_en DESC LIMIT 50'),
       asambleas: await q('SELECT id, titulo, fecha, lugar, orden_dia FROM asambleas ORDER BY fecha DESC LIMIT 50'),
       actas: await q('SELECT id, titulo, contenido, publicado_en FROM actas ORDER BY publicado_en DESC LIMIT 50'),

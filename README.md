@@ -11,7 +11,9 @@ Prototipo privado con **datos inventados**. No introduzcas datos de personas rea
 - Portal del socio con carné, cuota, publicaciones, exportación de datos y pedido de baja.
 - Panel con cuotas, publicaciones, configuración, auditoría y recuperación de contraseña.
 - Doble factor para el equipo y copias cifradas con restauración comprobada.
-- Cultivo con trazabilidad por lote, tareas e inventario, apagados por defecto y solo con datos inventados.
+- Cultivo con trazabilidad por lote y por planta, tareas e inventario, apagados por defecto y solo con datos inventados.
+- Caja, presupuesto, mora, vencimientos, procedimientos, capacitaciones e informe de inspección.
+- Turnos, fichaje, notas de traspaso, proyectos, calendario y pedidos a proveedores.
 - Web pública con aviso de edad, formulario de contacto y textos legales en borrador.
 
 ## Cómo abrirlo en tu ordenador

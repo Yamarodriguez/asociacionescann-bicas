@@ -1,8 +1,12 @@
 // Punto de entrada comun: recibe un pedido web y devuelve la respuesta.
 import { cargarDemoSiFalta } from './demo.mjs';
 import { ErrorHttp, TAMANO_MAXIMO, json } from './http.mjs';
+import * as abastecimiento from './rutas_abastecimiento.mjs';
 import * as acceso from './rutas_acceso.mjs';
 import * as cultivo from './rutas_cultivo.mjs';
+import * as cumplimiento from './rutas_cumplimiento.mjs';
+import * as equipo from './rutas_equipo.mjs';
+import * as finanzas from './rutas_finanzas.mjs';
 import * as panel from './rutas_panel.mjs';
 import * as socio from './rutas_socio.mjs';
 
@@ -41,6 +45,20 @@ export const RUTAS = {
   'POST /api/tareas': cultivo.accionTarea,
   'GET /api/inventario': cultivo.verInventario,
   'POST /api/inventario': cultivo.accionInventario,
+  'GET /api/lote_etiquetas': cultivo.etiquetas,
+  'GET /api/abastecimiento': abastecimiento.ver,
+  'POST /api/abastecimiento': abastecimiento.accion,
+  'GET /api/finanzas': finanzas.ver,
+  'POST /api/finanzas': finanzas.accion,
+  'GET /api/finanzas_csv': finanzas.csv,
+  'GET /api/mora': finanzas.verMora,
+  'POST /api/mora': finanzas.accionMora,
+  'GET /api/cumplimiento': cumplimiento.ver,
+  'POST /api/cumplimiento': cumplimiento.accion,
+  'GET /api/informe_inspeccion': cumplimiento.informe,
+  'GET /api/equipo': equipo.ver,
+  'POST /api/equipo': equipo.accion,
+  'GET /api/calendario': equipo.calendario,
   'GET /api/admin_seguridad': panel.verSeguridad,
   'POST /api/admin_seguridad': panel.cambiarSeguridad,
 };

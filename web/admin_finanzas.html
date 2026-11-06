@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Finanzas · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/admin_finanzas.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Finanzas</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <section class="tarjeta">
+        <h2>Caja de hoy</h2>
+        <p id="caja"></p>
+        <p id="estado-caja" class="nota"></p>
+        <a class="boton secundario" href="/api/finanzas_csv" download>Bajar movimientos para la contadora</a>
+      </section>
+
+      <form id="form-movimiento" class="tarjeta">
+        <h2>Nuevo movimiento</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="fecha">Fecha</label>
+            <input id="fecha" name="fecha" type="date" required>
+          </div>
+          <div class="campo">
+            <label for="tipo">Tipo</label>
+            <select id="tipo" name="tipo">
+              <option value="ingreso">Ingreso</option>
+              <option value="gasto">Gasto</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="categoria">Categoría</label>
+            <input id="categoria" name="categoria" maxlength="60" required>
+          </div>
+          <div class="campo">
+            <label for="concepto">Concepto</label>
+            <input id="concepto" name="concepto" maxlength="200" required>
+          </div>
+          <div class="campo">
+            <label for="importe">Importe</label>
+            <input id="importe" name="importe" inputmode="decimal" required>
+          </div>
+          <div class="campo">
+            <label for="metodo">Método</label>
+            <select id="metodo" name="metodo">
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit">Guardar movimiento</button>
+      </form>
+
+      <form id="form-cierre" class="tarjeta">
+        <h2>Cerrar la caja</h2>
+        <p class="nota">Cerrado un día, ya no admite movimientos ni anulaciones.</p>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="cierre-fecha">Día</label>
+            <input id="cierre-fecha" name="fecha" type="date" required>
+          </div>
+          <div class="campo">
+            <label for="contado">Efectivo contado</label>
+            <input id="contado" name="contado" inputmode="decimal" required>
+          </div>
+          <div class="campo">
+            <label for="notas">Notas</label>
+            <input id="notas" name="notas" maxlength="300">
+          </div>
+        </div>
+        <button type="submit" class="secundario">Cerrar el día</button>
+      </form>
+
+      <section class="tarjeta">
+        <h2>Movimientos</h2>
+        <p id="sin-movimientos" class="estado-vacio oculto">Todavía no hay movimientos.</p>
+        <table id="tabla-movimientos" class="oculto">
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Concepto</th>
+              <th scope="col">Importe</th>
+              <th scope="col">Método</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="filas-movimientos"></tbody>
+        </table>
+      </section>
+
+      <section class="tarjeta">
+        <h2 id="titulo-presupuesto">Presupuesto</h2>
+        <table id="tabla-presupuesto" class="oculto">
+          <thead>
+            <tr>
+              <th scope="col">Tipo</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Previsto</th>
+              <th scope="col">Real</th>
+              <th scope="col">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody id="filas-presupuesto"></tbody>
+        </table>
+        <form id="form-presupuesto" class="espaciada">
+          <div class="rejilla-campos">
+            <div class="campo">
+              <label for="presupuesto-tipo">Tipo</label>
+              <select id="presupuesto-tipo" name="tipo">
+                <option value="gasto">Gasto</option>
+                <option value="ingreso">Ingreso</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="presupuesto-categoria">Categoría</label>
+              <input id="presupuesto-categoria" name="categoria" maxlength="60" required>
+            </div>
+            <div class="campo">
+              <label for="presupuesto-importe">Importe del año</label>
+              <input id="presupuesto-importe" name="importe" inputmode="decimal" required>
+            </div>
+          </div>
+          <button type="submit" class="secundario">Guardar presupuesto</button>
+        </form>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Cierres</h2>
+        <div id="cierres"></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

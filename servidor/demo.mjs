@@ -28,8 +28,12 @@ async function cultivoDemo(q) {
   await q("INSERT INTO salas (nombre, tipo) VALUES ('Secado de prueba', 'secado')");
   const [{ id: genetica }] = await q("INSERT INTO geneticas (nombre) VALUES ('Genética de prueba') RETURNING id");
   const [{ id: lote }] = await q(
-    `INSERT INTO lotes (codigo, genetica_id, sala_id, origen, cantidad_plantas, etapa, creado_por)
-     VALUES ('L-PRUEBA-001', $1, $2, 'esqueje', 12, 'vegetativo', $3) RETURNING id`, [genetica, sala, coordinador],
+    `INSERT INTO lotes (codigo, genetica_id, sala_id, sala_inicial_id, origen, cantidad_plantas, etapa, cosecha_prevista, creado_por)
+     VALUES ('L-PRUEBA-001', $1, $2, $2, 'esqueje', 12, 'vegetativo', current_date + 45, $3) RETURNING id`, [genetica, sala, coordinador],
+  );
+  await q(
+    `INSERT INTO plantas (lote_id, codigo)
+     SELECT $1, 'L-PRUEBA-001-P' || lpad(n::text, 3, '0') FROM generate_series(1, 12) AS n`, [lote],
   );
   await q(
     `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, creado_por)
@@ -47,6 +51,51 @@ async function cultivoDemo(q) {
     "INSERT INTO insumos (nombre, categoria, unidad, stock, stock_minimo) VALUES ('Sustrato de prueba', 'Sustratos', 'litros', '40.00', '50.00')",
   );
   await q("INSERT INTO equipos (nombre, tipo, sala_id) VALUES ('Extractor de prueba', 'Ventilación', $1)", [sala]);
+}
+
+async function gestionDemo(q) {
+  const [{ total }] = await q('SELECT count(*) AS total FROM vencimientos');
+  if (total) return;
+  const correos = Object.fromEntries(EQUIPO.map(([correo, rol]) => [rol, correo]));
+  const persona = async (rol) => (await q('SELECT id FROM admins WHERE email = $1', [correos[rol]]))[0].id;
+  const secretaria = await persona('secretaria');
+  const tesoreria = await persona('tesoreria');
+  const coordinador = await persona('coordinador_cultivo');
+  const cultivador = await persona('cultivador');
+  await q(
+    `INSERT INTO movimientos_caja (fecha, tipo, categoria, concepto, importe, metodo, creado_por) VALUES
+     (current_date, 'ingreso', 'Aportes', 'Aporte inventado', '5000.00', 'efectivo', $1),
+     (current_date, 'gasto', 'Servicios', 'Gasto inventado', '1200.00', 'transferencia', $1)`, [tesoreria],
+  );
+  await q(
+    `INSERT INTO presupuestos (anio, tipo, categoria, importe)
+     VALUES (extract(year FROM current_date)::int, 'gasto', 'Servicios', '20000.00')`,
+  );
+  await q(
+    `INSERT INTO vencimientos (tipo, titulo, vence_en, creado_por) VALUES
+     ('seguro', 'Seguro de prueba', current_date + 20, $1),
+     ('contrato', 'Contrato de prueba', current_date + 200, $1)`, [secretaria],
+  );
+  const [{ id: procedimiento }] = await q(
+    "INSERT INTO procedimientos (titulo, creado_por) VALUES ('Procedimiento de prueba', $1) RETURNING id", [secretaria],
+  );
+  await q(
+    'INSERT INTO procedimiento_versiones (procedimiento_id, version, contenido, publicado_por) VALUES ($1, 1, $2, $3)',
+    [procedimiento, TEXTO, secretaria],
+  );
+  await q(
+    "INSERT INTO capacitaciones (titulo, fecha, dictada_por, creado_por) VALUES ('Capacitación de prueba', current_date - 10, 'Persona inventada', $1)",
+    [secretaria],
+  );
+  await q("INSERT INTO turnos (admin_id, fecha, franja, creado_por) VALUES ($1, current_date + 1, 'manana', $2)", [cultivador, coordinador]);
+  await q("INSERT INTO notas_traspaso (texto, autor_id) VALUES ('Nota inventada de traspaso de turno.', $1)", [coordinador]);
+  await q("INSERT INTO proyectos (titulo, responsable_id, creado_por) VALUES ('Proyecto de prueba', $1, $1)", [coordinador]);
+  await q(
+    "INSERT INTO tareas_recurrentes (titulo, cada_dias, proxima_en, asignada_a, creado_por) VALUES ('Cerrar la caja', 7, current_date, $1, $2)",
+    [tesoreria, coordinador],
+  );
+  await q("INSERT INTO proveedores (nombre, contacto) VALUES ('Proveedor de prueba', 'proveedor.prueba@ejemplo.test')");
+  await q("UPDATE equipos SET frecuencia_dias = 90, proximo_mantenimiento = current_date + 10 WHERE nombre = 'Extractor de prueba'");
 }
 
 export async function prepararDemo(clave) {
@@ -93,6 +142,7 @@ export async function prepararDemo(clave) {
       await q("INSERT INTO actas (titulo, contenido, autor_id) VALUES ('Acta de prueba', $1, $2)", [TEXTO, secretaria]);
     }
     await cultivoDemo(q);
+    await gestionDemo(q);
     // Solo en el prototipo: asi se puede recorrer sin un telefono.
     await q("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'");
     await q("UPDATE configuracion SET valor = 'true' WHERE clave = 'modulo_cultivo_activo'");
@@ -106,7 +156,8 @@ let revisada = false;
 export async function cargarDemoSiFalta() {
   if (revisada || process.env.ENTORNO !== 'pruebas' || !process.env.DEMO_CLAVE) return;
   const [{ falta }] = await transaccion((q) => q(
-    'SELECT NOT EXISTS (SELECT 1 FROM admins) OR NOT EXISTS (SELECT 1 FROM salas) AS falta',
+    `SELECT NOT EXISTS (SELECT 1 FROM admins) OR NOT EXISTS (SELECT 1 FROM salas)
+     OR NOT EXISTS (SELECT 1 FROM vencimientos) AS falta`,
   ));
   if (falta) await prepararDemo(process.env.DEMO_CLAVE);
   revisada = true;

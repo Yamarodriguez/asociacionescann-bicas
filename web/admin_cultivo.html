@@ -23,6 +23,11 @@
     <p id="plantas" class="tarjeta"></p>
 
     <section class="tarjeta">
+      <h2>Mapa de salas</h2>
+      <div id="mapa" class="tablero"></div>
+    </section>
+
+    <section class="tarjeta">
       <h2>Lotes</h2>
       <p id="estado-lista" class="cargando">Cargando…</p>
       <table id="tabla" class="oculto">
@@ -38,6 +43,12 @@
         </thead>
         <tbody id="filas"></tbody>
       </table>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Rendimiento</h2>
+      <p class="nota">Gramos secos por planta y merma media de los lotes con peso seco.</p>
+      <div id="comparativas"></div>
     </section>
 
     <div id="gestion" class="oculto">
@@ -65,7 +76,11 @@
           </div>
           <div class="campo">
             <label for="cantidad_plantas">Plantas</label>
-            <input id="cantidad_plantas" name="cantidad_plantas" type="number" min="1" required>
+            <input id="cantidad_plantas" name="cantidad_plantas" type="number" min="1" max="500" required>
+          </div>
+          <div class="campo">
+            <label for="cosecha_prevista">Cosecha prevista</label>
+            <input id="cosecha_prevista" name="cosecha_prevista" type="date">
           </div>
         </div>
         <button type="submit">Crear lote</button>

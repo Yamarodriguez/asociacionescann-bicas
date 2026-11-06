@@ -36,6 +36,14 @@
         <label for="titulo">Título</label>
         <input id="titulo" name="titulo" maxlength="200" required>
       </div>
+      <div id="campo-segmento" class="campo">
+        <label for="segmento">Destinatarios</label>
+        <select id="segmento" name="segmento">
+          <option value="todos">Todos los socios activos</option>
+          <option value="al_dia">Solo con la cuota al día</option>
+          <option value="morosos">Solo con la cuota atrasada</option>
+        </select>
+      </div>
       <div id="campos-asamblea" class="rejilla-campos oculto">
         <div class="campo">
           <label for="fecha">Fecha y hora</label>

@@ -1,102 +1,98 @@
-const mensaje = document.getElementById('mensaje');
-const estadoLista = document.getElementById('estado-lista');
-const formulario = document.getElementById('form-tarea');
-let rol = '';
+const accionTarea = async (datos, texto) => {
+  await pedir('/api/tareas', datos);
+  avisar(texto, 'exito');
+  await cargar();
+};
+const unicos = (valores) => [...new Set(valores.filter(Boolean))].sort();
+let estado = null;
 
-function tarjeta(tarea, yo) {
+function selectorResponsable(tarea) {
+  const selector = document.createElement('select');
+  selector.setAttribute('aria-label', `Responsable de ${tarea.titulo}`);
+  const opciones = [{ id: '', email: 'Sin responsable' }, ...estado.equipo].map((persona) => {
+    const opcion = document.createElement('option');
+    opcion.value = persona.id;
+    opcion.textContent = persona.email;
+    return opcion;
+  });
+  selector.replaceChildren(...opciones);
+  selector.value = tarea.asignada_a ?? '';
+  selector.addEventListener('change', async () => {
+    try {
+      await accionTarea({ accion: 'asignar', tarea_id: tarea.id, asignada_a: selector.value ? Number(selector.value) : null }, 'Tarea reasignada.');
+    } catch (error) {
+      avisar(error.message);
+    }
+  });
+  return selector;
+}
+
+function puedeCompletar(tarea) {
+  if (estado.puede_crear || tarea.asignada_a === estado.yo) return true;
+  return estado.rol === 'cultivador' && tarea.asignada_a === null;
+}
+
+function tarjeta(tarea) {
   const articulo = document.createElement('article');
   articulo.className = 'tarjeta';
   const titulo = document.createElement('h2');
   titulo.textContent = tarea.titulo;
   const datos = document.createElement('p');
   datos.className = 'nota';
-  const partes = [`Vence: ${fechaDia(tarea.vence_en)}`, tarea.lote && `Lote: ${tarea.lote}`, tarea.responsable ?? 'Sin responsable'];
+  const partes = [
+    `Vence: ${fechaDia(tarea.vence_en)}`, tarea.lote && `Lote: ${tarea.lote}`, tarea.sala,
+    tarea.responsable ?? 'Sin responsable',
+  ];
   datos.textContent = partes.filter(Boolean).join(' · ');
   articulo.append(titulo, datos);
-  if (tarea.vencida) {
-    const aviso = document.createElement('span');
-    aviso.className = 'etiqueta pendiente';
-    aviso.textContent = 'vencida';
-    articulo.append(aviso, ' ');
-  }
+  if (tarea.vencida) articulo.append(etiquetaDe('vencida', true), ' ');
   if (tarea.completada_en) {
-    const hecha = document.createElement('span');
-    hecha.className = 'etiqueta';
-    hecha.textContent = 'hecha';
-    articulo.append(hecha);
+    articulo.append(etiquetaDe(`hecha por ${tarea.hecha_por} · ${momento(tarea.completada_en)}`));
     return articulo;
   }
-  const puede = rol === 'coordinador_cultivo' || (rol === 'cultivador' && [null, yo].includes(tarea.asignada_a));
-  if (puede) {
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.textContent = 'Marcar como hecha';
-    boton.addEventListener('click', async () => {
-      boton.disabled = true;
-      try {
-        await pedir('/api/tareas', { accion: 'completar', tarea_id: tarea.id });
-        mostrarMensaje(mensaje, 'Tarea hecha.', 'exito');
-        await cargar();
-      } catch (error) {
-        mostrarMensaje(mensaje, error.message);
-        boton.disabled = false;
-      }
-    });
-    articulo.append(boton);
+  if (estado.puede_crear) articulo.append(selectorResponsable(tarea));
+  if (puedeCompletar(tarea)) {
+    articulo.append(botonAccion('Marcar como hecha', () => accionTarea({ accion: 'completar', tarea_id: tarea.id }, 'Tarea hecha.'), ''));
   }
   return articulo;
 }
 
-async function cargar() {
-  const { tareas, equipo, yo, puede_crear: puedeCrear } = await pedir('/api/tareas');
-  document.getElementById('lista').replaceChildren(...tareas.map((t) => tarjeta(t, yo)));
-  estadoLista.className = tareas.length ? 'oculto' : 'estado-vacio';
-  estadoLista.textContent = 'No hay tareas.';
-  formulario.classList.toggle('oculto', !puedeCrear);
-  const sinResponsable = document.createElement('option');
-  sinResponsable.value = '';
-  sinResponsable.textContent = 'Sin responsable';
-  const personas = equipo.map((persona) => {
-    const opcion = document.createElement('option');
-    opcion.value = persona.id;
-    opcion.textContent = persona.email;
-    return opcion;
+function pintar() {
+  const vista = document.getElementById('vista').value;
+  const persona = document.getElementById('filtro-persona').value;
+  const sala = document.getElementById('filtro-sala').value;
+  const visibles = estado.tareas.filter((tarea) => {
+    if (vista === 'hechas' && !tarea.completada_en) return false;
+    if (vista !== 'hechas' && tarea.completada_en) return false;
+    if (vista === 'hoy' && tarea.vence_en > estado.hoy) return false;
+    if (persona && tarea.responsable !== persona) return false;
+    return !sala || tarea.sala === sala;
   });
-  document.getElementById('asignada_a').replaceChildren(sinResponsable, ...personas);
+  document.getElementById('lista').replaceChildren(...visibles.map(tarjeta));
+  document.getElementById('vacio').classList.toggle('oculto', visibles.length > 0);
 }
 
-formulario.addEventListener('submit', async (evento) => {
-  evento.preventDefault();
-  const boton = formulario.querySelector('button[type=submit]');
-  boton.disabled = true;
-  try {
-    const datos = Object.fromEntries(new FormData(formulario));
-    await pedir('/api/tareas', {
-      ...datos, accion: 'crear', asignada_a: datos.asignada_a ? Number(datos.asignada_a) : null,
-    });
-    formulario.reset();
-    mostrarMensaje(mensaje, 'Tarea creada.', 'exito');
-    await cargar();
-  } catch (error) {
-    mostrarMensaje(mensaje, error.message);
-  } finally {
-    boton.disabled = false;
-  }
-});
-
-async function iniciar() {
-  try {
-    const sesion = await leerSesion();
-    if (!sesion || sesion.tipo !== 'admin') {
-      location.href = '/login.html';
-      return;
-    }
-    rol = sesion.rol;
-    await cargar();
-  } catch (error) {
-    estadoLista.className = 'oculto';
-    mostrarMensaje(mensaje, error.message);
-  }
+function opcionesFiltro(id, valores, vacio) {
+  const actual = document.getElementById(id).value;
+  opcionesEn(id, valores.map((valor) => ({ id: valor, nombre: valor })), 'nombre', vacio);
+  if (valores.includes(actual)) document.getElementById(id).value = actual;
 }
 
-iniciar();
+async function cargar() {
+  estado = await pedir('/api/tareas');
+  document.getElementById('form-tarea').classList.toggle('oculto', !estado.puede_crear);
+  opcionesFiltro('filtro-persona', unicos(estado.tareas.map((t) => t.responsable)), 'Todas');
+  opcionesFiltro('filtro-sala', unicos(estado.tareas.map((t) => t.sala)), 'Todas');
+  opcionesEn('asignada_a', estado.equipo, 'email', 'Sin responsable');
+  pintar();
+}
+
+for (const id of ['vista', 'filtro-persona', 'filtro-sala']) {
+  document.getElementById(id).addEventListener('change', pintar);
+}
+
+enviarForm('form-tarea', '/api/tareas', (datos) => ({
+  ...datos, accion: 'crear', asignada_a: datos.asignada_a ? Number(datos.asignada_a) : null,
+}), cargar);
+
+arrancar(cargar);

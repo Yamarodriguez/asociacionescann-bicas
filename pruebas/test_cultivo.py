@@ -45,11 +45,21 @@ class Cultivo(Base):
     def test_con_el_modulo_apagado_nada_responde(self):
         with _db.transaccion() as cursor:
             cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'modulo_cultivo_activo'")
-        for ruta in ("/api/cultivo", "/api/cultivo_lote?id=1", "/api/tareas", "/api/inventario"):
+        for ruta in ("/api/cultivo", "/api/cultivo_lote?id=1", "/api/inventario", "/api/abastecimiento", "/api/lote_etiquetas?id=1"):
             self.assertEqual(pedir("GET", ruta, galleta=self.galleta)[0], 404, ruta)
         self.assertEqual(pedir("GET", "/api/cultivo")[0], 404)
         self.assertEqual(self.post("/api/cultivo", {"accion": "crear_sala"})[0], 404)
         self.assertNotIn("lotes_activos", pedir("GET", "/api/admin_resumen", galleta=self.galleta)[1])
+
+    def test_con_el_modulo_apagado_no_se_ven_las_tareas_de_lotes(self):
+        lote = self.lote()
+        with _db.transaccion() as cursor:
+            cursor.execute(
+                "INSERT INTO tareas (titulo, lote_id, vence_en) VALUES ('De lote', %s, current_date), ('Administrativa', NULL, current_date)",
+                (lote,))
+            cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'modulo_cultivo_activo'")
+        tareas = pedir("GET", "/api/tareas", galleta=self.galleta)[1]["tareas"]
+        self.assertEqual([t["titulo"] for t in tareas], ["Administrativa"])
 
     def test_el_lote_avanza_en_orden_y_calcula_la_merma(self):
         lote = self.lote()
@@ -200,6 +210,10 @@ class Textos(unittest.TestCase):
         for clave in re.findall(r"'(\w+)'", lista):
             if clave.endswith("ion"):
                 self.assertIn(f"{clave}: '{clave[:-3]}ión'", comun)
+
+    def test_una_fecha_con_hora_no_acaba_en_doble_punto(self):
+        for ruta in sorted((_config.RAIZ / "web").glob("*.js")):
+            self.assertNotRegex(ruta.read_text(encoding="utf-8"), r"momento\([^)]*\)\}\.", ruta.name)
 
     def test_las_pantallas_no_muestran_claves_ni_fechas_crudas(self):
         crudos = {

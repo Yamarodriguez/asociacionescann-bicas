@@ -15,6 +15,7 @@
     <div class="cabecera">
       <h1>Inventario</h1>
       <div>
+        <a class="boton secundario" href="/admin_abastecimiento.html">Abastecimiento</a>
         <a class="boton secundario" href="/admin.html">Volver al panel</a>
         <button type="button" id="salir" class="secundario">Salir</button>
       </div>
@@ -41,6 +42,11 @@
     <section class="tarjeta">
       <h2>Equipos</h2>
       <div id="equipos"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Averías</h2>
+      <div id="averias"></div>
     </section>
 
     <section class="tarjeta">
@@ -114,8 +120,31 @@
             <label for="proximo_mantenimiento">Próximo mantenimiento</label>
             <input id="proximo_mantenimiento" name="proximo_mantenimiento" type="date">
           </div>
+          <div class="campo">
+            <label for="frecuencia_dias">Repetir cada (días)</label>
+            <input id="frecuencia_dias" name="frecuencia_dias" type="number" min="1" max="3660">
+          </div>
         </div>
         <button type="submit" class="secundario">Crear equipo</button>
+      </form>
+
+      <form id="form-averia" class="tarjeta">
+        <h2>Registrar avería</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="equipo_id">Equipo</label>
+            <select id="equipo_id" name="equipo_id" required></select>
+          </div>
+          <div class="campo">
+            <label for="averia-detalle">Detalle</label>
+            <input id="averia-detalle" name="detalle" maxlength="500" required>
+          </div>
+          <div class="campo">
+            <label for="coste">Coste</label>
+            <input id="coste" name="coste" inputmode="decimal">
+          </div>
+        </div>
+        <button type="submit" class="secundario">Guardar avería</button>
       </form>
     </div>
   </main>

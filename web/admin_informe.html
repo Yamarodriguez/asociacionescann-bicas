@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Informe de inspección · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/admin_informe.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera no-imprimir">
+      <h1>Informe de inspección</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="imprimir" class="secundario">Imprimir</button>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <p class="nota">Modelo pendiente: qué registros exige la normativa y en qué formato lo confirma el abogado. No incluye datos personales de socios.</p>
+      <p id="generado" class="nota"></p>
+      <section class="tarjeta">
+        <h2>Socios y equipo</h2>
+        <p id="socios"></p>
+      </section>
+      <section id="bloque-cultivo" class="tarjeta oculto">
+        <h2>Cultivo</h2>
+        <p id="plantas"></p>
+        <div id="lotes"></div>
+        <h3>Destrucción de residuos</h3>
+        <div id="destrucciones"></div>
+      </section>
+      <section class="tarjeta">
+        <h2>Vencimientos</h2>
+        <div id="vencimientos"></div>
+      </section>
+      <section class="tarjeta">
+        <h2>Procedimientos</h2>
+        <div id="procedimientos"></div>
+      </section>
+      <section class="tarjeta">
+        <h2>Capacitaciones</h2>
+        <div id="capacitaciones"></div>
+      </section>
+      <section class="tarjeta">
+        <h2>Registro de auditoría</h2>
+        <p id="auditoria"></p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

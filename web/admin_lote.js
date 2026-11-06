@@ -1,5 +1,7 @@
 const mensaje = document.getElementById('mensaje');
-const loteId = Number(new URLSearchParams(location.search).get('id'));
+const parametros = new URLSearchParams(location.search);
+const loteId = Number(parametros.get('id'));
+const plantaCodigo = parametros.get('planta');
 const ETAPAS = ['origen', 'vegetativo', 'floracion', 'cosecha', 'secado', 'curado', 'envasado'];
 const PIDE_PESO = { cosecha: 'Peso húmedo en gramos', curado: 'Peso seco en gramos' };
 const fecha = (valor) => new Date(valor).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
@@ -31,7 +33,23 @@ function linea(registro) {
   return `${fecha(registro.creado_en)} · ${nombreCultivo(registro.tipo)}: ${registro.detalle}${medidas ? ` (${medidas})` : ''} · ${registro.responsable}`;
 }
 
-function pintar({ lote, registros, analisis, merma, qr }) {
+function pintarOpciones(selector, lista, vacio) {
+  const elementos = lista.map((item) => {
+    const opcion = document.createElement('option');
+    opcion.value = item.id;
+    opcion.textContent = item.nombre;
+    return opcion;
+  });
+  if (vacio) {
+    const primera = document.createElement('option');
+    primera.value = '';
+    primera.textContent = vacio;
+    elementos.unshift(primera);
+  }
+  document.getElementById(selector).replaceChildren(...elementos);
+}
+
+function pintar({ lote, registros, analisis, merma, qr, plantas: cuenta, insumos, salas }) {
   document.getElementById('codigo').textContent = lote.codigo;
   document.getElementById('etapa').textContent = `Etapa: ${nombreCultivo(lote.etapa)}`;
   document.getElementById('datos').textContent =
@@ -46,11 +64,21 @@ function pintar({ lote, registros, analisis, merma, qr }) {
   parrafos('analisis', analisis.map((a) => `${fechaDia(a.fecha)} · ${a.laboratorio} · THC ${a.thc} % · CBD ${a.cbd} %`),
     'Sin análisis: el lote sigue en cuarentena.');
 
+  pintarOpciones('insumo_id', insumos, 'Ninguno');
+  pintarOpciones('sala_id', salas);
+  document.getElementById('sala_id').value = lote.sala_id;
+  document.getElementById('enlace-etiquetas').href = `/admin_etiquetas.html?id=${loteId}`;
+  document.getElementById('enlace-etiquetas').textContent = `Etiquetas QR: ${cuenta.vivas} de ${cuenta.total} plantas`;
+  const avisoPlanta = document.getElementById('aviso-planta');
+  avisoPlanta.classList.toggle('oculto', !plantaCodigo);
+  avisoPlanta.textContent = `Planta ${plantaCodigo}: los registros de abajo quedan asociados a ella.`;
+
   const activo = lote.estado === 'activo';
   const siguiente = ETAPAS[ETAPAS.indexOf(lote.etapa) + 1];
   const coordina = rol === 'coordinador_cultivo';
   document.getElementById('form-avanzar').classList.toggle('oculto', !(coordina && activo && siguiente));
   document.getElementById('form-analisis').classList.toggle('oculto', !coordina);
+  document.getElementById('form-mover').classList.toggle('oculto', !(coordina && activo));
   document.getElementById('form-registro').classList.toggle(
     'oculto', !(activo && ['coordinador_cultivo', 'cultivador'].includes(rol)),
   );
@@ -86,13 +114,19 @@ function enviar(id, ruta, preparar) {
 enviar('form-avanzar', '/api/cultivo', (d) => ({ accion: 'avanzar', lote_id: loteId, peso_g: d.peso_g }));
 enviar('form-analisis', '/api/cultivo', (d) => ({ ...d, accion: 'analisis', lote_id: loteId }));
 enviar('form-registro', '/api/cultivo_registro', (d) => ({
-  ...d, lote_id: loteId, plantas: d.plantas ? Number(d.plantas) : undefined,
+  ...d,
+  lote_id: loteId,
+  plantas: d.plantas ? Number(d.plantas) : undefined,
+  insumo_id: d.insumo_id ? Number(d.insumo_id) : undefined,
+  planta_codigo: plantaCodigo ?? undefined,
 }));
+enviar('form-mover', '/api/cultivo', (d) => ({ accion: 'mover', lote_id: loteId, sala_id: Number(d.sala_id) }));
 
 document.getElementById('tipo').addEventListener('change', (evento) => {
   const { value: tipo } = evento.target;
-  document.getElementById('campo-plantas').classList.toggle('oculto', tipo !== 'baja');
-  document.getElementById('plantas').required = tipo === 'baja';
+  const pideCantidad = tipo === 'baja' && !plantaCodigo;
+  document.getElementById('campo-plantas').classList.toggle('oculto', !pideCantidad);
+  document.getElementById('plantas').required = pideCantidad;
   document.getElementById('campo-testigos').classList.toggle('oculto', tipo !== 'destruccion');
   document.getElementById('testigos').required = tipo === 'destruccion';
 });

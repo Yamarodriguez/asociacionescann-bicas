@@ -38,9 +38,44 @@ function pintarPlantas({ autorizadas, florecidas, excede }) {
   aviso.classList.toggle('error', excede);
 }
 
+function pintarMapa(salas, lotes) {
+  document.getElementById('mapa').replaceChildren(...salas.map((sala) => {
+    const bloque = document.createElement('article');
+    const titulo = document.createElement('h3');
+    titulo.textContent = sala.nombre;
+    const contenido = lotes.filter((l) => l.sala_id === sala.id && l.estado === 'activo');
+    const detalle = document.createElement('p');
+    detalle.className = 'nota';
+    detalle.textContent = contenido.length
+      ? contenido.map((l) => `${l.codigo}: ${l.cantidad_plantas} plantas, ${nombreCultivo(l.etapa)}`).join(' · ')
+      : 'Vacía';
+    bloque.append(titulo, detalle);
+    return bloque;
+  }));
+}
+
+function pintarComparativas(geneticas, salas) {
+  const linea = (fila) => {
+    const parrafo = document.createElement('p');
+    parrafo.className = 'nota';
+    parrafo.textContent = `${fila.nombre} · ${fila.lotes} lotes · ${fila.gramos_por_planta} g por planta · merma ${fila.merma} %`;
+    return parrafo;
+  };
+  const lineas = [...geneticas, ...salas].map(linea);
+  if (!lineas.length) {
+    const nada = document.createElement('p');
+    nada.className = 'estado-vacio';
+    nada.textContent = 'Todavía no hay lotes con peso seco.';
+    lineas.push(nada);
+  }
+  document.getElementById('comparativas').replaceChildren(...lineas);
+}
+
 async function cargar() {
   const datos = await pedir('/api/cultivo');
   pintarPlantas(datos.plantas);
+  pintarMapa(datos.salas, datos.lotes);
+  pintarComparativas(datos.por_genetica, datos.por_sala);
   document.getElementById('filas').replaceChildren(...datos.lotes.map(fila));
   document.getElementById('tabla').classList.toggle('oculto', datos.lotes.length === 0);
   estadoLista.className = datos.lotes.length ? 'oculto' : 'estado-vacio';

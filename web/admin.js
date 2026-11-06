@@ -6,8 +6,12 @@ const SECCIONES = [
   { clave: 'lotes_activos', titulo: 'Cultivo', detalle: 'Lotes activos', enlace: '/admin_cultivo.html' },
   { clave: 'tareas_hoy', titulo: 'Tareas', detalle: 'Para hoy o vencidas', enlace: '/admin_tareas.html' },
   { clave: 'stock_bajo', titulo: 'Inventario', detalle: 'Insumos por reponer', enlace: '/admin_inventario.html' },
+  { clave: 'en_mora', titulo: 'Mora', detalle: 'Socios sobre el límite de atraso', enlace: '/admin_mora.html' },
+  { clave: 'vencimientos_proximos', titulo: 'Vencimientos', detalle: 'En los próximos 60 días', enlace: '/admin_cumplimiento.html' },
+  { clave: 'procedimientos_sin_leer', titulo: 'Procedimientos', detalle: 'Por confirmar la lectura', enlace: '/admin_cumplimiento.html' },
 ];
 const PUBLICACIONES = ['comision_directiva', 'secretaria'];
+const FINANZAS = ['comision_directiva', 'tesoreria'];
 
 function tarjeta(titulo, detalle, enlace, valor) {
   const elemento = document.createElement('a');
@@ -43,6 +47,17 @@ async function iniciar() {
     if (PUBLICACIONES.includes(sesion.rol)) {
       tarjetas.push(tarjeta('Publicaciones', 'Comunicados, documentos, asambleas y actas', '/admin_comunicados.html'));
     }
+    if (PUBLICACIONES.includes(sesion.rol)) {
+      tarjetas.push(tarjeta('Informe de inspección', 'Resumen listo para imprimir', '/admin_informe.html'));
+    }
+    if (FINANZAS.includes(sesion.rol)) {
+      tarjetas.push(tarjeta('Finanzas', 'Caja, presupuesto e informes', '/admin_finanzas.html'));
+    }
+    if ('stock_bajo' in resumen) {
+      tarjetas.push(tarjeta('Abastecimiento', 'Proveedores y pedidos', '/admin_abastecimiento.html'));
+    }
+    tarjetas.push(tarjeta('Equipo', 'Fichaje, turnos, notas y proyectos', '/admin_equipo.html'));
+    tarjetas.push(tarjeta('Calendario', 'Próximos 60 días', '/admin_calendario.html'));
     if (sesion.rol === 'comision_directiva') {
       tarjetas.push(tarjeta('Configuración', 'Límites, plazos e interruptores', '/admin_configuracion.html'));
     }

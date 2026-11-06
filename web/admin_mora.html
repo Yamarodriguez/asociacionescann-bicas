@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mora · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/admin_mora.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Mora</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <section class="tarjeta">
+        <h2>Regla de suspensión</h2>
+        <p id="regla"></p>
+        <p class="nota">El sistema propone y la comisión decide. Los meses se fijan en Configuración y dependen de los estatutos.</p>
+        <div id="accion"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Socios con la cuota atrasada</h2>
+        <p id="sin-mora" class="estado-vacio oculto">No hay socios atrasados.</p>
+        <table id="tabla" class="oculto">
+          <thead>
+            <tr>
+              <th scope="col">Socio</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Cuota hasta</th>
+              <th scope="col">Meses de atraso</th>
+            </tr>
+          </thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

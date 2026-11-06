@@ -286,6 +286,16 @@ th { color: var(--muted); font-size: 0.875rem; font-weight: 600; }
 tbody tr:last-child td { border-bottom: 0; }
 td.acciones .casilla { margin-bottom: 0.5rem; }
 
+.tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.etiquetas { display: flex; flex-wrap: wrap; gap: 1rem; }
+.etiqueta-planta { margin: 0; padding: 0.5rem; border: 1px solid var(--line); text-align: center; break-inside: avoid; }
+.etiqueta-planta figcaption { font-size: 0.875rem; }
+
+@media print {
+  .no-imprimir, .aviso-prototipo { display: none; }
+  .tarjeta { border: 0; box-shadow: none; padding: 0; }
+}
+
 @media (max-width: 700px) {
   .bloques { grid-template-columns: 1fr; }
   .portada { padding-top: 1.75rem; }
