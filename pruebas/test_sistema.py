@@ -105,6 +105,7 @@ class Base(unittest.TestCase):
         with _db.transaccion() as cursor:
             cursor.execute("TRUNCATE recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
             cursor.execute("UPDATE configuracion SET valor = '18' WHERE clave = 'edad_minima'")
+            cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'")
         ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
         ruta.unlink(missing_ok=True)
 
@@ -927,7 +928,8 @@ class Servidor(Base):
         for ruta in (
             "/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html",
             "/admin_contactos.html", "/legal.html", "/portada.js", "/recuperar.html", "/admin_cuotas.html",
-            "/admin_comunicados.html", "/admin_configuracion.html",
+            "/admin_comunicados.html", "/admin_configuracion.html", "/admin_seguridad.html",
+            "/admin_auditoria.html",
         ):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
 

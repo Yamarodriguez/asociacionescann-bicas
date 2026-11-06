@@ -28,7 +28,7 @@ const pg = new EmbeddedPostgres({
 
 if (nuevo) await pg.initialise();
 await pg.start();
-for (const nombre of ['asociacion_dev', 'asociacion_pruebas']) {
+for (const nombre of ['asociacion_dev', 'asociacion_pruebas', 'asociacion_restauracion']) {
   try { await pg.createDatabase(nombre); } catch { /* ya existe */ }
 }
 console.log(`BASE DE DATOS LISTA en el puerto ${env.PG_LOCAL_PUERTO}`);

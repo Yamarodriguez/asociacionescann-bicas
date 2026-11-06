@@ -43,6 +43,10 @@ async function iniciar() {
     if (sesion.rol === 'comision_directiva') {
       tarjetas.push(tarjeta('Configuración', 'Límites, plazos e interruptores', '/admin_configuracion.html'));
     }
+    if (sesion.rol === 'comision_directiva') {
+      tarjetas.push(tarjeta('Auditoría', 'Quién hizo qué y cuándo', '/admin_auditoria.html'));
+    }
+    tarjetas.push(tarjeta('Seguridad', 'Doble factor de tu cuenta', '/admin_seguridad.html'));
     document.getElementById('menu').replaceChildren(...tarjetas);
     document.getElementById('bloque-sin-permisos').classList.toggle('oculto', tarjetas.length > 0);
   } catch (error) {

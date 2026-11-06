@@ -48,6 +48,8 @@ SESION_SECRETO_SOCIOS=$(openssl rand -hex 32)
 SESION_SECRETO_ADMINS=$(openssl rand -hex 32)
 HUELLAS_SECRETO=$(openssl rand -hex 32)
 MIGRATE_SECRET=$(openssl rand -hex 32)
+TOTP_CLAVE=$(openssl rand -hex 32)
+COPIA_CLAVE=$(openssl rand -hex 32)
 CORREO_MODO=archivo
 ENV
   umask 022

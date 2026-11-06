@@ -15,4 +15,4 @@ def post(manejador):
                 "UPDATE admins SET sesion_version = sesion_version + 1 WHERE id = %s", (admin["id"],))
     _http.json_respuesta(
         manejador, 200, {"ok": True},
-        [_http.galleta_borrada("socio"), _http.galleta_borrada("admin")])
+        [_http.galleta_borrada("socio"), _http.galleta_borrada("admin"), _http.galleta_borrada("pre")])

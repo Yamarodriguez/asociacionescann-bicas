@@ -31,12 +31,14 @@ Si el repositorio es privado, ambas órdenes necesitan una clave de acceso de Gi
 
 - La contraseña de las cuentas inventadas queda en `/opt/asociacion/.dev/credenciales_prueba.txt`.
 - Los correos no se envían: quedan en `/opt/asociacion/.dev/correos/`.
-- Hay una copia diaria de la base en `/var/backups/asociacion`, con 7 días de conservación.
+- Hay una copia diaria cifrada de la base en `/var/backups/asociacion`, con 7 días de conservación.
+- Guardá `COPIA_CLAVE`, de `/opt/asociacion/.env`, fuera del servidor: sin esa clave las copias no se pueden recuperar.
 
 ## Antes de usar datos reales
 
 - Pasar las cuentas a la asociación.
 - Tener la confirmación del abogado sobre guardar datos fuera de Argentina.
 - Cambiar `ENTORNO` a `produccion`, configurar el correo real y eliminar los datos inventados.
-- Activar el doble factor y probar la restauración de una copia.
+- Dejar `dosfa_obligatorio` en `true`: los datos inventados lo apagan.
+- Repetir la prueba de restauración en el servidor.
 - Guardar una copia en otro lugar: las de este servidor se pierden si se pierde el servidor.

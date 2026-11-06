@@ -33,6 +33,15 @@
       <p class="espaciada"><a href="/recuperar.html">Olvidé mi contraseña</a></p>
     </form>
 
+    <form id="form-2fa" class="tarjeta oculto">
+      <h2>Doble factor</h2>
+      <div class="campo">
+        <label for="codigo-2fa">Código de tu aplicación o de recuperación</label>
+        <input id="codigo-2fa" name="codigo" autocomplete="one-time-code" maxlength="40" required>
+      </div>
+      <button type="submit">Confirmar</button>
+    </form>
+
     <form id="form-solicitud" class="tarjeta oculto">
       <h2>Solicitar el alta</h2>
       <p class="nota">Tu solicitud queda pendiente hasta que verifiquemos tu identidad en persona.</p>

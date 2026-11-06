@@ -54,7 +54,16 @@ def post(manejador):
     clave_hash = _auth.hashear_clave(clave)
 
     creado = False
+    huella_ip = _auth.huella(f"solicitud:{_http.ip_cliente(manejador)}")
     with _db.transaccion() as cursor:
+        maximo = int(_db.configuracion(cursor, "solicitud_max_por_ip"))
+        cursor.execute(
+            "SELECT count(*) AS total FROM intentos_login WHERE huella_ip = %s"
+            " AND creado_en > now() - interval '1 hour'", (huella_ip,))
+        if cursor.fetchone()["total"] >= maximo:
+            raise _http.ErrorHttp(429, "Demasiadas solicitudes. Probá de nuevo más tarde.")
+        cursor.execute(
+            "INSERT INTO intentos_login (huella_email, huella_ip) VALUES ('solicitud', %s)", (huella_ip,))
         # El aval lo comprueba el equipo: asi no se revela que numeros existen.
         if _db.configuracion(cursor, "aval_activo") == "true" and avalista is None:
             raise _http.ErrorHttp(422, "Necesitás indicar el número de socio que te avala.")

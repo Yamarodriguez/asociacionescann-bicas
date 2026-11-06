@@ -105,6 +105,8 @@ def main():
         secretaria = cursor.fetchone()["id"]
         _socio_activo(cursor, clave_hash, secretaria)
         _publicaciones(cursor, secretaria)
+        # Solo fuera de produccion: asi el prototipo se puede recorrer sin un telefono.
+        cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'")
     ARCHIVO.parent.mkdir(parents=True, exist_ok=True)
     if clave is not None:
         lineas = ["Cuentas inventadas del prototipo. Todas usan la misma contraseña:", clave, ""]

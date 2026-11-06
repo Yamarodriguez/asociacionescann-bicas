@@ -46,6 +46,12 @@ try {
 }
 const nombrePruebas = 'Pruebas de funciones y permisos';
 const correcto = paso(nombrePruebas, PYTHON, ['-m', 'unittest', 'discover', '-s', 'pruebas', '-t', '.', '-v']);
+if (!correcto) {
+  if (pararBd) await pararBd();
+  terminar(1, `SE HA PARADO EN: ${nombrePruebas}`);
+}
+const nombreCopia = 'Copia y restauración real';
+const copiaCorrecta = paso(nombreCopia, PYTHON, ['-m', 'scripts.copia', 'probar']);
 if (pararBd) await pararBd();
-if (!correcto) terminar(1, `SE HA PARADO EN: ${nombrePruebas}`);
+if (!copiaCorrecta) terminar(1, `SE HA PARADO EN: ${nombreCopia}`);
 terminar(0, 'TODO CORRECTO: 0 fallos');

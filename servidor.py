@@ -5,9 +5,9 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from api import (
-    _config, _http, admin_configuracion, admin_contactos, admin_cuotas, admin_publicaciones,
-    admin_resumen, admin_socios, contacto, login, logout, migrate, publico, recuperar, sesion,
-    socio_baja, socio_exportar, socio_portal, solicitud,
+    _config, _http, admin_auditoria, admin_configuracion, admin_contactos, admin_cuotas,
+    admin_publicaciones, admin_resumen, admin_seguridad, admin_socios, contacto, login, login_2fa,
+    logout, migrate, publico, recuperar, sesion, socio_baja, socio_exportar, socio_portal, solicitud,
 )
 
 WEB = _config.RAIZ / "web"
@@ -22,6 +22,10 @@ RUTAS = {
     ("GET", "/api/admin_socios_csv"): admin_socios.csv_socios,
     ("GET", "/api/admin_contactos"): admin_contactos.get,
     ("GET", "/api/admin_resumen"): admin_resumen.get,
+    ("GET", "/api/admin_auditoria"): admin_auditoria.get,
+    ("GET", "/api/admin_seguridad"): admin_seguridad.get,
+    ("POST", "/api/admin_seguridad"): admin_seguridad.post,
+    ("POST", "/api/login_2fa"): login_2fa.post,
     ("GET", "/api/admin_cuotas"): admin_cuotas.get,
     ("POST", "/api/admin_cuotas"): admin_cuotas.post,
     ("GET", "/api/admin_publicaciones"): admin_publicaciones.get,

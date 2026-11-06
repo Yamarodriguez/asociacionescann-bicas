@@ -90,6 +90,23 @@ def revisar_identificadores():
     return fallos
 
 
+def revisar_codigo():
+    """Patrones que no deben aparecer nunca."""
+    fallos = []
+    for ruta in sorted(WEB.glob("*.js")):
+        texto = ruta.read_text(encoding="utf-8")
+        for patron in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval("):
+            if patron in texto:
+                fallos.append(f"{ruta.name}: uso prohibido de {patron}")
+    for ruta in sorted((RAIZ / "api").glob("*.py")):
+        texto = ruta.read_text(encoding="utf-8")
+        if re.search(r"execute\(\s*f[\"']", texto):
+            fallos.append(f"{ruta.name}: SQL montado con texto")
+        if "log.exception" in texto:
+            fallos.append(f"{ruta.name}: log.exception puede guardar datos personales")
+    return fallos
+
+
 def revisar_palabras():
     fallos = []
     for ruta in sorted(WEB.iterdir()):
@@ -135,7 +152,7 @@ def revisar_secretos():
 
 
 def main():
-    fallos = revisar_pantallas() + revisar_identificadores() + revisar_palabras() + revisar_secretos()
+    fallos = revisar_pantallas() + revisar_identificadores() + revisar_codigo() + revisar_palabras() + revisar_secretos()
     for fallo in fallos:
         print("FALLO:", fallo)
     print(f"{len(fallos)} fallos en el validador")

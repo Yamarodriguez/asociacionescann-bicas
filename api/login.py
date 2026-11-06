@@ -17,7 +17,8 @@ def post(manejador):
     with _db.transaccion() as cursor:
         bloqueado = _auth.intentos_superados(cursor, email, ip)
         cursor.execute(
-            "SELECT id, clave_hash, sesion_version FROM admins WHERE email = %s AND activo", (email,))
+            "SELECT id, clave_hash, sesion_version, totp_activado_en FROM admins"
+            " WHERE email = %s AND activo", (email,))
         admin = cursor.fetchone()
         socio = None
         if admin is None:
@@ -35,6 +36,16 @@ def post(manejador):
         with _db.transaccion() as cursor:
             _auth.registrar_fallo(cursor, email, ip)
         raise _http.ErrorHttp(401, GENERICO)
+
+    if admin and admin["totp_activado_en"] is not None:
+        # La contrasena era correcta, pero la sesion solo se abre con el segundo factor.
+        with _db.transaccion() as cursor:
+            _auth.limpiar_fallos(cursor, email)
+        previo = _auth.crear_token("pre", admin["id"], admin["sesion_version"])
+        _http.json_respuesta(
+            manejador, 200, {"tipo": "admin", "requiere_2fa": True},
+            [_http.galleta_sesion("pre", previo)])
+        return
 
     tipo = "admin" if admin else "socio"
     token = _auth.crear_token(tipo, cuenta["id"], cuenta["sesion_version"])

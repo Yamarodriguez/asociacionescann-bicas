@@ -28,6 +28,9 @@ async function leerSesion() {
   try {
     const datos = await pedir('/api/sesion');
     tokenCsrf = datos.csrf;
+    if (datos.falta_2fa && location.pathname !== '/admin_seguridad.html') {
+      location.href = '/admin_seguridad.html';
+    }
     return datos;
   } catch (error) {
     if (error.estado === 401) return null;

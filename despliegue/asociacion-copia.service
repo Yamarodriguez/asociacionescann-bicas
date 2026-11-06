@@ -7,5 +7,6 @@ Type=oneshot
 User=asociacion
 Group=asociacion
 UMask=0077
-EnvironmentFile=/opt/asociacion/.env
-ExecStart=/bin/sh -c 'pg_dump --format=custom --file=/var/backups/asociacion/copia-$(date +%%Y%%m%%d).dump "$DATABASE_URL" && find /var/backups/asociacion -name "copia-*.dump" -mtime +7 -delete'
+WorkingDirectory=/opt/asociacion
+ExecStart=/opt/asociacion/.venv/bin/python -m scripts.copia crear /var/backups/asociacion
+ExecStartPost=/usr/bin/find /var/backups/asociacion -name "copia-*.bin" -mtime +7 -delete

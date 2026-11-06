@@ -130,6 +130,9 @@ summary { display: flex; align-items: center; min-height: 44px; cursor: pointer;
 .tarjeta-menu { display: block; margin: 0; color: var(--ink); text-decoration: none; }
 .tarjeta-menu:hover { border-color: var(--leaf); }
 
+.codigos { columns: 2; padding-left: 1.25rem; font-family: ui-monospace, monospace; }
+code { overflow-wrap: anywhere; }
+
 dialog {
   width: min(28rem, calc(100vw - 2rem));
   padding: 1.5rem;

@@ -12,8 +12,9 @@ COLUMNAS_CSV = (
 
 
 def get(manejador):
-    _http.exigir_sesion(manejador, "admin", ROLES)
+    admin = _http.exigir_sesion(manejador, "admin", ROLES)
     with _db.transaccion() as cursor:
+        _db.auditar(cursor, "socios_consultados", "socio", admin_id=admin["id"])
         cursor.execute(
             "SELECT id, numero_socio, nombre, apellido, tipo_documento, numero_documento, email,"
             " telefono, estado, avalista_numero_socio, cuota_vigente_hasta, baja_solicitada_en,"

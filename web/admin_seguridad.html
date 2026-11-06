@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Seguridad · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_seguridad.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <div class="cabecera">
+      <h1>Doble factor</h1>
+      <div>
+        <a class="boton secundario oculto" id="volver" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <section id="estado-activo" class="tarjeta oculto">
+      <p>El doble factor está activado en tu cuenta.</p>
+      <p>Códigos de recuperación disponibles: <strong id="restantes"></strong></p>
+    </section>
+
+    <section id="paso-inicio" class="tarjeta oculto">
+      <p id="aviso-obligatorio" class="oculto">Para usar el panel tenés que activar el doble factor.</p>
+      <p>Vas a necesitar una aplicación de autenticación en tu teléfono.</p>
+      <button type="button" id="iniciar">Empezar</button>
+    </section>
+
+    <form id="paso-confirmar" class="tarjeta oculto">
+      <p>Escaneá este código con tu aplicación.</p>
+      <img id="qr" class="qr" alt="Código QR para la aplicación de autenticación" width="200" height="200">
+      <p class="nota espaciada">Si no podés escanearlo, escribí esta clave: <code id="secreto"></code></p>
+      <div class="campo">
+        <label for="codigo">Código de 6 números</label>
+        <input id="codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+      </div>
+      <button type="submit">Confirmar</button>
+    </form>
+
+    <section id="paso-codigos" class="tarjeta oculto">
+      <h2>Guardá estos códigos</h2>
+      <p>Sirven si perdés el teléfono. Cada uno funciona una vez y no se vuelven a mostrar.</p>
+      <ul id="codigos" class="codigos"></ul>
+      <a class="boton" href="/admin.html">Ir al panel</a>
+    </section>
+  </main>
+</body>
+</html>

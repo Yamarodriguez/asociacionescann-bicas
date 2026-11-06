@@ -122,7 +122,7 @@ def galleta_borrada(tipo):
     return f"{_auth.COOKIE[tipo]}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
 
 
-def _leer_galleta(manejador, tipo):
+def leer_galleta(manejador, tipo):
     crudo = manejador.headers.get("Cookie")
     if not crudo:
         return None
@@ -136,7 +136,7 @@ def _leer_galleta(manejador, tipo):
 
 def sesion(manejador, tipo):
     """Devuelve la persona de la sesion, comprobada en la base en cada pedido."""
-    datos = _auth.leer_token(tipo, _leer_galleta(manejador, tipo))
+    datos = _auth.leer_token(tipo, leer_galleta(manejador, tipo))
     if datos is None:
         return None
     with _db.transaccion() as cursor:
@@ -146,7 +146,9 @@ def sesion(manejador, tipo):
                 " FROM socios WHERE id = %s", (datos["id"],))
         else:
             cursor.execute(
-                "SELECT id, email, rol, activo, sesion_version FROM admins WHERE id = %s",
+                "SELECT id, email, rol, activo, sesion_version, totp_activado_en,"
+                " (SELECT valor = 'true' FROM configuracion WHERE clave = 'dosfa_obligatorio')"
+                " AS dosfa_obligatorio FROM admins WHERE id = %s",
                 (datos["id"],))
         persona = cursor.fetchone()
     if persona is None or persona["sesion_version"] != datos["v"]:
@@ -160,10 +162,16 @@ def sesion(manejador, tipo):
     return persona
 
 
-def exigir_sesion(manejador, tipo, roles=None, csrf=False):
+def falta_dosfa(persona):
+    return persona["dosfa_obligatorio"] and persona["totp_activado_en"] is None
+
+
+def exigir_sesion(manejador, tipo, roles=None, csrf=False, permitir_sin_2fa=False):
     persona = sesion(manejador, tipo)
     if persona is None:
         raise ErrorHttp(401, "Tenés que iniciar sesión.")
+    if tipo == "admin" and not permitir_sin_2fa and falta_dosfa(persona):
+        raise ErrorHttp(403, "Tenés que activar el doble factor.")
     if roles is not None and persona["rol"] not in roles:
         raise ErrorHttp(403, "No tenés permiso para esta acción.")
     if csrf:
@@ -193,6 +201,12 @@ def ejecutar(manejador, funcion):
         funcion(manejador)
     except ErrorHttp as error:
         json_respuesta(manejador, error.estado, {"error": error.mensaje})
-    except Exception:
-        log.exception("Error interno")
+    except Exception as error:
+        # Solo el tipo y la ruta: los mensajes de la base pueden contener datos personales.
+        ruta = manejador.path.split("?", 1)[0]
+        origen = error.__traceback__
+        while origen.tb_next is not None:
+            origen = origen.tb_next
+        lugar = f"{os.path.basename(origen.tb_frame.f_code.co_filename)}:{origen.tb_lineno}"
+        log.error("Error interno %s en %s (%s)", type(error).__name__, ruta, lugar)
         json_respuesta(manejador, 500, {"error": "Algo salió mal. Probá de nuevo más tarde."})

@@ -1,8 +1,10 @@
 """Envio de correo detras de un solo modulo. Los textos no describen la actividad."""
 import json
 import os
+import logging
 import smtplib
 import ssl
+import threading
 import time
 from email.message import EmailMessage
 from html import escape
@@ -32,6 +34,20 @@ def enviar(destinatario, plantilla, enlace=None):
     if os.environ.get("CORREO_MODO", "archivo") == "archivo":
         _guardar_en_archivo(destinatario, asunto, texto)
         return
+    # En segundo plano: el tiempo de respuesta no revela si la cuenta existe.
+    threading.Thread(
+        target=_enviar_seguro, args=(destinatario, asunto, texto), name="correo", daemon=True,
+    ).start()
+
+
+def _enviar_seguro(destinatario, asunto, texto):
+    try:
+        _enviar_smtp(destinatario, asunto, texto)
+    except Exception as error:
+        logging.getLogger("asociacion").error("Fallo de correo %s", type(error).__name__)
+
+
+def _enviar_smtp(destinatario, asunto, texto):
     mensaje = EmailMessage()
     mensaje["Subject"] = asunto
     mensaje["From"] = _config.req("SMTP_REMITENTE")

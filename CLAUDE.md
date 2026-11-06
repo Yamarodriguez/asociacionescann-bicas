@@ -32,7 +32,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
 - Falta en Fase 2: repositorio remoto y despliegue de pruebas, que requieren las cuentas. `despliegue/` está preparado, pero sin probar en un servidor real.
-- Falta para seguridad: 2FA y restauración probada de copias.
+- Seguridad hecha en local (Fase 7). Falta repetir la restauración en el servidor real.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
 ## Lecciones
@@ -55,3 +55,13 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Las votaciones online, los recibos y la firma digital no están construidos: dependen del abogado.
 - `scripts/purgar_bajas.py` debe programarse en el servidor cuando se fije el plazo de retención.
 - Para Fase 7: enviar los correos en segundo plano, para que el tiempo de respuesta de `/api/recuperar` no revele si la cuenta existe.
+
+## Fase 7
+
+- Doble factor TOTP con códigos de recuperación. `dosfa_obligatorio` es `true` por defecto y no se cambia desde el panel; `scripts/datos_prueba.py` lo apaga fuera de producción.
+- Auditoría inmutable por disparador. Solo admite quitar la referencia a un socio borrado.
+- `pruebas/test_seguridad.py` exige clasificar cada ruta nueva con sus roles.
+- Copias propias cifradas con `scripts/copia.py`, porque el PostgreSQL local no trae `pg_dump`. `npm run todo` restaura una copia real y compara cada tabla. Sin `COPIA_CLAVE` no se recupera nada.
+- Los registros solo guardan tipo de error, ruta y línea: los mensajes de la base pueden contener datos personales.
+- Revisar dependencias con `pip-audit` antes de cada publicación. Hoy: sin vulnerabilidades conocidas.
+- Pendiente fuera del prototipo: repetir la restauración en el servidor y guardar copias fuera de él.

@@ -1,6 +1,6 @@
 // Prepara el proyecto: crea .env con secretos aleatorios y el entorno de Python.
 // Nunca sobrescribe un .env existente.
-import { existsSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { PYTHON } from './_comun.mjs';
@@ -32,6 +32,15 @@ if (existsSync('.env')) {
     '',
   ].join('\n'), { mode: 0o600 });
   console.log('.env creado con secretos nuevos.');
+}
+
+// Anade los secretos nuevos a un .env anterior sin tocar los que ya existen.
+const actual = readFileSync('.env', 'utf8');
+for (const nombre of ['TOTP_CLAVE', 'COPIA_CLAVE']) {
+  if (!new RegExp(`^${nombre}=`, 'm').test(actual)) {
+    appendFileSync('.env', `${nombre}=${s()}\n`);
+    console.log(`${nombre} añadida a .env.`);
+  }
 }
 
 if (!existsSync(PYTHON)) {

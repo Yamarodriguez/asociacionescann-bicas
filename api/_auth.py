@@ -11,9 +11,9 @@ from . import _config, _db
 
 SCRYPT = {"n": 2**15, "r": 8, "p": 1, "maxmem": 128 * 1024 * 1024, "dklen": 32}
 LONGITUD_MINIMA_CLAVE = 10
-DURACION = {"socio": 7 * 24 * 3600, "admin": 12 * 3600}
-COOKIE = {"socio": "sesion_socio", "admin": "sesion_admin"}
-SECRETO = {"socio": "SESION_SECRETO_SOCIOS", "admin": "SESION_SECRETO_ADMINS"}
+DURACION = {"socio": 7 * 24 * 3600, "admin": 12 * 3600, "pre": 300}
+COOKIE = {"socio": "sesion_socio", "admin": "sesion_admin", "pre": "sesion_pre"}
+SECRETO = {"socio": "SESION_SECRETO_SOCIOS", "admin": "SESION_SECRETO_ADMINS", "pre": "SESION_SECRETO_ADMINS"}
 
 # Se usa cuando el correo no existe, para que la respuesta tarde lo mismo
 # y no revele si la cuenta existe.
