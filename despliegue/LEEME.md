@@ -2,7 +2,7 @@
 
 Esta versión lleva solo datos inventados y está marcada para que los buscadores no la indexen.
 
-**Estado:** la función se probó empaquetada en local, pero aún no se ha publicado en Netlify.
+**Estado:** publicado en `asociacionescannabis`, protegido con la contraseña de Netlify.
 
 ## 1. Conectar el proyecto
 
@@ -20,9 +20,9 @@ Esta versión lleva solo datos inventados y está marcada para que los buscadore
 1. Lanza un despliegue. Netlify crea la base de datos y aplica las migraciones de `netlify/database/migrations/`.
 2. Si la base no se crea sola, abre **Data & Storage > Database > Create a database manually** y vuelve a desplegar.
 
-## 4. Cargar los datos inventados
+## 4. Datos inventados
 
-Envía un `POST` a `/api/preparar_demo` con la cabecera `X-Demo-Secreto` y el valor `DEMO_SECRETO`, con el mismo `Origin` que la web. Las cuentas usan `DEMO_CLAVE` como contraseña.
+Con `ENTORNO=pruebas`, la primera visita carga solos los datos inventados. Las cuentas son las de `.dev/credenciales_prueba.txt` y usan `DEMO_CLAVE` como contraseña.
 
 ## Límites de esta versión
 
@@ -39,4 +39,4 @@ Envía un `POST` a `/api/preparar_demo` con la cabecera `X-Demo-Secreto` y el va
 - Usar un dominio propio y un servicio de correo real.
 - Dejar `dosfa_obligatorio` en `true`: los datos inventados lo apagan.
 - Probar la restauración de una copia en la base publicada y guardar copias fuera de Netlify.
-- Eliminar los datos inventados y retirar la ruta `/api/preparar_demo`.
+- Eliminar los datos inventados y quitar `DEMO_CLAVE`.

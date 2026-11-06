@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Inventario · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_inventario.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Inventario</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+
+    <section class="tarjeta">
+      <h2>Insumos</h2>
+      <p id="estado-lista" class="cargando">Cargando…</p>
+      <table id="tabla" class="oculto">
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Categoría</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Mínimo</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="filas"></tbody>
+      </table>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Equipos</h2>
+      <div id="equipos"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Últimos movimientos</h2>
+      <div id="movimientos"></div>
+    </section>
+
+    <div id="gestion" class="oculto">
+      <form id="form-movimiento" class="tarjeta">
+        <h2>Registrar movimiento</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="insumo_id">Insumo</label>
+            <select id="insumo_id" name="insumo_id" required></select>
+          </div>
+          <div class="campo">
+            <label for="tipo">Tipo</label>
+            <select id="tipo" name="tipo">
+              <option value="ingreso">Ingreso</option>
+              <option value="consumo">Consumo</option>
+              <option value="ajuste">Ajuste al alza</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" name="cantidad" inputmode="decimal" required>
+          </div>
+          <div class="campo">
+            <label for="motivo">Motivo</label>
+            <input id="motivo" name="motivo" maxlength="300" required>
+          </div>
+        </div>
+        <button type="submit">Registrar</button>
+      </form>
+
+      <form id="form-insumo" class="tarjeta">
+        <h2>Nuevo insumo</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="insumo-nombre">Nombre</label>
+            <input id="insumo-nombre" name="nombre" maxlength="120" required>
+          </div>
+          <div class="campo">
+            <label for="categoria">Categoría</label>
+            <input id="categoria" name="categoria" maxlength="60" required>
+          </div>
+          <div class="campo">
+            <label for="unidad">Unidad</label>
+            <input id="unidad" name="unidad" maxlength="20" required>
+          </div>
+          <div class="campo">
+            <label for="stock_minimo">Stock mínimo</label>
+            <input id="stock_minimo" name="stock_minimo" inputmode="decimal">
+          </div>
+        </div>
+        <button type="submit" class="secundario">Crear insumo</button>
+      </form>
+
+      <form id="form-equipo" class="tarjeta">
+        <h2>Nuevo equipo</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="equipo-nombre">Nombre</label>
+            <input id="equipo-nombre" name="nombre" maxlength="120" required>
+          </div>
+          <div class="campo">
+            <label for="equipo-tipo">Tipo</label>
+            <input id="equipo-tipo" name="tipo" maxlength="60" required>
+          </div>
+          <div class="campo">
+            <label for="proximo_mantenimiento">Próximo mantenimiento</label>
+            <input id="proximo_mantenimiento" name="proximo_mantenimiento" type="date">
+          </div>
+        </div>
+        <button type="submit" class="secundario">Crear equipo</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

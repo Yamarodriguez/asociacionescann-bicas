@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Cultivo · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_cultivo.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina pagina-ancha">
+    <div class="cabecera">
+      <h1>Cultivo</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="plantas" class="tarjeta"></p>
+
+    <section class="tarjeta">
+      <h2>Lotes</h2>
+      <p id="estado-lista" class="cargando">Cargando…</p>
+      <table id="tabla" class="oculto">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Genética</th>
+            <th scope="col">Sala</th>
+            <th scope="col">Etapa</th>
+            <th scope="col">Plantas</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="filas"></tbody>
+      </table>
+    </section>
+
+    <div id="gestion" class="oculto">
+      <form id="form-lote" class="tarjeta">
+        <h2>Nuevo lote</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="codigo">Código</label>
+            <input id="codigo" name="codigo" maxlength="40" required>
+          </div>
+          <div class="campo">
+            <label for="genetica_id">Genética</label>
+            <select id="genetica_id" name="genetica_id" required></select>
+          </div>
+          <div class="campo">
+            <label for="sala_id">Sala</label>
+            <select id="sala_id" name="sala_id" required></select>
+          </div>
+          <div class="campo">
+            <label for="origen">Origen</label>
+            <select id="origen" name="origen">
+              <option value="esqueje">Esqueje</option>
+              <option value="semilla">Semilla</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="cantidad_plantas">Plantas</label>
+            <input id="cantidad_plantas" name="cantidad_plantas" type="number" min="1" required>
+          </div>
+        </div>
+        <button type="submit">Crear lote</button>
+      </form>
+
+      <form id="form-sala" class="tarjeta">
+        <h2>Nueva sala</h2>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="sala-nombre">Nombre</label>
+            <input id="sala-nombre" name="nombre" maxlength="100" required>
+          </div>
+          <div class="campo">
+            <label for="sala-tipo">Tipo</label>
+            <select id="sala-tipo" name="tipo">
+              <option value="cultivo">Cultivo</option>
+              <option value="secado">Secado</option>
+              <option value="curado">Curado</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="secundario">Crear sala</button>
+      </form>
+
+      <form id="form-genetica" class="tarjeta">
+        <h2>Nueva genética</h2>
+        <div class="campo">
+          <label for="genetica-nombre">Nombre</label>
+          <input id="genetica-nombre" name="nombre" maxlength="100" required>
+        </div>
+        <button type="submit" class="secundario">Crear genética</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

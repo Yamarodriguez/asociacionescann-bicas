@@ -30,9 +30,9 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Estado
 
-- Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo, web pública con contacto, legales en borrador y `npm run todo`.
+- Hecho: base de datos, sesiones, solicitud, aprobación manual, panel, portal, cultivo con tareas e inventario, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
-- Código en GitHub. Falta publicar en Netlify y comprobarlo.
+- Publicado en Netlify (`asociacionescannabis`) tras contraseña de sitio, sin comprobar desde fuera: falta confirmar que se importaron las variables de `.dev/variables-netlify.env`.
 - Seguridad hecha en local (Fase 7). Falta repetir la restauración en la base publicada.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
@@ -60,13 +60,21 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Fase 7
 
-- Doble factor TOTP con códigos de recuperación. `dosfa_obligatorio` es `true` por defecto y no se cambia desde el panel; `scripts/datos_prueba.py` lo apaga fuera de producción.
+- Doble factor TOTP con códigos de recuperación. `dosfa_obligatorio` es `true` por defecto y no se cambia desde el panel; `servidor/demo.mjs` lo apaga en los datos inventados.
 - Auditoría inmutable por disparador. Solo admite quitar la referencia a un socio borrado.
 - `pruebas/test_seguridad.py` exige clasificar cada ruta nueva con sus roles.
 - Copias propias cifradas con `scripts/copia.py`, porque el PostgreSQL local no trae `pg_dump`. `npm run todo` restaura una copia real y compara cada tabla. Sin `COPIA_CLAVE` no se recupera nada.
 - Los registros solo guardan tipo de error, ruta y línea: los mensajes de la base pueden contener datos personales.
 - Revisar dependencias con `pip-audit` antes de cada publicación. Hoy: sin vulnerabilidades conocidas.
 - Pendiente fuera del prototipo: repetir la restauración en la base publicada y guardar copias fuera de Netlify.
+
+## Cultivo, tareas e inventario
+
+- Módulo tras `modulo_cultivo_activo`: apagado por defecto, responde 404 y solo los datos inventados lo encienden.
+- Lo real exige ver el certificado REPROCANN y la respuesta del abogado: registrar cifras distintas de las declaradas es un riesgo crítico de la Fase 0.
+- Reservas y dispensa siguen sin construir: dependen de las preguntas 1 a 6 al abogado.
+- `plantas_autorizadas` avisa pero no bloquea, y sale del certificado. Sin notas de efecto, por la regla 7.
+- Sin fotos, sensores, WhatsApp ni IA por ahora.
 
 ## Estructura tras pasar a Netlify
 

@@ -49,6 +49,20 @@ function mostrarMensaje(elemento, texto, clase = 'error') {
   elemento.scrollIntoView({ block: 'center' });
 }
 
+function celdaTabla(etiqueta, texto) {
+  const td = document.createElement('td');
+  td.dataset.etiqueta = etiqueta;
+  td.textContent = texto;
+  return td;
+}
+
+const NOMBRES_CULTIVO = {
+  floracion: 'floración', aplicacion: 'aplicación', medicion: 'medición', destruccion: 'destrucción',
+  etapa: 'cambio de etapa',
+};
+const nombreCultivo = (clave) => NOMBRES_CULTIVO[clave] ?? clave;
+const fechaDia = (valor) => valor.split('-').reverse().join('/');
+
 function activarSalir() {
   const boton = document.getElementById('salir');
   if (!boton) return;

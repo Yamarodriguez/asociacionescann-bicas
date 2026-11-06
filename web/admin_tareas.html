@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tareas · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_tareas.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <div class="cabecera">
+      <h1>Tareas</h1>
+      <div>
+        <a class="boton secundario" href="/admin.html">Volver al panel</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="estado-lista" class="cargando">Cargando…</p>
+    <div id="lista"></div>
+
+    <form id="form-tarea" class="tarjeta oculto">
+      <h2>Nueva tarea</h2>
+      <div class="campo">
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" maxlength="200" required>
+      </div>
+      <div class="rejilla-campos">
+        <div class="campo">
+          <label for="vence_en">Vence</label>
+          <input id="vence_en" name="vence_en" type="date" required>
+        </div>
+        <div class="campo">
+          <label for="asignada_a">Responsable</label>
+          <select id="asignada_a" name="asignada_a"></select>
+        </div>
+      </div>
+      <button type="submit">Crear tarea</button>
+    </form>
+  </main>
+</body>
+</html>

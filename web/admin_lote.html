@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Lote · Prototipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/admin_lote.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <div class="cabecera">
+      <h1 id="codigo">Lote</h1>
+      <div>
+        <a class="boton secundario" href="/admin_cultivo.html">Volver a cultivo</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <section class="tarjeta carne">
+        <div>
+          <h2 id="etapa"></h2>
+          <p id="datos"></p>
+          <p id="pesos" class="nota"></p>
+        </div>
+        <img id="qr" class="qr" alt="Código QR del lote" width="150" height="150">
+      </section>
+
+      <form id="form-avanzar" class="tarjeta oculto">
+        <h2>Cambiar de etapa</h2>
+        <div id="campo-peso" class="campo oculto">
+          <label for="peso_g" id="etiqueta-peso">Peso en gramos</label>
+          <input id="peso_g" name="peso_g" inputmode="decimal">
+        </div>
+        <button type="submit" id="boton-avanzar">Avanzar</button>
+      </form>
+
+      <form id="form-registro" class="tarjeta oculto">
+        <h2>Nuevo registro</h2>
+        <div class="campo">
+          <label for="tipo">Tipo</label>
+          <select id="tipo" name="tipo">
+            <option value="riego">Riego</option>
+            <option value="nutrientes">Nutrientes</option>
+            <option value="poda">Poda</option>
+            <option value="aplicacion">Aplicación</option>
+            <option value="medicion">Medición</option>
+            <option value="incidencia">Incidencia</option>
+            <option value="baja">Baja de plantas</option>
+            <option value="destruccion">Destrucción de residuos</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="detalle">Detalle</label>
+          <textarea id="detalle" name="detalle" rows="3" maxlength="1000" required></textarea>
+        </div>
+        <div class="rejilla-campos">
+          <div class="campo">
+            <label for="ph">pH</label>
+            <input id="ph" name="ph" inputmode="decimal">
+          </div>
+          <div class="campo">
+            <label for="ec">EC</label>
+            <input id="ec" name="ec" inputmode="decimal">
+          </div>
+          <div class="campo">
+            <label for="temperatura">Temperatura (°C)</label>
+            <input id="temperatura" name="temperatura" inputmode="decimal">
+          </div>
+          <div class="campo">
+            <label for="humedad">Humedad (%)</label>
+            <input id="humedad" name="humedad" inputmode="decimal">
+          </div>
+        </div>
+        <div id="campo-plantas" class="campo oculto">
+          <label for="plantas">Plantas dadas de baja</label>
+          <input id="plantas" name="plantas" type="number" min="1">
+        </div>
+        <div id="campo-testigos" class="campo oculto">
+          <label for="testigos">Testigos</label>
+          <input id="testigos" name="testigos" maxlength="300">
+        </div>
+        <button type="submit">Guardar registro</button>
+      </form>
+
+      <section class="tarjeta">
+        <h2>Análisis de laboratorio</h2>
+        <div id="analisis"></div>
+        <form id="form-analisis" class="oculto espaciada">
+          <div class="rejilla-campos">
+            <div class="campo">
+              <label for="laboratorio">Laboratorio</label>
+              <input id="laboratorio" name="laboratorio" maxlength="120" required>
+            </div>
+            <div class="campo">
+              <label for="fecha">Fecha</label>
+              <input id="fecha" name="fecha" type="date" required>
+            </div>
+            <div class="campo">
+              <label for="thc">THC (%)</label>
+              <input id="thc" name="thc" inputmode="decimal" required>
+            </div>
+            <div class="campo">
+              <label for="cbd">CBD (%)</label>
+              <input id="cbd" name="cbd" inputmode="decimal" required>
+            </div>
+          </div>
+          <button type="submit" class="secundario">Guardar análisis</button>
+        </form>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Historial</h2>
+        <div id="historial"></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

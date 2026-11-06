@@ -3,6 +3,9 @@ const SECCIONES = [
   { clave: 'bajas', titulo: 'Bajas', detalle: 'Pedidos de baja', enlace: '/admin_socios.html' },
   { clave: 'vencidas', titulo: 'Cuotas', detalle: 'Socios con la cuota vencida', enlace: '/admin_cuotas.html' },
   { clave: 'mensajes', titulo: 'Contacto', detalle: 'Mensajes recibidos', enlace: '/admin_contactos.html' },
+  { clave: 'lotes_activos', titulo: 'Cultivo', detalle: 'Lotes activos', enlace: '/admin_cultivo.html' },
+  { clave: 'tareas_hoy', titulo: 'Tareas', detalle: 'Para hoy o vencidas', enlace: '/admin_tareas.html' },
+  { clave: 'stock_bajo', titulo: 'Inventario', detalle: 'Insumos por reponer', enlace: '/admin_inventario.html' },
 ];
 const PUBLICACIONES = ['comision_directiva', 'secretaria'];
 

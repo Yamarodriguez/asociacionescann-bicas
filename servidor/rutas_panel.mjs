@@ -3,6 +3,7 @@ import { auditar, transaccion } from './db.mjs';
 import { enviar } from './correo.mjs';
 import { ErrorHttp, archivo, exigirSesion, json, leerJson } from './http.mjs';
 import { fechaValida } from './rutas_acceso.mjs';
+import { contadoresCultivo } from './rutas_cultivo.mjs';
 import { dataUriQr } from './rutas_socio.mjs';
 import {
   cifrarTexto, descifrarTexto, generarCodigosRecuperacion, generarSecretoTotp, hashCodigo, uriTotp, verificarTotp,
@@ -21,6 +22,8 @@ const EDITABLES = {
   edad_minima: ['entero', 18, 99],
   aval_activo: ['interruptor'],
   carne_qr_activo: ['interruptor'],
+  modulo_cultivo_activo: ['interruptor'],
+  plantas_autorizadas: ['entero', 0, 100000],
   retencion_baja_dias: ['entero', 0, 3650],
   contacto_retencion_dias: ['entero', 1, 365],
   login_max_por_email: ['entero', 3, 20],
@@ -151,6 +154,8 @@ export async function resumen(c) {
       );
       Object.assign(salida, fila);
     }
+    const [{ valor }] = await q("SELECT valor FROM configuracion WHERE clave = 'modulo_cultivo_activo'");
+    if (valor === 'true') Object.assign(salida, await contadoresCultivo(q, admin.rol, admin.id));
   });
   return json(200, salida);
 }

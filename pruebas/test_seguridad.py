@@ -22,7 +22,7 @@ ROLES = (
 PUBLICAS = {
     ("GET", "/api/sesion"), ("GET", "/api/publico"), ("POST", "/api/contacto"), ("POST", "/api/login"),
     ("POST", "/api/login_2fa"), ("POST", "/api/logout"), ("POST", "/api/solicitud"),
-    ("POST", "/api/recuperar"), ("POST", "/api/recuperar_cambiar"), ("POST", "/api/preparar_demo"),
+    ("POST", "/api/recuperar"), ("POST", "/api/recuperar_cambiar"),
 }
 DE_SOCIO = {
     ("GET", "/api/socio_portal"), ("POST", "/api/socio_portal"),
@@ -42,6 +42,14 @@ DE_EQUIPO = {
     ("POST", "/api/admin_configuracion"): {COMISION},
     ("GET", "/api/admin_auditoria"): {COMISION},
     ("GET", "/api/admin_seguridad"): set(ROLES),
+    ("GET", "/api/cultivo"): {COMISION, "coordinador_cultivo", "cultivador", "director_medico"},
+    ("POST", "/api/cultivo"): {"coordinador_cultivo"},
+    ("GET", "/api/cultivo_lote"): {COMISION, "coordinador_cultivo", "cultivador", "director_medico"},
+    ("POST", "/api/cultivo_registro"): {"coordinador_cultivo", "cultivador"},
+    ("GET", "/api/tareas"): {COMISION, "coordinador_cultivo", "cultivador"},
+    ("POST", "/api/tareas"): {"coordinador_cultivo", "cultivador"},
+    ("GET", "/api/inventario"): {COMISION, "coordinador_cultivo"},
+    ("POST", "/api/inventario"): {"coordinador_cultivo"},
     ("POST", "/api/admin_seguridad"): set(ROLES),
 }
 

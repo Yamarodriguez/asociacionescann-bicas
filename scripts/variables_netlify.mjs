@@ -16,7 +16,6 @@ writeFileSync(RUTA, [
   `SESION_SECRETO_ADMINS=${s()}`,
   `HUELLAS_SECRETO=${s()}`,
   `TOTP_CLAVE=${s()}`,
-  `DEMO_SECRETO=${s()}`,
   `DEMO_CLAVE=${randomBytes(12).toString('base64url')}`,
   '',
 ].join('\n'), { mode: 0o600 });

@@ -1,7 +1,8 @@
 // Punto de entrada comun: recibe un pedido web y devuelve la respuesta.
-import { rutaDemo } from './demo.mjs';
+import { cargarDemoSiFalta } from './demo.mjs';
 import { ErrorHttp, TAMANO_MAXIMO, json } from './http.mjs';
 import * as acceso from './rutas_acceso.mjs';
+import * as cultivo from './rutas_cultivo.mjs';
 import * as panel from './rutas_panel.mjs';
 import * as socio from './rutas_socio.mjs';
 
@@ -16,7 +17,6 @@ export const RUTAS = {
   'POST /api/solicitud': acceso.solicitud,
   'POST /api/recuperar': acceso.recuperar,
   'POST /api/recuperar_cambiar': acceso.recuperarCambiar,
-  'POST /api/preparar_demo': rutaDemo,
   'GET /api/socio_portal': socio.portal,
   'POST /api/socio_portal': socio.actualizar,
   'GET /api/socio_exportar': socio.exportar,
@@ -33,6 +33,14 @@ export const RUTAS = {
   'GET /api/admin_configuracion': panel.verConfiguracion,
   'POST /api/admin_configuracion': panel.cambiarConfiguracion,
   'GET /api/admin_auditoria': panel.auditoria,
+  'GET /api/cultivo': cultivo.verCultivo,
+  'POST /api/cultivo': cultivo.accionCultivo,
+  'GET /api/cultivo_lote': cultivo.verLote,
+  'POST /api/cultivo_registro': cultivo.registrar,
+  'GET /api/tareas': cultivo.verTareas,
+  'POST /api/tareas': cultivo.accionTarea,
+  'GET /api/inventario': cultivo.verInventario,
+  'POST /api/inventario': cultivo.accionInventario,
   'GET /api/admin_seguridad': panel.verSeguridad,
   'POST /api/admin_seguridad': panel.cambiarSeguridad,
 };
@@ -47,6 +55,7 @@ export async function manejar(request, ip) {
     const longitud = Number(request.headers.get('content-length') ?? 0);
     if (!Number.isFinite(longitud) || longitud > TAMANO_MAXIMO) throw new ErrorHttp(413, 'Pedido inválido.');
     if (!funcion) return json(404, { error: 'No encontrado.' });
+    await cargarDemoSiFalta();
     const cuerpo = request.method === 'POST' ? await request.text() : '';
     if (cuerpo.length > TAMANO_MAXIMO) throw new ErrorHttp(413, 'Pedido inválido.');
     return await funcion({ request, url, ip, cuerpo });

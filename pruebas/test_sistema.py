@@ -116,9 +116,10 @@ class Base(unittest.TestCase):
 
     def setUp(self):
         with _db.transaccion() as cursor:
-            cursor.execute("TRUNCATE recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE movimientos_insumo, insumos, equipos, tareas, plantillas_tarea, analisis, registros_lote, lotes, geneticas, salas, recuperaciones, actas, asambleas, documentos, comunicados, cuotas, contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
             cursor.execute("UPDATE configuracion SET valor = '18' WHERE clave = 'edad_minima'")
             cursor.execute("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'")
+            cursor.execute("UPDATE configuracion SET valor = 'true' WHERE clave = 'modulo_cultivo_activo'")
         ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
         ruta.unlink(missing_ok=True)
 
@@ -444,11 +445,6 @@ class WebPublica(Base):
         respuesta.read()
         conexion.close()
         self.assertIn("immutable", respuesta.headers["Cache-Control"])
-
-    def test_la_carga_de_datos_inventados_exige_el_secreto(self):
-        self.assertEqual(pedir("POST", "/api/preparar_demo", {})[0], 403)
-        estado = pedir("POST", "/api/preparar_demo", {}, cabeceras={"X-Demo-Secreto": "falso"})[0]
-        self.assertEqual(estado, 403)
 
 
 class Portal(Base):
@@ -917,7 +913,8 @@ class Servidor(Base):
             "/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html",
             "/admin_contactos.html", "/legal.html", "/portada.js", "/recuperar.html", "/admin_cuotas.html",
             "/admin_comunicados.html", "/admin_configuracion.html", "/admin_seguridad.html",
-            "/admin_auditoria.html",
+            "/admin_auditoria.html", "/admin_cultivo.html", "/admin_lote.html",
+            "/admin_tareas.html", "/admin_inventario.html",
         ):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
 

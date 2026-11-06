@@ -1,12 +1,13 @@
 // Crea datos inventados para el prototipo. Se puede repetir sin duplicar nada.
-import { compararSeguro, hashearClave, req } from './seguridad.mjs';
-import { ErrorHttp, json } from './http.mjs';
+import { hashearClave } from './seguridad.mjs';
 import { transaccion } from './db.mjs';
 
 export const EQUIPO = [
   ['comision.prueba@ejemplo.test', 'comision_directiva'],
   ['secretaria.prueba@ejemplo.test', 'secretaria'],
   ['tesoreria.prueba@ejemplo.test', 'tesoreria'],
+  ['coordinador.prueba@ejemplo.test', 'coordinador_cultivo'],
+  ['cultivador.prueba@ejemplo.test', 'cultivador'],
   ['dispensador.prueba@ejemplo.test', 'dispensador'],
 ];
 const SOLICITUDES = [
@@ -17,6 +18,36 @@ const ACTIVO = ['diego.prueba@ejemplo.test', 'Diego', 'Prueba', '1988-07-02', '9
 const TEXTO = 'Texto inventado para probar el portal.';
 
 export const CUENTAS = [...EQUIPO.map(([correo]) => correo), ...SOLICITUDES.map(([correo]) => correo), ACTIVO[0]];
+
+async function cultivoDemo(q) {
+  const [{ total }] = await q('SELECT count(*) AS total FROM salas');
+  if (total) return;
+  const [{ id: coordinador }] = await q('SELECT id FROM admins WHERE email = $1', [EQUIPO[3][0]]);
+  const [{ id: cultivador }] = await q('SELECT id FROM admins WHERE email = $1', [EQUIPO[4][0]]);
+  const [{ id: sala }] = await q("INSERT INTO salas (nombre, tipo) VALUES ('Sala de prueba 1', 'cultivo') RETURNING id");
+  await q("INSERT INTO salas (nombre, tipo) VALUES ('Secado de prueba', 'secado')");
+  const [{ id: genetica }] = await q("INSERT INTO geneticas (nombre) VALUES ('Genética de prueba') RETURNING id");
+  const [{ id: lote }] = await q(
+    `INSERT INTO lotes (codigo, genetica_id, sala_id, origen, cantidad_plantas, etapa, creado_por)
+     VALUES ('L-PRUEBA-001', $1, $2, 'esqueje', 12, 'vegetativo', $3) RETURNING id`, [genetica, sala, coordinador],
+  );
+  await q(
+    `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, creado_por)
+     VALUES ($1, 'riego', 'Riego de prueba', '6.20', '1.40', $2)`, [lote, cultivador],
+  );
+  await q(
+    `INSERT INTO plantillas_tarea (etapa, titulo, dias) VALUES ('vegetativo', 'Revisar riego', 2),
+     ('floracion', 'Cambiar fotoperiodo', 0), ('cosecha', 'Registrar peso húmedo', 0), ('secado', 'Controlar humedad', 3)`,
+  );
+  await q(
+    "INSERT INTO tareas (titulo, lote_id, asignada_a, vence_en, creado_por) VALUES ('Revisar riego', $1, $2, current_date, $3)",
+    [lote, cultivador, coordinador],
+  );
+  await q(
+    "INSERT INTO insumos (nombre, categoria, unidad, stock, stock_minimo) VALUES ('Sustrato de prueba', 'Sustratos', 'litros', '40.00', '50.00')",
+  );
+  await q("INSERT INTO equipos (nombre, tipo, sala_id) VALUES ('Extractor de prueba', 'Ventilación', $1)", [sala]);
+}
 
 export async function prepararDemo(clave) {
   const hash = await hashearClave(clave);
@@ -61,18 +92,22 @@ export async function prepararDemo(clave) {
       );
       await q("INSERT INTO actas (titulo, contenido, autor_id) VALUES ('Acta de prueba', $1, $2)", [TEXTO, secretaria]);
     }
+    await cultivoDemo(q);
     // Solo en el prototipo: asi se puede recorrer sin un telefono.
     await q("UPDATE configuracion SET valor = 'false' WHERE clave = 'dosfa_obligatorio'");
+    await q("UPDATE configuracion SET valor = 'true' WHERE clave = 'modulo_cultivo_activo'");
+    await q("UPDATE configuracion SET valor = '30' WHERE clave = 'plantas_autorizadas'");
   });
 }
 
-// Ruta protegida para cargar los datos inventados en la version publicada.
-export async function rutaDemo(c) {
-  const recibido = c.request.headers.get('x-demo-secreto') ?? '';
-  const secreto = process.env.DEMO_SECRETO;
-  if (process.env.ENTORNO === 'produccion' || !secreto || !recibido || !compararSeguro(recibido, secreto)) {
-    throw new ErrorHttp(403, 'No permitido.');
-  }
-  await prepararDemo(req('DEMO_CLAVE'));
-  return json(200, { cuentas: CUENTAS });
+let revisada = false;
+
+// En la version publicada de prueba, los datos inventados se cargan solos una vez.
+export async function cargarDemoSiFalta() {
+  if (revisada || process.env.ENTORNO !== 'pruebas' || !process.env.DEMO_CLAVE) return;
+  const [{ falta }] = await transaccion((q) => q(
+    'SELECT NOT EXISTS (SELECT 1 FROM admins) OR NOT EXISTS (SELECT 1 FROM salas) AS falta',
+  ));
+  if (falta) await prepararDemo(process.env.DEMO_CLAVE);
+  revisada = true;
 }
