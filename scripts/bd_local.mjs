@@ -37,4 +37,6 @@ const parar = async () => { parando = true; await pg.stop(); process.exit(0); };
 process.on('SIGINT', parar);
 process.on('SIGTERM', parar);
 process.on('message', (m) => { if (m === 'parar') parar(); });
+// Si se cierra de golpe el programa que la lanzo, la base se para tambien.
+process.on('disconnect', parar);
 setInterval(() => {}, 1 << 30);

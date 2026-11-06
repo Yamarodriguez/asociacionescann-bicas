@@ -5,39 +5,120 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Asociación · Prototipo</title>
+  <meta name="description" content="Información institucional de la asociación.">
+  <link rel="preload" href="/fuentes/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fuentes/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
+  <script src="/portada.js" defer></script>
 </head>
 <body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <div class="borde-barra">
-    <header class="barra">
-      <span class="marca" data-sitio="nombre">Asociación</span>
-      <a class="boton" href="/login.html">Acceso socios</a>
-    </header>
-  </div>
+
+  <dialog id="aviso-edad" aria-labelledby="aviso-edad-titulo">
+    <h2 id="aviso-edad-titulo">Antes de entrar</h2>
+    <p id="aviso-edad-texto">Este sitio es solo para personas mayores de la edad mínima.</p>
+    <div id="aviso-edad-acciones" class="acciones-aviso">
+      <button type="button" id="edad-si">Sí, tengo esa edad</button>
+      <button type="button" id="edad-no" class="secundario">No</button>
+    </div>
+  </dialog>
+
+  <header class="barra">
+    <span class="marca" data-sitio="nombre">Asociación</span>
+    <a class="boton" href="/login.html">Acceso socios</a>
+  </header>
+  <nav class="navegacion" aria-label="Secciones">
+    <a href="#quienes">Quiénes somos</a>
+    <a href="#requisitos">Requisitos</a>
+    <a href="#normativa">Normativa</a>
+    <a href="#reduccion">Reducción de daños</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+
   <section class="portada">
     <h1 data-sitio="nombre">Asociación</h1>
     <p>Acá va la presentación que apruebe la asociación, con sus fines según los estatutos.</p>
   </section>
-  <main class="contenido">
+
+  <main id="contenido" class="contenido">
     <div class="bloques">
-      <section class="bloque">
+      <section class="bloque" id="quienes">
         <h2>Quiénes somos</h2>
-        <p>Forma jurídica, número de registro y fines.</p>
+        <p data-sitio="forma_juridica"></p>
+        <p data-sitio="numero_registro"></p>
+        <p data-sitio="fines"></p>
       </section>
-      <section class="bloque">
+      <section class="bloque" id="requisitos">
         <h2>Requisitos para asociarse</h2>
-        <p>Condiciones y pasos para solicitar el alta.</p>
+        <p data-sitio="requisitos"></p>
+        <p>El alta tiene dos pasos: enviás tu solicitud y verificamos tu identidad en persona.</p>
       </section>
-      <section class="bloque">
-        <h2>Horario y contacto</h2>
-        <p>Dirección, horario y formulario de contacto.</p>
+      <section class="bloque" id="horario">
+        <h2>Horario y dirección</h2>
+        <p data-sitio="direccion"></p>
+        <p data-sitio="horario"></p>
       </section>
     </div>
+
+    <section class="seccion" id="normativa">
+      <h2>Normativa</h2>
+      <p class="borrador">BORRADOR: revisar con asesoría legal</p>
+      <ul>
+        <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/270000-274999/273801/norma.htm">Ley 27.350</a></li>
+        <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/340000-344999/344131/norma.htm">Decreto 883/2020</a></li>
+        <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/345000-349999/347837/texact.htm">Resolución 800/2021, texto actualizado</a></li>
+        <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/410000-414999/413121/norma.htm">Resolución 1780/2025</a></li>
+        <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/60000-64999/64790/texact.htm">Ley 25.326 de protección de datos personales</a></li>
+      </ul>
+      <p class="nota">Fuentes oficiales consultadas el 6 de noviembre de 2026.</p>
+    </section>
+
+    <section class="seccion" id="reduccion">
+      <h2>Reducción de daños</h2>
+      <p class="borrador">Contenido pendiente de la revisión legal.</p>
+    </section>
+
+    <section class="seccion" id="contacto">
+      <h2>Contacto</h2>
+      <p>También podés escribirnos a <span data-sitio="contacto"></span>.</p>
+      <form id="form-contacto" class="tarjeta">
+        <div id="contacto-mensaje" class="mensaje" role="alert"></div>
+        <div class="campo">
+          <label for="contacto-nombre">Nombre</label>
+          <input id="contacto-nombre" name="nombre" maxlength="120" autocomplete="name" required>
+        </div>
+        <div class="campo">
+          <label for="contacto-email">Correo electrónico</label>
+          <input id="contacto-email" name="email" type="email" maxlength="254" autocomplete="email" required>
+        </div>
+        <div class="campo">
+          <label for="contacto-texto">Mensaje</label>
+          <textarea id="contacto-texto" name="mensaje" rows="5" maxlength="2000" required></textarea>
+          <p class="nota">No incluyas datos de salud ni información sensible.</p>
+        </div>
+        <div class="campo-oculto" aria-hidden="true">
+          <label for="sitio_web">No completes este campo</label>
+          <input id="sitio_web" name="sitio_web" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="casilla">
+          <input id="contacto-consentimiento" name="consentimiento" type="checkbox" required>
+          <label for="contacto-consentimiento">Acepto la <a href="/legal.html#privacidad">política de privacidad</a> para que respondan mi mensaje.</label>
+        </div>
+        <button type="submit">Enviar mensaje</button>
+      </form>
+    </section>
+
     <div class="franja">
       <p>Solo para mayores de la edad mínima. Acceso exclusivo para socios. Consumo responsable.</p>
     </div>
   </main>
+
+  <footer class="pie">
+    <a href="/legal.html#privacidad">Privacidad</a>
+    <a href="/legal.html#condiciones">Condiciones</a>
+    <a href="/legal.html#estatutos">Estatutos</a>
+  </footer>
 </body>
 </html>

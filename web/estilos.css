@@ -62,6 +62,69 @@ h2 { font-size: 1.375rem; margin: 0 0 0.75rem; }
 p { margin: 0 0 0.75rem; }
 a { color: var(--leaf-deep); }
 
+.saltar {
+  position: absolute;
+  left: -999px;
+  padding: 0.5rem 1rem;
+  background: var(--card);
+}
+
+.saltar:focus { left: 0.5rem; top: 0.5rem; z-index: 5; }
+
+.navegacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 0 1rem 0.5rem;
+}
+
+.navegacion a { display: inline-block; padding: 0.625rem 0; }
+
+.seccion { margin-top: 2.5rem; scroll-margin-top: 1rem; }
+.seccion h3 { margin: 1.25rem 0 0.25rem; font-size: 1.0625rem; }
+.seccion ul { margin: 0 0 0.75rem; padding-left: 1.25rem; }
+.seccion li { margin-bottom: 0.25rem; }
+.seccion li a { display: inline-block; padding: 0.375rem 0; }
+.bloque { scroll-margin-top: 1rem; }
+
+.borrador {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radio);
+  background: var(--card);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.pie a { display: inline-block; padding: 0.625rem 0; }
+
+dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radio);
+  background: var(--card);
+  color: var(--ink);
+}
+
+dialog::backdrop { background: rgb(24 38 31 / 0.75); }
+.acciones-aviso { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+
+.campo-oculto { position: absolute; left: -9999px; }
+.mensaje-contacto { white-space: pre-wrap; overflow-wrap: anywhere; }
+
 .barra {
   display: flex;
   align-items: center;
@@ -72,7 +135,7 @@ a { color: var(--leaf-deep); }
   padding: 0.75rem 1rem;
 }
 
-.marca { font-family: var(--titulos); font-size: 1.125rem; }
+.marca { font-family: var(--titulos); font-size: 1.125rem; color: var(--ink); text-decoration: none; }
 
 .portada {
   max-width: 62rem;
@@ -84,7 +147,7 @@ a { color: var(--leaf-deep); }
 .portada h1 { font-size: clamp(2.25rem, 7vw, 3.5rem); line-height: 1.15; }
 .portada p { color: var(--muted); max-width: 34rem; margin-inline: auto; }
 
-.contenido { max-width: 62rem; margin: 0 auto; padding: 0 1rem 3rem; }
+.contenido { max-width: 62rem; margin: 0 auto; padding: 0 1rem 2rem; }
 
 .bloques {
   display: grid;
@@ -100,7 +163,7 @@ a { color: var(--leaf-deep); }
 }
 
 .bloque h2 { padding-bottom: 0.625rem; border-bottom: 2px solid var(--accent); }
-.bloque p { color: var(--muted); margin: 0; }
+.bloque p { color: var(--muted); margin: 0 0 0.5rem; }
 
 .franja {
   margin-top: 2rem;
@@ -128,7 +191,7 @@ label {
   margin-bottom: 0.25rem;
 }
 
-input, select {
+input, select, textarea {
   width: 100%;
   min-height: 44px;
   padding: 0.5rem 0.75rem;
@@ -202,7 +265,8 @@ td.acciones .casilla { margin-bottom: 0.5rem; }
 
 @media (max-width: 700px) {
   .bloques { grid-template-columns: 1fr; }
-  .portada { padding-top: 2.25rem; }
+  .portada { padding-top: 1.75rem; }
+  .acciones-aviso button { width: 100%; }
   table, thead, tbody, tr, th, td { display: block; }
   thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   tr {

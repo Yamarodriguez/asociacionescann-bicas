@@ -10,6 +10,9 @@ WEB = RAIZ / "web"
 PROHIBIDAS = re.compile(r"\b(clientes?|compras?|ventas?|tiendas?|carritos?)\b", re.IGNORECASE)
 RASTREO = re.compile(r"adsbygoogle|googletagmanager|google-analytics|facebook\.net|fbq\(|gtag\(", re.IGNORECASE)
 CORREO_PROHIBIDAS = re.compile(r"cannabis|gramos?\b|variedad|cogollo|flores", re.IGNORECASE)
+TERAPEUTICAS = re.compile(r"\b(cura|curar|sana|alivia|beneficios?|efectos?)\b", re.IGNORECASE)
+FUENTES_OFICIALES = ("https://servicios.infoleg.gob.ar/", "https://www.argentina.gob.ar/")
+AVISO_BORRADOR = "BORRADOR: revisar con asesoría legal"
 SECRETO = re.compile(r"postgresql://[^:\s]+:[^@\s<{]+@|BEGIN (RSA |EC )?PRIVATE KEY")
 DIRECTORIOS_TEXTO = ("api", "web", "scripts", "migraciones", "pruebas")
 ESTE_ARCHIVO = Path(__file__).resolve()
@@ -44,8 +47,15 @@ class Pantalla(HTMLParser):
                 self.problemas.append(f"evento en linea {nombre}")
             if nombre == "style":
                 self.problemas.append("estilo en linea")
-            if nombre in ("src", "href") and str(valor).startswith(("http://", "https://", "//")):
+            externo = str(valor).startswith(("http://", "https://", "//"))
+            if nombre == "src" and externo:
                 self.problemas.append(f"recurso externo {valor}")
+            if nombre == "href" and externo:
+                # Solo se admiten enlaces normales a fuentes oficiales.
+                if etiqueta != "a" or not str(valor).startswith(FUENTES_OFICIALES):
+                    self.problemas.append(f"enlace externo no permitido {valor}")
+                elif datos.get("rel") != "noopener noreferrer":
+                    self.problemas.append(f"enlace sin rel de privacidad {valor}")
 
 
 def revisar_pantallas():
@@ -71,9 +81,13 @@ def revisar_palabras():
         if ruta.suffix not in (".html", ".js", ".json"):
             continue
         texto = ruta.read_text(encoding="utf-8")
-        for patron, motivo in ((PROHIBIDAS, "palabra prohibida"), (RASTREO, "rastreo")):
+        patrones = ((PROHIBIDAS, "palabra prohibida"), (RASTREO, "rastreo"), (TERAPEUTICAS, "afirmacion de salud"))
+        for patron, motivo in patrones:
             for coincidencia in patron.finditer(texto):
                 fallos.append(f"{ruta.name}: {motivo}: {coincidencia.group()}")
+    legal = (WEB / "legal.html").read_text(encoding="utf-8")
+    if legal.count(AVISO_BORRADOR) < 4:
+        fallos.append("legal.html: cada texto debe llevar el aviso de borrador")
     correo = (RAIZ / "api" / "_email.py").read_text(encoding="utf-8")
     plantillas = correo.split("PLANTILLAS = {", 1)[1].split("\n}\n", 1)[0]
     for coincidencia in CORREO_PROHIBIDAS.finditer(plantillas):

@@ -9,6 +9,7 @@ Prototipo privado con **datos inventados**. No introduzcas datos de personas rea
 - Aprobación manual tras verificar la identidad en persona.
 - Panel con la cola de solicitudes y permisos por rol.
 - Portal mínimo del socio.
+- Web pública con aviso de edad, formulario de contacto y textos legales en borrador.
 
 ## Cómo abrirlo en tu ordenador
 

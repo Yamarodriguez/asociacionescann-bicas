@@ -102,7 +102,7 @@ class Base(unittest.TestCase):
 
     def setUp(self):
         with _db.transaccion() as cursor:
-            cursor.execute("TRUNCATE intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE contactos, intentos_login, auditoria, socios, admins RESTART IDENTITY CASCADE")
             cursor.execute("UPDATE configuracion SET valor = '18' WHERE clave = 'edad_minima'")
         ruta = _config.RAIZ / ".dev" / "correos" / "enviados.jsonl"
         ruta.unlink(missing_ok=True)
@@ -348,6 +348,105 @@ class Permisos(Base):
         self.assertEqual(ingresar("persona@ejemplo.test")[0], 401)
 
 
+def contacto(**extra):
+    datos = {"nombre": "Prueba", "email": "Consulta@Ejemplo.test", "mensaje": "Hola", "consentimiento": True}
+    datos.update(extra)
+    return pedir("POST", "/api/contacto", datos)
+
+
+def total_contactos():
+    with _db.transaccion() as cursor:
+        cursor.execute("SELECT count(*) AS total FROM contactos")
+        return cursor.fetchone()["total"]
+
+
+class WebPublica(Base):
+    def test_datos_publicos_salen_de_la_configuracion(self):
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE configuracion SET valor = '21' WHERE clave = 'edad_minima'")
+        estado, cuerpo, _ = pedir("GET", "/api/publico")
+        self.assertEqual(estado, 200)
+        self.assertEqual(cuerpo, {"edad_minima": 21})
+
+    def test_el_contacto_guarda_el_mensaje_sin_la_ip_en_claro(self):
+        self.assertEqual(contacto()[0], 202)
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT email, huella_ip, consentimiento_en FROM contactos")
+            fila = cursor.fetchone()
+        self.assertEqual(fila["email"], "consulta@ejemplo.test")
+        self.assertNotIn("127.0.0.1", fila["huella_ip"])
+        self.assertIsNotNone(fila["consentimiento_en"])
+
+    def test_el_contacto_valida_los_datos(self):
+        self.assertEqual(contacto(consentimiento=False)[0], 422)
+        self.assertEqual(contacto(email="sin-arroba")[0], 422)
+        self.assertEqual(contacto(mensaje="   ")[0], 422)
+        self.assertEqual(contacto(mensaje="x" * 2001)[0], 422)
+        self.assertEqual(total_contactos(), 0)
+
+    def test_el_campo_trampa_descarta_el_mensaje_sin_avisar(self):
+        trampa = contacto(sitio_web="http://malo.test")
+        self.assertEqual(trampa[:2], contacto()[:2])
+        self.assertEqual(total_contactos(), 1)
+
+    def test_el_contacto_limita_los_mensajes_por_ip(self):
+        for _ in range(5):
+            self.assertEqual(contacto()[0], 202)
+        self.assertEqual(contacto()[0], 429)
+        self.assertEqual(total_contactos(), 5)
+
+    def test_el_contacto_exige_origen_propio(self):
+        datos = {"nombre": "Prueba", "email": "a@ejemplo.test", "mensaje": "Hola", "consentimiento": True}
+        self.assertEqual(pedir("POST", "/api/contacto", datos, origen="http://malo.test")[0], 403)
+
+    def test_los_mensajes_viejos_se_borran_solos(self):
+        contacto()
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE contactos SET creado_en = now() - interval '31 days'")
+        contacto()
+        self.assertEqual(total_contactos(), 1)
+
+    def test_los_mensajes_solo_los_ve_quien_tiene_permiso(self):
+        contacto()
+        self.assertEqual(pedir("GET", "/api/admin_contactos")[0], 401)
+        email, _ = crear_admin("dispensador")
+        galleta, _ = sesion_de(email)
+        self.assertEqual(pedir("GET", "/api/admin_contactos", galleta=galleta)[0], 403)
+        alta()
+        socio, _ = sesion_de("persona@ejemplo.test")
+        self.assertEqual(pedir("GET", "/api/admin_contactos", galleta=socio)[0], 401)
+        email, admin_id = crear_admin("secretaria")
+        galleta, _ = sesion_de(email)
+        estado, cuerpo, _ = pedir("GET", "/api/admin_contactos", galleta=galleta)
+        self.assertEqual(estado, 200)
+        self.assertEqual(len(cuerpo["contactos"]), 1)
+        self.assertNotIn("huella_ip", cuerpo["contactos"][0])
+        with _db.transaccion() as cursor:
+            cursor.execute("SELECT admin_id FROM auditoria WHERE accion = 'contactos_consultados'")
+            self.assertEqual(cursor.fetchone()["admin_id"], admin_id)
+
+    def test_los_legales_son_borradores_y_los_buscadores_no_entran(self):
+        _, legal, _ = pedir("GET", "/legal.html")
+        for ancla in ('id="privacidad"', 'id="condiciones"', 'id="estatutos"'):
+            self.assertIn(ancla, legal)
+        self.assertGreaterEqual(legal.count("BORRADOR: revisar con asesoría legal"), 4)
+        _, robots, _ = pedir("GET", "/robots.txt")
+        self.assertIn("Disallow: /", robots)
+
+    def test_la_portada_no_muestra_nada_de_las_reservas(self):
+        _, portada, _ = pedir("GET", "/")
+        for palabra in ("$", "precio", "gramo", "variedad", "stock", "reserva"):
+            self.assertNotIn(palabra, portada.lower())
+
+    def test_las_letras_se_guardan_en_el_navegador(self):
+        conexion = http.client.HTTPConnection("127.0.0.1", PUERTO, timeout=10)
+        conexion.request("GET", "/fuentes/dm-sans.woff2")
+        respuesta = conexion.getresponse()
+        respuesta.read()
+        conexion.close()
+        self.assertIn("immutable", respuesta.headers["Cache-Control"])
+
+
 class Correos(Base):
     def test_las_plantillas_no_mencionan_la_actividad(self):
         for asunto, texto in _email.PLANTILLAS.values():
@@ -442,7 +541,10 @@ class Servidor(Base):
         self.assertNotIn("selector-tema", codigo)
 
     def test_las_paginas_del_prototipo_cargan(self):
-        for ruta in ("/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html"):
+        for ruta in (
+            "/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html",
+            "/admin_contactos.html", "/legal.html", "/portada.js",
+        ):
             self.assertEqual(pedir("GET", ruta)[0], 200, ruta)
 
 

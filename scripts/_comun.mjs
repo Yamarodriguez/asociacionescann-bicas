@@ -1,7 +1,7 @@
 // Funciones compartidas por los scripts de desarrollo.
 import { fork, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import pg from 'pg';
 
 export const PYTHON = process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python';
@@ -34,11 +34,21 @@ async function bdResponde(env) {
 
 // Si un cierre brusco dejo una base huerfana que ya no responde, la para.
 function pararHuerfana() {
-  if (!existsSync('.dev/pg/postmaster.pid')) return;
   const sistema = process.platform === 'win32' ? 'windows' : process.platform;
   const binario = process.platform === 'win32' ? 'pg_ctl.exe' : 'pg_ctl';
-  const ruta = join('node_modules', '@embedded-postgres', `${sistema}-x64`, 'native', 'bin', binario);
-  spawnSync(ruta, ['stop', '-D', '.dev/pg', '-m', 'immediate', '-t', '15'], { stdio: 'ignore' });
+  const carpeta = resolve('node_modules', '@embedded-postgres', `${sistema}-x64`, 'native', 'bin');
+  if (existsSync('.dev/pg/postmaster.pid')) {
+    spawnSync(join(carpeta, binario), ['stop', '-D', '.dev/pg', '-m', 'immediate', '-t', '15'], { stdio: 'ignore' });
+  }
+  // Tambien pueden quedar procesos auxiliares sueltos. Solo se paran los de este proyecto.
+  if (process.platform === 'win32') {
+    const orden = `Get-CimInstance Win32_Process -Filter "Name='postgres.exe'" | `
+      + `Where-Object { ($_.CommandLine -replace '/', '\\') -like '*${carpeta}*' } | `
+      + 'ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }';
+    spawnSync('powershell.exe', ['-NoProfile', '-Command', orden], { stdio: 'ignore' });
+  } else {
+    spawnSync('pkill', ['-f', join(carpeta, 'postgres')], { stdio: 'ignore' });
+  }
 }
 
 // Arranca la base de datos local si no esta en marcha.

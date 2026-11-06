@@ -1,6 +1,12 @@
 {
   "nombre": "[Nombre de la asociación: pendiente]",
+  "forma_juridica": "[Forma jurídica: pendiente]",
+  "numero_registro": "[Número de registro: pendiente]",
   "provincia": "[Provincia: pendiente]",
-  "contacto": "[Contacto: pendiente]",
+  "fines": "[Fines según los estatutos: pendiente]",
+  "requisitos": "[Requisitos para asociarse: pendiente]",
+  "direccion": "[Dirección: pendiente]",
+  "horario": "[Horario: pendiente]",
+  "contacto": "[Correo de contacto: pendiente]",
   "prototipo": true
 }

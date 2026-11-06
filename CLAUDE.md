@@ -29,7 +29,8 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Estado
 
-- Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo y `npm run todo`.
+- Hecho: base de datos, sesiones, solicitud, aprobación manual, panel mínimo, web pública con contacto, legales en borrador y `npm run todo`.
+- Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
 - Falta en Fase 2: repositorio remoto y despliegue de pruebas, que requieren las cuentas. `despliegue/` está preparado, pero sin probar en un servidor real.
 - Falta para seguridad: 2FA, recuperación de contraseña, exportación de datos y copias.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
@@ -38,6 +39,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 - Toda ruta debe consumir el cuerpo del pedido antes de responder. Si no, sus bytes contaminan el siguiente pedido de la misma conexión. Lo resuelve `_http.ejecutar`.
 - Una base local huérfana puede ocupar el puerto sin responder. `scripts/_comun.mjs` la detecta con una consulta real, no solo mirando el puerto.
+- En Windows, tras un cierre brusco sobrevive un proceso `io_worker` de PostgreSQL que retiene el puerto, aunque su proceso padre ya no exista y no quede `postmaster.pid`. Se identifica por la línea de órdenes, que usa barras `/`.
 
 ## Diseño
 

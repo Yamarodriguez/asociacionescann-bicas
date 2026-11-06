@@ -4,16 +4,22 @@ import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from api import _config, _http, admin_socios, login, logout, migrate, sesion, solicitud
+from api import (
+    _config, _http, admin_contactos, admin_socios, contacto, login, logout, migrate, publico,
+    sesion, solicitud,
+)
 
 WEB = _config.RAIZ / "web"
-EXTENSIONES = {".html", ".css", ".js", ".json", ".svg", ".ico", ".woff2"}
+EXTENSIONES = {".html", ".css", ".js", ".json", ".svg", ".ico", ".woff2", ".txt"}
 TIPOS_BINARIOS = {".woff2": "font/woff2"}
 # Las pantallas y rutas del modulo de reservas no existen mientras este apagado.
 RUTAS = {
     ("GET", "/api/sesion"): sesion.get,
+    ("GET", "/api/publico"): publico.get,
     ("GET", "/api/admin_socios"): admin_socios.get,
     ("POST", "/api/admin_socios"): admin_socios.post,
+    ("GET", "/api/admin_contactos"): admin_contactos.get,
+    ("POST", "/api/contacto"): contacto.post,
     ("POST", "/api/login"): login.post,
     ("POST", "/api/logout"): logout.post,
     ("POST", "/api/solicitud"): solicitud.post,
@@ -70,7 +76,9 @@ class Manejador(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(cuerpo)))
-        self.send_header("Cache-Control", "no-cache")
+        # Las letras no cambian; se guardan un ano en el navegador.
+        cache = "public, max-age=31536000, immutable" if destino.suffix == ".woff2" else "no-cache"
+        self.send_header("Cache-Control", cache)
         _http.cabeceras_seguridad(self)
         self.end_headers()
         self.wfile.write(cuerpo)
