@@ -1,6 +1,17 @@
 const mensaje = document.getElementById('mensaje');
 const mostrarSeccion = (id, visible = true) => document.getElementById(id).classList.toggle('oculto', !visible);
 
+// Enciende el paso en curso y marca como hechos los anteriores.
+function marcarPaso(actual) {
+  document.getElementById('pasos').classList.remove('oculto');
+  for (const numero of [1, 2, 3]) {
+    let clase = 'pendiente';
+    if (numero < actual) clase = 'hecha';
+    if (numero === actual) clase = 'actual';
+    document.getElementById(`paso-${numero}`).className = `etapa-caja ${clase}`;
+  }
+}
+
 async function iniciar() {
   try {
     const sesion = await leerSesion();
@@ -14,6 +25,7 @@ async function iniciar() {
     mostrarSeccion('paso-inicio', !estado.activo);
     mostrarSeccion('aviso-obligatorio', estado.obligatorio && !estado.activo);
     document.getElementById('restantes').textContent = estado.codigos_restantes;
+    if (!estado.activo) marcarPaso(1);
   } catch (error) {
     mostrarMensaje(mensaje, error.message);
   } finally {
@@ -29,6 +41,7 @@ document.getElementById('iniciar').addEventListener('click', async (evento) => {
     document.getElementById('secreto').textContent = secreto;
     mostrarSeccion('paso-inicio', false);
     mostrarSeccion('paso-confirmar');
+    marcarPaso(2);
   } catch (error) {
     mostrarMensaje(mensaje, error.message);
     evento.target.disabled = false;
@@ -51,6 +64,7 @@ document.getElementById('paso-confirmar').addEventListener('submit', async (even
     mostrarSeccion('paso-confirmar', false);
     mostrarSeccion('volver');
     mostrarSeccion('paso-codigos');
+    marcarPaso(3);
     mostrarMensaje(mensaje, 'Doble factor activado.', 'exito');
   } catch (error) {
     mostrarMensaje(mensaje, error.message);

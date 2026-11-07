@@ -15,7 +15,7 @@ const armazon = (() => {
       { titulo: 'Socios', detalle: 'Solicitudes pendientes', enlace: '/admin_socios.html', dibujo: 'socios', tono: 'verde', clave: 'pendientes', aviso: true },
       { titulo: 'Bajas', detalle: 'Pedidos de baja', enlace: '/admin_socios.html', dibujo: 'bajas', tono: 'terracota', clave: 'bajas', aviso: true, soloMosaico: true },
       { titulo: 'Cuotas', detalle: 'Socios con la cuota vencida', enlace: '/admin_cuotas.html', dibujo: 'cuotas', tono: 'dorado', clave: 'vencidas', aviso: true },
-      { titulo: 'Mora', detalle: 'Socios sobre el límite de atraso', enlace: '/admin_mora.html', dibujo: 'mora', tono: 'terracota', clave: 'en_mora', aviso: true },
+      { titulo: 'Cuotas atrasadas', menu: 'Atrasos', detalle: 'Socios sobre el límite de atraso', enlace: '/admin_mora.html', dibujo: 'mora', tono: 'terracota', clave: 'en_mora', aviso: true },
       { titulo: 'Contacto', detalle: 'Mensajes recibidos', enlace: '/admin_contactos.html', dibujo: 'contacto', tono: 'azul', clave: 'mensajes', aviso: true },
     ] },
     { titulo: 'Producción', secciones: [

@@ -9,7 +9,7 @@ const plantasValidas = () => /^\d+$/.test(entradaPlantas.value)
 
 function pintarOpciones(destino, grupo, lista, textoOtra) {
   const recuadros = lista.map((item) => recuadroEleccion(grupo, String(item.id), item.nombre));
-  recuadros.push(recuadroEleccion(grupo, OTRA, textoOtra, { dibujo: 'mas' }));
+  recuadros.push(recuadroEleccion(grupo, OTRA, textoOtra, { dibujo: dibujoDe('mas') }));
   document.getElementById(destino).replaceChildren(...recuadros);
 }
 
@@ -80,8 +80,8 @@ async function cargar() {
   pintarOpciones('variedades', 'variedad', datos.geneticas, 'Otra variedad');
   pintarOpciones('salas', 'sala', datos.salas.filter((sala) => sala.tipo === 'cultivo'), 'Otra sala');
   document.getElementById('origenes').replaceChildren(
-    recuadroEleccion('origen', 'semilla', 'Semilla', { detalle: 'Nacen de semillas', dibujo: 'etapa-origen' }),
-    recuadroEleccion('origen', 'esqueje', 'Esqueje', { detalle: 'Salen de otra planta', dibujo: 'etapa-vegetativo' }),
+    recuadroEleccion('origen', 'semilla', 'Semilla', { detalle: 'Nacen de semillas', dibujo: dibujoCultivo('etapa-origen') }),
+    recuadroEleccion('origen', 'esqueje', 'Esqueje', { detalle: 'Salen de otra planta', dibujo: dibujoCultivo('etapa-vegetativo') }),
   );
   document.getElementById('nombre-lote').textContent = `Este lote se va a llamar ${datos.siguiente_codigo}.`;
   comprobar();

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_cuotas.js" defer></script>
 </head>
 <body>
@@ -21,58 +23,21 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
 
-    <form id="form-cuota" class="tarjeta">
-      <h2>Registrar un pago</h2>
-      <p class="nota">Registro manual de pagos en efectivo o por transferencia.</p>
-      <div class="rejilla-campos">
-        <div class="campo">
-          <label for="socio_id">Socio</label>
-          <select id="socio_id" name="socio_id" required></select>
-        </div>
-        <div class="campo">
-          <label for="periodo">Período</label>
-          <input id="periodo" name="periodo" type="month" required>
-        </div>
-        <div class="campo">
-          <label for="importe">Importe (ARS)</label>
-          <input id="importe" name="importe" inputmode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required>
-        </div>
-        <div class="campo">
-          <label for="pagado_en">Fecha de pago</label>
-          <input id="pagado_en" name="pagado_en" type="date" required>
-        </div>
-        <div class="campo">
-          <label for="metodo">Método</label>
-          <select id="metodo" name="metodo" required>
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
-        </div>
-      </div>
-      <button type="submit">Registrar pago</button>
-    </form>
-
-    <section class="tarjeta">
-      <h2>Estado de los socios</h2>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <table id="tabla" class="oculto">
-        <thead>
-          <tr>
-            <th scope="col">Número</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Cuota hasta</th>
-            <th scope="col">Estado</th>
-          </tr>
-        </thead>
-        <tbody id="filas"></tbody>
-      </table>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Últimos pagos</h2>
-      <div id="pagos"></div>
-    </section>
+    <div id="contenido" class="oculto">
+      <div id="cifras" class="cifras"></div>
+      <section class="bloque">
+        <h2>Socios</h2>
+        <p class="nota">Solo se anota aquí lo que se pagó en el local o por transferencia.</p>
+        <div id="filtro-cuota" class="elecciones filtros"></div>
+        <div id="socios" class="mosaico"></div>
+      </section>
+      <section class="bloque">
+        <h2>Últimos pagos</h2>
+        <div id="pagos" class="historial"></div>
+      </section>
+    </div>
   </main>
 </body>
 </html>

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_comunicados.js" defer></script>
 </head>
 <body>
@@ -21,52 +23,18 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
 
-    <form id="form-publicacion" class="tarjeta">
-      <h2>Publicar para socios activos</h2>
-      <div class="campo">
-        <label for="tipo">Tipo</label>
-        <select id="tipo" name="tipo">
-          <option value="comunicado">Comunicado</option>
-          <option value="documento">Documento</option>
-          <option value="asamblea">Asamblea</option>
-          <option value="acta">Acta</option>
-        </select>
-      </div>
-      <div class="campo">
-        <label for="titulo">Título</label>
-        <input id="titulo" name="titulo" maxlength="200" required>
-      </div>
-      <div id="campo-segmento" class="campo">
-        <label for="segmento">Destinatarios</label>
-        <select id="segmento" name="segmento">
-          <option value="todos">Todos los socios activos</option>
-          <option value="al_dia">Solo con la cuota al día</option>
-          <option value="morosos">Solo con la cuota atrasada</option>
-        </select>
-      </div>
-      <div id="campos-asamblea" class="rejilla-campos oculto">
-        <div class="campo">
-          <label for="fecha">Fecha y hora</label>
-          <input id="fecha" name="fecha" type="datetime-local">
-        </div>
-        <div class="campo">
-          <label for="lugar">Lugar</label>
-          <input id="lugar" name="lugar" maxlength="200">
-        </div>
-      </div>
-      <div class="campo">
-        <label for="cuerpo" id="etiqueta-cuerpo">Texto</label>
-        <textarea id="cuerpo" name="cuerpo" rows="7" required></textarea>
-      </div>
-      <button type="submit">Publicar</button>
-    </form>
-
-    <section class="tarjeta">
-      <h2>Publicado</h2>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <div id="lista"></div>
-    </section>
+    <div id="contenido" class="oculto">
+      <section class="bloque">
+        <h2>¿Qué querés publicar?</h2>
+        <div id="acciones" class="anotar"></div>
+      </section>
+      <section class="bloque">
+        <h2>Publicado</h2>
+        <div id="lista" class="historial"></div>
+      </section>
+    </div>
   </main>
 </body>
 </html>

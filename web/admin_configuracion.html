@@ -9,11 +9,13 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_configuracion.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="pagina pagina-ancha">
     <div class="cabecera">
       <h1>Configuración</h1>
       <div>
@@ -21,8 +23,12 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
-    <p id="estado-lista" class="cargando">Cargando…</p>
-    <div id="lista"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <p class="nota">Valores generales del sistema. Los marcados como provisionales dependen de los estatutos o del abogado.</p>
+      <div id="lista"></div>
+    </div>
   </main>
 </body>
 </html>

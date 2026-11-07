@@ -10,11 +10,12 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_calendario.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="pagina pagina-ancha">
     <div class="cabecera">
       <h1>Calendario</h1>
       <div>
@@ -23,9 +24,10 @@
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
     <p id="cargando" class="cargando">Cargando…</p>
+
     <div id="contenido" class="oculto">
-      <p class="nota">Próximos 60 días: lo que tu rol puede ver.</p>
-      <div id="dias"></div>
+      <p class="nota">Los próximos 60 días: lo que te toca ver según tu función.</p>
+      <div id="dias" class="mosaico"></div>
     </div>
   </main>
 </body>

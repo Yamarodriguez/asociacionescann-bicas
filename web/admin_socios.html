@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_socios.js" defer></script>
 </head>
 <body>
@@ -17,33 +19,24 @@
     <div class="cabecera">
       <h1>Socios</h1>
       <div>
+        <a class="boton secundario" href="/api/admin_socios_csv">Descargar la lista</a>
         <button type="button" id="salir" class="secundario">Salir</button>
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
-    <section class="tarjeta">
-      <div class="herramientas">
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <div id="cifras" class="cifras"></div>
+      <section class="bloque">
         <div class="campo">
           <label for="buscar">Buscar por nombre, documento o número</label>
           <input id="buscar" type="search" autocomplete="off">
         </div>
-        <a class="boton secundario" href="/api/admin_socios_csv">Descargar CSV</a>
-      </div>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <table id="tabla" class="oculto">
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Documento</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Número</th>
-            <th scope="col">Cuota hasta</th>
-            <th scope="col">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="filas"></tbody>
-      </table>
-    </section>
+        <div id="estados" class="elecciones filtros"></div>
+        <div id="socios" class="mosaico"></div>
+      </section>
+    </div>
   </main>
 </body>
 </html>

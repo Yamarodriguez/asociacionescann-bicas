@@ -77,6 +77,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Reservas y dispensa siguen sin construir: dependen de las preguntas 1 a 6 al abogado.
 - `plantas_autorizadas` avisa pero no bloquea, y sale del certificado. Sin notas de efecto, por la regla 7.
 - Sin fotos, sensores, WhatsApp ni IA por ahora.
+- 2026-11-07: «Vegetativo» se llama «Crecimiento» en pantalla; la clave interna sigue siendo `vegetativo`. Crecimiento también es una anotación con la altura en centímetros y su gráfico en la ficha.
 - `numero()` admite coma decimal en todo el sistema. Los puntos de miles se rechazan a propósito: «1.250» podría leerse como 1,25.
 
 ## Cultivo por recuadros
@@ -89,6 +90,15 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Cerrar o descartar un lote cierra sus tareas pendientes.
 - Las pruebas contra el servidor no ven si la pantalla envía bien los datos: el fallo de que no se guardaba ninguna anotación solo salió al recorrer la pantalla de verdad. Tras tocar una pantalla, recorrerla.
 - Tras guardar, `confirmar` no mueve la página; `avisar` sí, y solo queda para errores.
+
+## Recuadros en todos los módulos
+
+- 2026-11-07: la responsable pidió llevar a todos los módulos el estilo del cultivo. Sin tablas, sin formularios abiertos y sin `window.prompt`: cifras arriba, recuadros y ventanas que piden solo lo necesario.
+- Piezas comunes en `web/recuadros.js`, después de `gestion.js` y antes del código de cada pantalla. Lo propio del cultivo está en `web/cultivo_comun.js`.
+- `.oculto` lleva `!important`: si no, un estilo posterior con `display` lo anula.
+- En «Mora» la pantalla dice «Cuotas atrasadas» y el menú «Atrasos». La auditoría y el resto de nombres internos no cambian.
+- El nombre de cada ajuste de Configuración está en `AJUSTES`. Un ajuste nuevo se añade ahí.
+- Una migración ya aplicada no se vuelve a ejecutar aunque cambie su archivo: lo añadido a una migración local hay que probarlo aparte.
 
 ## Gestión interna
 

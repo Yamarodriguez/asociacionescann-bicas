@@ -10,6 +10,7 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_equipo.js" defer></script>
 </head>
 <body>
@@ -26,114 +27,45 @@
     <p id="cargando" class="cargando">Cargando…</p>
 
     <div id="contenido" class="oculto">
-      <section class="tarjeta">
-        <h2>Fichaje</h2>
-        <p id="estado-fichaje"></p>
-        <div id="boton-fichaje"></div>
-        <div id="fichajes" class="espaciada"></div>
-      </section>
-
-      <section class="tarjeta">
+      <section id="fichaje" class="lo-que-sigue bloque"></section>
+      <section class="bloque">
         <h2>Próximos turnos</h2>
-        <div id="turnos"></div>
+        <div id="turnos" class="mosaico"></div>
       </section>
-
-      <section class="tarjeta">
-        <h2>Notas de traspaso</h2>
-        <form id="form-nota">
-          <div class="campo">
-            <label for="texto">Nota para el turno siguiente</label>
-            <textarea id="texto" name="texto" rows="2" maxlength="2000" required></textarea>
-          </div>
-          <button type="submit" class="secundario">Guardar nota</button>
-        </form>
-        <div id="notas" class="espaciada"></div>
+      <section class="bloque">
+        <div class="titulo-progreso">
+          <h2>Notas para el turno siguiente</h2>
+          <button type="button" id="nueva-nota" class="secundario">Dejar una nota</button>
+        </div>
+        <div id="notas" class="historial"></div>
       </section>
-
-      <section class="tarjeta">
+      <section class="bloque">
         <h2>Proyectos</h2>
         <div class="tablero">
           <div>
             <h3>Pendiente</h3>
-            <div id="columna-pendiente"></div>
+            <div id="columna-pendiente" class="columna"></div>
           </div>
           <div>
             <h3>En curso</h3>
-            <div id="columna-en_curso"></div>
+            <div id="columna-en_curso" class="columna"></div>
           </div>
           <div>
             <h3>Hecho</h3>
-            <div id="columna-hecho"></div>
+            <div id="columna-hecho" class="columna"></div>
           </div>
         </div>
       </section>
-
-      <div id="gestion" class="oculto">
-        <form id="form-turno" class="tarjeta">
-          <h2>Nuevo turno</h2>
-          <div class="rejilla-campos">
-            <div class="campo">
-              <label for="turno-persona">Persona</label>
-              <select id="turno-persona" name="admin_id" required></select>
-            </div>
-            <div class="campo">
-              <label for="turno-fecha">Fecha</label>
-              <input id="turno-fecha" name="fecha" type="date" required>
-            </div>
-            <div class="campo">
-              <label for="franja">Franja</label>
-              <select id="franja" name="franja">
-                <option value="manana">Mañana</option>
-                <option value="tarde">Tarde</option>
-                <option value="noche">Noche</option>
-                <option value="guardia">Guardia</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="secundario">Guardar turno</button>
-        </form>
-
-        <form id="form-proyecto" class="tarjeta">
-          <h2>Nuevo proyecto</h2>
-          <div class="rejilla-campos">
-            <div class="campo">
-              <label for="proyecto-titulo">Título</label>
-              <input id="proyecto-titulo" name="titulo" maxlength="200" required>
-            </div>
-            <div class="campo">
-              <label for="proyecto-responsable">Responsable</label>
-              <select id="proyecto-responsable" name="responsable_id"></select>
-            </div>
-          </div>
-          <button type="submit" class="secundario">Crear proyecto</button>
-        </form>
-
-        <section class="tarjeta">
-          <h2>Tareas recurrentes</h2>
-          <div id="recurrentes"></div>
-          <form id="form-recurrente" class="espaciada">
-            <div class="rejilla-campos">
-              <div class="campo">
-                <label for="recurrente-titulo">Título</label>
-                <input id="recurrente-titulo" name="titulo" maxlength="200" required>
-              </div>
-              <div class="campo">
-                <label for="cada_dias">Cada cuántos días</label>
-                <input id="cada_dias" name="cada_dias" type="number" min="1" max="366" required>
-              </div>
-              <div class="campo">
-                <label for="proxima_en">Primera vez</label>
-                <input id="proxima_en" name="proxima_en" type="date" required>
-              </div>
-              <div class="campo">
-                <label for="recurrente-responsable">Responsable</label>
-                <select id="recurrente-responsable" name="asignada_a"></select>
-              </div>
-            </div>
-            <button type="submit" class="secundario">Crear tarea recurrente</button>
-          </form>
-        </section>
-      </div>
+      <section id="bloque-recurrentes" class="bloque oculto">
+        <h2>Tareas que se repiten</h2>
+        <div id="recurrentes" class="mosaico"></div>
+      </section>
+      <section class="bloque">
+        <details class="plegable">
+          <summary>Últimos fichajes</summary>
+          <div id="fichajes" class="historial"></div>
+        </details>
+      </section>
     </div>
   </main>
 </body>

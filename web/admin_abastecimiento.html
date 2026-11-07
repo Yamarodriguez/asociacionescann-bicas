@@ -10,6 +10,7 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_abastecimiento.js" defer></script>
 </head>
 <body>
@@ -26,81 +27,24 @@
     <p id="cargando" class="cargando">Cargando…</p>
 
     <div id="contenido" class="oculto">
-      <section class="tarjeta">
-        <h2>Pedidos a proveedores</h2>
+      <section class="bloque">
+        <h2>¿Qué necesitás pedir?</h2>
         <p id="regla" class="nota"></p>
-        <p id="sin-pedidos" class="estado-vacio oculto">Todavía no hay pedidos.</p>
-        <table id="tabla" class="oculto">
-          <thead>
-            <tr>
-              <th scope="col">Pedido</th>
-              <th scope="col">Proveedor</th>
-              <th scope="col">Insumos</th>
-              <th scope="col">Total</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="filas"></tbody>
-        </table>
+        <div id="acciones" class="anotar"></div>
       </section>
-
-      <form id="form-pedido" class="tarjeta">
-        <h2>Nuevo pedido</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="proveedor_id">Proveedor</label>
-            <select id="proveedor_id" name="proveedor_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="insumo_id">Insumo</label>
-            <select id="insumo_id" name="insumo_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="cantidad">Cantidad</label>
-            <input id="cantidad" name="cantidad" inputmode="decimal" required>
-          </div>
-          <div class="campo">
-            <label for="coste_unitario">Coste por unidad</label>
-            <input id="coste_unitario" name="coste_unitario" inputmode="decimal" required>
-          </div>
-        </div>
-        <button type="submit">Crear borrador</button>
-      </form>
-
-      <form id="form-faltantes" class="tarjeta">
-        <h2>Pedido con lo que falta</h2>
-        <p class="nota">Crea un borrador con todos los insumos por debajo del mínimo. Hasta cargar sus costes no se puede aprobar.</p>
-        <div class="campo">
-          <label for="faltantes-proveedor">Proveedor</label>
-          <select id="faltantes-proveedor" name="proveedor_id" required></select>
-        </div>
-        <button type="submit" class="secundario">Crear borrador</button>
-      </form>
-
-      <form id="form-proveedor" class="tarjeta">
-        <h2>Nuevo proveedor</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="nombre">Nombre</label>
-            <input id="nombre" name="nombre" maxlength="120" required>
-          </div>
-          <div class="campo">
-            <label for="contacto">Contacto</label>
-            <input id="contacto" name="contacto" maxlength="200">
-          </div>
-        </div>
-        <button type="submit" class="secundario">Crear proveedor</button>
-      </form>
-
-      <section class="tarjeta">
+      <section class="bloque">
+        <h2>Pedidos</h2>
+        <div id="pedidos" class="mosaico"></div>
+      </section>
+      <section class="bloque">
         <h2>Proveedores</h2>
-        <div id="proveedores"></div>
+        <div id="proveedores" class="mosaico"></div>
       </section>
-
-      <section class="tarjeta">
-        <h2>Historial de costes</h2>
-        <div id="costes"></div>
+      <section class="bloque">
+        <details class="plegable">
+          <summary>Historial de costes</summary>
+          <div id="costes" class="historial"></div>
+        </details>
       </section>
     </div>
   </main>

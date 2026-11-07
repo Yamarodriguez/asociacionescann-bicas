@@ -11,15 +11,18 @@ const VE_CULTIVO = ['comision_directiva', 'coordinador_cultivo', 'cultivador', '
 const GESTIONA_TAREAS = ['comision_directiva', 'coordinador_cultivo'];
 const VE_INVENTARIO = ['comision_directiva', 'coordinador_cultivo'];
 const ETAPAS = ['origen', 'vegetativo', 'floracion', 'cosecha', 'secado', 'curado', 'envasado'];
-const TIPOS_REGISTRO = ['riego', 'nutrientes', 'poda', 'aplicacion', 'incidencia', 'medicion', 'baja', 'destruccion'];
+const TIPOS_REGISTRO = ['riego', 'nutrientes', 'poda', 'aplicacion', 'incidencia', 'medicion', 'crecimiento', 'baja', 'destruccion'];
 const TIPOS_SALA = ['cultivo', 'secado', 'curado'];
 const ORIGENES = ['semilla', 'esqueje'];
 const MOVIMIENTOS = ['ingreso', 'consumo', 'ajuste'];
 const MAXIMO_PLANTAS = 500;
 // Lo que ya dice el propio recuadro: un riego no obliga a escribir nada.
-const DETALLE_POR_DEFECTO = { riego: 'Riego', nutrientes: 'Nutrientes', poda: 'Poda', medicion: 'Medición' };
+const DETALLE_POR_DEFECTO = { riego: 'Riego', nutrientes: 'Nutrientes', poda: 'Poda', medicion: 'Medición', crecimiento: 'Crecimiento' };
 const gramos = (valor) => String(Number(valor)).replace('.', ',');
-const textoEtapa = (etapa) => `Pasó a ${etapa === 'floracion' ? 'floración' : etapa}`;
+const NOMBRE_ETAPA = { vegetativo: 'crecimiento', floracion: 'floración' };
+const textoEtapa = (etapa) => `Pasó a ${NOMBRE_ETAPA[etapa] ?? etapa}`;
+// Los lotes anteriores guardaron el cambio con la palabra técnica.
+const ES_CAMBIO_A = (registro, etapa) => registro.tipo === 'etapa' && [textoEtapa(etapa), `Pasó a ${etapa}`].includes(registro.detalle);
 
 export async function moduloActivo() {
   return transaccion(async (q) => (await configuracion(q, 'modulo_cultivo_activo')) === 'true');
@@ -102,6 +105,8 @@ export async function verCultivo(c) {
       `SELECT l.id, l.codigo, l.etapa, l.estado, l.cantidad_plantas, l.origen, l.creado_en, l.cosecha_prevista, l.sala_id,
        g.nombre AS genetica, s.nombre AS sala,
        (SELECT max(r.creado_en) FROM registros_lote r WHERE r.lote_id = l.id) AS ultimo_registro,
+       (SELECT r.altura_cm FROM registros_lote r WHERE r.lote_id = l.id AND r.altura_cm IS NOT NULL
+        ORDER BY r.creado_en DESC, r.id DESC LIMIT 1) AS ultima_altura,
        (SELECT count(*)::int FROM tareas t WHERE t.lote_id = l.id AND t.completada_en IS NULL) AS tareas_pendientes
        FROM lotes l JOIN geneticas g ON g.id = l.genetica_id JOIN salas s ON s.id = l.sala_id
        ORDER BY l.estado = 'activo' DESC, l.creado_en DESC LIMIT 300`,
@@ -138,7 +143,7 @@ export async function verLote(c) {
     return {
       lote,
       registros: await q(
-        `SELECT r.id, r.tipo, r.detalle, r.ph, r.ec, r.temperatura, r.humedad, r.litros, r.plantas, r.testigos, r.creado_en,
+        `SELECT r.id, r.tipo, r.detalle, r.ph, r.ec, r.temperatura, r.humedad, r.litros, r.altura_cm, r.plantas, r.testigos, r.creado_en,
          a.email AS responsable, p.codigo AS planta FROM registros_lote r JOIN admins a ON a.id = r.creado_por
          LEFT JOIN plantas p ON p.id = r.planta_id
          WHERE r.lote_id = $1 ORDER BY r.creado_en DESC, r.id DESC LIMIT 500`, [id],
@@ -161,7 +166,7 @@ export async function verLote(c) {
     };
   });
   const fechasEtapa = Object.fromEntries(ETAPAS.map((etapa) => [
-    etapa, datos.registros.find((r) => r.tipo === 'etapa' && r.detalle === textoEtapa(etapa))?.creado_en ?? null,
+    etapa, datos.registros.find((registro) => ES_CAMBIO_A(registro, etapa))?.creado_en ?? null,
   ]));
   fechasEtapa.origen = datos.lote.creado_en;
   const { peso_humedo_g: humedo, peso_seco_g: seco } = datos.lote;
@@ -398,6 +403,7 @@ export async function registrar(c) {
   const detalle = texto(datos, 'detalle', 1000, false) ?? DETALLE_POR_DEFECTO[datos.tipo];
   if (!detalle) throw new ErrorHttp(422, 'Contá brevemente qué pasó.');
   const litros = datos.tipo === 'riego' ? numero(datos, 'litros', { maximo: 100000 }) : null;
+  const altura = datos.tipo === 'crecimiento' ? positivo(datos, 'altura_cm', { maximo: 9999 }) : null;
   const medidas = [
     numero(datos, 'ph', { maximo: 14 }), numero(datos, 'ec', { maximo: 100 }),
     numero(datos, 'temperatura', { maximo: 100 }), numero(datos, 'humedad', { maximo: 100 }),
@@ -431,9 +437,9 @@ export async function registrar(c) {
       );
     }
     const filas = await q(
-      `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, temperatura, humedad, litros, plantas, testigos, planta_id, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-      [datos.lote_id, datos.tipo, detalle, ...medidas, litros, plantas, testigos, plantaId, admin.id],
+      `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, temperatura, humedad, litros, altura_cm, plantas, testigos, planta_id, creado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+      [datos.lote_id, datos.tipo, detalle, ...medidas, litros, altura, plantas, testigos, plantaId, admin.id],
     );
     if (gasto) {
       await moverStock(q, admin.id, {

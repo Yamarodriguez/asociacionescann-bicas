@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_inventario.js" defer></script>
 </head>
 <body>
@@ -22,131 +24,29 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
 
-    <section class="tarjeta">
-      <h2>Insumos</h2>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <table id="tabla" class="oculto">
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Stock</th>
-            <th scope="col">Mínimo</th>
-            <th scope="col">Estado</th>
-          </tr>
-        </thead>
-        <tbody id="filas"></tbody>
-      </table>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Equipos</h2>
-      <div id="equipos"></div>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Averías</h2>
-      <div id="averias"></div>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Últimos movimientos</h2>
-      <div id="movimientos"></div>
-    </section>
-
-    <div id="gestion" class="oculto">
-      <form id="form-movimiento" class="tarjeta">
-        <h2>Registrar movimiento</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="insumo_id">Insumo</label>
-            <select id="insumo_id" name="insumo_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="tipo">Tipo</label>
-            <select id="tipo" name="tipo">
-              <option value="ingreso">Ingreso</option>
-              <option value="consumo">Consumo</option>
-              <option value="ajuste">Ajuste al alza</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label for="cantidad">Cantidad</label>
-            <input id="cantidad" name="cantidad" inputmode="decimal" required>
-          </div>
-          <div class="campo">
-            <label for="motivo">Motivo</label>
-            <input id="motivo" name="motivo" maxlength="300" required>
-          </div>
-        </div>
-        <button type="submit">Registrar</button>
-      </form>
-
-      <form id="form-insumo" class="tarjeta">
-        <h2>Nuevo insumo</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="insumo-nombre">Nombre</label>
-            <input id="insumo-nombre" name="nombre" maxlength="120" required>
-          </div>
-          <div class="campo">
-            <label for="categoria">Categoría</label>
-            <input id="categoria" name="categoria" maxlength="60" required>
-          </div>
-          <div class="campo">
-            <label for="unidad">Unidad</label>
-            <input id="unidad" name="unidad" maxlength="20" required>
-          </div>
-          <div class="campo">
-            <label for="stock_minimo">Stock mínimo</label>
-            <input id="stock_minimo" name="stock_minimo" inputmode="decimal">
-          </div>
-        </div>
-        <button type="submit" class="secundario">Crear insumo</button>
-      </form>
-
-      <form id="form-equipo" class="tarjeta">
-        <h2>Nuevo equipo</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="equipo-nombre">Nombre</label>
-            <input id="equipo-nombre" name="nombre" maxlength="120" required>
-          </div>
-          <div class="campo">
-            <label for="equipo-tipo">Tipo</label>
-            <input id="equipo-tipo" name="tipo" maxlength="60" required>
-          </div>
-          <div class="campo">
-            <label for="proximo_mantenimiento">Próximo mantenimiento</label>
-            <input id="proximo_mantenimiento" name="proximo_mantenimiento" type="date">
-          </div>
-          <div class="campo">
-            <label for="frecuencia_dias">Repetir cada (días)</label>
-            <input id="frecuencia_dias" name="frecuencia_dias" type="number" min="1" max="3660">
-          </div>
-        </div>
-        <button type="submit" class="secundario">Crear equipo</button>
-      </form>
-
-      <form id="form-averia" class="tarjeta">
-        <h2>Registrar avería</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="equipo_id">Equipo</label>
-            <select id="equipo_id" name="equipo_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="averia-detalle">Detalle</label>
-            <input id="averia-detalle" name="detalle" maxlength="500" required>
-          </div>
-          <div class="campo">
-            <label for="coste">Coste</label>
-            <input id="coste" name="coste" inputmode="decimal">
-          </div>
-        </div>
-        <button type="submit" class="secundario">Guardar avería</button>
-      </form>
+    <div id="contenido" class="oculto">
+      <div id="cifras" class="cifras"></div>
+      <section class="bloque">
+        <h2>Insumos</h2>
+        <p class="nota">Cuando entre o se use algo, tocá el botón de ese insumo.</p>
+        <div id="insumos" class="mosaico"></div>
+      </section>
+      <section class="bloque">
+        <h2>Equipos</h2>
+        <div id="equipos" class="mosaico"></div>
+      </section>
+      <section class="bloque">
+        <h2>Averías</h2>
+        <div id="averias" class="mosaico"></div>
+      </section>
+      <section class="bloque">
+        <details class="plegable">
+          <summary>Últimos movimientos</summary>
+          <div id="movimientos" class="historial"></div>
+        </details>
+      </section>
     </div>
   </main>
 </body>

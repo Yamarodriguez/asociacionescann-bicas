@@ -15,7 +15,7 @@
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
   <main class="pagina">
     <div class="cabecera">
-      <h1>Doble factor</h1>
+      <h1>Seguridad de tu cuenta</h1>
       <div>
         <a class="boton secundario oculto" id="volver" href="/admin.html">Volver al panel</a>
         <button type="button" id="salir" class="secundario">Salir</button>
@@ -24,14 +24,23 @@
     <div id="mensaje" class="mensaje" role="alert"></div>
     <p id="cargando" class="cargando">Cargando…</p>
 
-    <section id="estado-activo" class="tarjeta oculto">
-      <p>El doble factor está activado en tu cuenta.</p>
-      <p>Códigos de recuperación disponibles: <strong id="restantes"></strong></p>
+    <p class="nota">El doble factor pide, además de tu contraseña, un código que genera tu celular. Así nadie entra solo con tu contraseña.</p>
+    <ol id="pasos" class="recorrido recorrido-tres oculto">
+      <li id="paso-1" class="etapa-caja"><strong>1. Preparar</strong><span class="nota">Tené el celular a mano</span></li>
+      <li id="paso-2" class="etapa-caja"><strong>2. Escanear</strong><span class="nota">Con tu aplicación</span></li>
+      <li id="paso-3" class="etapa-caja"><strong>3. Guardar</strong><span class="nota">Tus códigos</span></li>
+    </ol>
+
+    <section id="estado-activo" class="lo-que-sigue oculto">
+      <div>
+        <strong>El doble factor está activado en tu cuenta.</strong>
+        <p class="nota">Códigos de recuperación disponibles: <span id="restantes"></span></p>
+      </div>
     </section>
 
     <section id="paso-inicio" class="tarjeta oculto">
       <p id="aviso-obligatorio" class="oculto">Para usar el panel tenés que activar el doble factor.</p>
-      <p>Vas a necesitar una aplicación de autenticación en tu teléfono.</p>
+      <p>Vas a necesitar una aplicación de autenticación en tu celular, por ejemplo la que ya uses para otras cuentas.</p>
       <button type="button" id="iniciar">Empezar</button>
     </section>
 

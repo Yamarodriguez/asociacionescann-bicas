@@ -10,11 +10,12 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_tareas.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="pagina pagina-ancha">
     <div class="cabecera">
       <h1>Tareas</h1>
       <div>
@@ -25,45 +26,25 @@
     <p id="cargando" class="cargando">Cargando…</p>
 
     <div id="contenido" class="oculto">
-      <div class="rejilla-campos">
-        <div class="campo">
-          <label for="vista">Ver</label>
-          <select id="vista">
-            <option value="hoy">Hoy</option>
-            <option value="pendientes">Todas las pendientes</option>
-            <option value="hechas">Hechas</option>
-          </select>
-        </div>
-        <div class="campo">
-          <label for="filtro-persona">Persona</label>
-          <select id="filtro-persona"></select>
-        </div>
-        <div class="campo">
-          <label for="filtro-sala">Sala</label>
-          <select id="filtro-sala"></select>
-        </div>
-      </div>
-      <p id="vacio" class="estado-vacio oculto">No hay tareas para mostrar.</p>
-      <div id="lista"></div>
-
-      <form id="form-tarea" class="tarjeta oculto">
-        <h2>Nueva tarea</h2>
-        <div class="campo">
-          <label for="titulo">Título</label>
-          <input id="titulo" name="titulo" maxlength="200" required>
-        </div>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="vence_en">Vence</label>
-            <input id="vence_en" name="vence_en" type="date" required>
+      <div id="cifras" class="cifras"></div>
+      <section class="bloque">
+        <h2>Qué hay que hacer</h2>
+        <div id="vistas" class="elecciones filtros"></div>
+        <details class="plegable">
+          <summary>Filtrar por persona o sala</summary>
+          <div class="rejilla-campos">
+            <div class="campo">
+              <label for="filtro-persona">Persona</label>
+              <select id="filtro-persona"></select>
+            </div>
+            <div class="campo">
+              <label for="filtro-sala">Sala</label>
+              <select id="filtro-sala"></select>
+            </div>
           </div>
-          <div class="campo">
-            <label for="asignada_a">Responsable</label>
-            <select id="asignada_a" name="asignada_a"></select>
-          </div>
-        </div>
-        <button type="submit">Crear tarea</button>
-      </form>
+        </details>
+        <div id="lista" class="mosaico"></div>
+      </section>
     </div>
   </main>
 </body>

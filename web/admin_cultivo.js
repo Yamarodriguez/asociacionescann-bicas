@@ -1,17 +1,5 @@
 let coordina = false;
 
-function cajaCifra(numero, titulo, detalle, { dibujo, alerta = false, enlace } = {}) {
-  const caja = nuevo(enlace ? 'a' : 'div', alerta ? 'cifra-caja alerta' : 'cifra-caja');
-  if (enlace) caja.href = enlace;
-  const circulo = nuevo('span', 'cifra-dibujo');
-  circulo.append(dibujoCultivo(dibujo));
-  const textos = nuevo('div');
-  textos.append(nuevo('p', 'cifra-numero', numero), nuevo('p', 'cifra-titulo', titulo));
-  if (detalle) textos.append(nuevo('p', 'nota', detalle));
-  caja.append(circulo, textos);
-  return caja;
-}
-
 function pintarCifras(plantas, lotes) {
   const activos = lotes.filter((lote) => lote.estado === 'activo');
   const pendientes = activos.reduce((total, lote) => total + lote.tareas_pendientes, 0);
@@ -19,9 +7,9 @@ function pintarCifras(plantas, lotes) {
     ? `De ${plantas.autorizadas} autorizadas${plantas.excede ? ': se superó el límite' : ''}`
     : 'Falta cargar el límite del certificado';
   document.getElementById('cifras').replaceChildren(
-    cajaCifra(activos.length, activos.length === 1 ? 'Lote en marcha' : 'Lotes en marcha', '', { dibujo: 'etapa-vegetativo' }),
-    cajaCifra(plantas.florecidas, 'Plantas en floración', detallePlantas, { dibujo: 'etapa-floracion', alerta: plantas.excede }),
-    cajaCifra(pendientes, 'Tareas de cultivo', 'Ver lo que falta hacer', { dibujo: 'hecho', enlace: '/admin_tareas.html' }),
+    cajaCifra(activos.length, activos.length === 1 ? 'Lote en marcha' : 'Lotes en marcha', '', { dibujo: dibujoCultivo('etapa-vegetativo') }),
+    cajaCifra(plantas.florecidas, 'Plantas en floración', detallePlantas, { dibujo: dibujoCultivo('etapa-floracion'), alerta: plantas.excede }),
+    cajaCifra(pendientes, 'Tareas de cultivo', 'Ver lo que falta hacer', { dibujo: dibujoDe('hecho'), enlace: '/admin_tareas.html' }),
   );
 }
 
@@ -42,26 +30,14 @@ function tarjetaLote(lote) {
   const etapa = nuevo('p', 'lote-etapa', estado);
   const lugar = nuevo('p', 'nota', `${lote.sala} · ${textoPlantas(lote.cantidad_plantas)}`);
   const ultimo = nuevo('p', 'nota', `Última anotación: ${haceCuanto(lote.ultimo_registro).toLowerCase()}`);
-  tarjeta.append(cabeza, etapa, pasosEtapa(lote.etapa, cerrado), lugar, ultimo);
+  tarjeta.append(cabeza, etapa, pasosEtapa(lote.etapa, cerrado), lugar);
+  if (lote.ultima_altura) tarjeta.append(nuevo('p', 'nota', `Altura: ${cifra(lote.ultima_altura)} cm`));
+  tarjeta.append(ultimo);
   if (lote.tareas_pendientes) {
     const tareas = lote.tareas_pendientes === 1 ? '1 tarea pendiente' : `${lote.tareas_pendientes} tareas pendientes`;
     tarjeta.append(etiquetaDe(tareas, true));
   }
   return tarjeta;
-}
-
-function recuadroNuevo(titulo, detalle, alPulsar) {
-  const elemento = nuevo(typeof alPulsar === 'string' ? 'a' : 'button', 'recuadro-nuevo');
-  if (typeof alPulsar === 'string') {
-    elemento.href = alPulsar;
-  } else {
-    elemento.type = 'button';
-    elemento.addEventListener('click', alPulsar);
-  }
-  const mas = nuevo('span', 'recuadro-mas');
-  mas.append(dibujoCultivo('mas'));
-  elemento.append(mas, nuevo('strong', '', titulo), nuevo('span', 'nota', detalle));
-  return elemento;
 }
 
 function pintarLotes(lotes) {

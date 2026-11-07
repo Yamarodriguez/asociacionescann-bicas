@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_auditoria.js" defer></script>
 </head>
 <body>
@@ -21,21 +23,16 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
-    <section class="tarjeta">
-      <p class="nota">Últimas 300 acciones. Este registro no se puede modificar.</p>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <table id="tabla" class="oculto">
-        <thead>
-          <tr>
-            <th scope="col">Fecha</th>
-            <th scope="col">Responsable</th>
-            <th scope="col">Acción</th>
-            <th scope="col">Sobre</th>
-          </tr>
-        </thead>
-        <tbody id="filas"></tbody>
-      </table>
-    </section>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <p class="nota">Las últimas 300 acciones. Este registro no se puede modificar.</p>
+      <div class="campo">
+        <label for="buscar">Buscar</label>
+        <input id="buscar" type="search" autocomplete="off">
+      </div>
+      <div id="lista" class="historial"></div>
+    </div>
   </main>
 </body>
 </html>

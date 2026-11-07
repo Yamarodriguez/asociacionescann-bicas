@@ -1,40 +1,30 @@
-const estadoLista = document.getElementById('estado-lista');
+const buscar = document.getElementById('buscar');
+let registros = [];
 
-function celda(etiqueta, texto) {
-  const td = document.createElement('td');
-  td.dataset.etiqueta = etiqueta;
-  td.textContent = texto;
-  return td;
+const textoAccion = (registro) => {
+  const texto = registro.accion.replaceAll('_', ' ');
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+};
+const sobreQue = (registro) => [registro.entidad, registro.entidad_id, registro.detalle].filter(Boolean).join(' ');
+const responsable = (registro) => (registro.responsable ? nombreCorto(registro.responsable) : 'Sistema o socio');
+
+function pintar() {
+  const texto = buscar.value.trim().toLowerCase();
+  const visibles = registros.filter((registro) => !texto
+    || `${registro.accion} ${sobreQue(registro)} ${responsable(registro)}`.replaceAll('_', ' ').toLowerCase().includes(texto));
+  pintarEn('lista', visibles.map((registro) => filaApunte({
+    titulo: textoAccion(registro),
+    detalle: sobreQue(registro),
+    pie: `${momento(registro.creado_en)} · ${responsable(registro)}`,
+    dibujo: dibujoDe('auditoria'),
+  })), registros.length ? 'Nada coincide con la búsqueda.' : 'Todavía no hay registros.');
 }
 
-function fila(registro) {
-  const tr = document.createElement('tr');
-  const sobre = [registro.entidad, registro.entidad_id, registro.detalle].filter(Boolean).join(' ');
-  tr.append(
-    celda('Fecha', new Date(registro.creado_en).toLocaleString('es-AR')),
-    celda('Responsable', registro.responsable ?? 'Sistema o socio'),
-    celda('Acción', registro.accion.replaceAll('_', ' ')),
-    celda('Sobre', sobre),
-  );
-  return tr;
+async function cargar() {
+  ({ auditoria: registros } = await pedir('/api/admin_auditoria'));
+  pintar();
 }
 
-async function iniciar() {
-  try {
-    const sesion = await leerSesion();
-    if (!sesion || sesion.tipo !== 'admin') {
-      location.href = '/login.html';
-      return;
-    }
-    const { auditoria } = await pedir('/api/admin_auditoria');
-    document.getElementById('filas').replaceChildren(...auditoria.map(fila));
-    document.getElementById('tabla').classList.toggle('oculto', auditoria.length === 0);
-    estadoLista.className = auditoria.length ? 'oculto' : 'estado-vacio';
-    estadoLista.textContent = 'Todavía no hay registros.';
-  } catch (error) {
-    estadoLista.className = 'oculto';
-    mostrarMensaje(document.getElementById('mensaje'), error.message);
-  }
-}
+buscar.addEventListener('input', pintar);
 
-iniciar();
+arrancar(cargar);

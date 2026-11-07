@@ -1,78 +1,141 @@
+const COLUMNAS = ['pendiente', 'en_curso', 'hecho'];
+const NOMBRE_COLUMNA = { pendiente: 'Pendiente', en_curso: 'En curso', hecho: 'Hecho' };
+const FRANJAS = [
+  { valor: 'manana', texto: 'Mañana' }, { valor: 'tarde', texto: 'Tarde' },
+  { valor: 'noche', texto: 'Noche' }, { valor: 'guardia', texto: 'Guardia' },
+];
+let actual = null;
+
 const accionEquipo = async (datos, texto) => {
   await pedir('/api/equipo', datos);
-  avisar(texto, 'exito');
+  confirmar(texto);
   await cargar();
 };
-const COLUMNAS = ['pendiente', 'en_curso', 'hecho'];
-
-function tarjetaProyecto(proyecto, gestiona) {
-  const articulo = document.createElement('article');
-  articulo.className = 'tarjeta';
-  const titulo = document.createElement('p');
-  titulo.textContent = proyecto.titulo;
-  const responsable = document.createElement('p');
-  responsable.className = 'nota';
-  responsable.textContent = proyecto.responsable ?? 'Sin responsable';
-  articulo.append(titulo, responsable);
-  if (gestiona) {
-    for (const columna of COLUMNAS.filter((c) => c !== proyecto.columna)) {
-      articulo.append(botonAccion(`Pasar a ${nombreCultivo(columna)}`, () => accionEquipo(
-        { accion: 'mover_proyecto', id: proyecto.id, columna }, 'Proyecto movido.',
-      )), ' ');
-    }
-  }
-  return articulo;
-}
+const numeroDe = (valor) => (valor ? Number(valor) : null);
+const personas = (vacio) => [
+  ...(vacio ? [{ valor: '', texto: vacio }] : []),
+  ...actual.personas.map(({ id, email }) => ({ valor: String(id), texto: nombreCorto(email) })),
+];
 
 function pintarFichaje({ fichaje_abierto: abierto, fichajes }) {
-  document.getElementById('estado-fichaje').textContent = abierto
-    ? `Entrada registrada: ${momento(abierto.entrada_en)}` : 'No tenés una entrada abierta.';
+  const textos = nuevo('div');
+  textos.append(
+    nuevo('strong', '', abierto ? 'Estás trabajando' : 'No estás fichado'),
+    nuevo('p', 'nota', abierto ? `Entraste: ${momento(abierto.entrada_en)}` : 'Fichá cuando empieces tu turno.'),
+  );
   const accion = abierto ? 'salida' : 'entrada';
-  document.getElementById('boton-fichaje').replaceChildren(botonAccion(
+  document.getElementById('fichaje').replaceChildren(textos, botonAccion(
     abierto ? 'Fichar salida' : 'Fichar entrada', () => accionEquipo({ accion }, 'Fichaje guardado.'), '',
   ));
-  parrafosEn('fichajes', fichajes.map((f) => `${f.persona} · ${momento(f.entrada_en)} · ${f.salida_en ? momento(f.salida_en) : 'en curso'}`), 'Sin fichajes.');
+  pintarEn('fichajes', fichajes.map((fichaje) => filaApunte({
+    titulo: nombreCorto(fichaje.persona),
+    detalle: `Entró ${momento(fichaje.entrada_en)}`,
+    pie: fichaje.salida_en ? `Salió ${momento(fichaje.salida_en)}` : 'Sigue trabajando',
+    dibujo: dibujoDe('reloj'),
+  })), 'Sin fichajes.');
 }
 
-function pintarTurnos(turnos, gestiona) {
-  const contenedor = document.getElementById('turnos');
-  if (!turnos.length) {
-    parrafosEn('turnos', [], 'No hay turnos cargados.');
-    return;
-  }
-  contenedor.replaceChildren(...turnos.map((turno) => {
-    const linea = document.createElement('p');
-    linea.textContent = `${fechaDia(turno.fecha)} · ${nombreCultivo(turno.franja)} · ${turno.persona} `;
-    if (gestiona) linea.append(botonAccion('Quitar', () => accionEquipo({ accion: 'quitar_turno', id: turno.id }, 'Turno quitado.')));
-    return linea;
+function nuevoTurno() {
+  abrirVentana({
+    titulo: 'Nuevo turno',
+    dibujo: dibujoDe('calendario'),
+    campos: [
+      { nombre: 'admin_id', etiqueta: '¿Quién trabaja?', tipo: 'lista', opciones: personas(), obligatorio: true },
+      { nombre: 'fecha', etiqueta: '¿Qué día?', tipo: 'fecha', obligatorio: true, valor: fechaLocal() },
+      { nombre: 'franja', etiqueta: '¿En qué turno?', tipo: 'elegir', opciones: FRANJAS, obligatorio: true },
+    ],
+    alGuardar: (datos) => accionEquipo({ ...datos, accion: 'crear_turno', admin_id: Number(datos.admin_id) }, 'Turno guardado.'),
+  });
+}
+
+function pintarTurnos({ turnos, gestiona }) {
+  const recuadros = turnos.map((turno) => recuadroFicha({
+    titulo: fechaDia(turno.fecha),
+    subtitulo: FRANJAS.find(({ valor }) => valor === turno.franja)?.texto ?? turno.franja,
+    lineas: [nombreCorto(turno.persona)],
+    acciones: gestiona ? [botonAccion('Quitar', () => accionEquipo({ accion: 'quitar_turno', id: turno.id }, 'Turno quitado.'))] : [],
   }));
+  if (gestiona) recuadros.push(recuadroNuevo('Agregar un turno', 'Mañana, tarde, noche o guardia', nuevoTurno));
+  pintarEn('turnos', recuadros, 'No hay turnos cargados.');
+}
+
+function nuevaNota() {
+  abrirVentana({
+    titulo: 'Nota para el turno siguiente',
+    dibujo: dibujoDe('contacto'),
+    campos: [{ nombre: 'texto', etiqueta: '¿Qué tiene que saber quien viene?', tipo: 'largo', largo: 2000, obligatorio: true }],
+    alGuardar: (datos) => accionEquipo({ ...datos, accion: 'nota' }, 'Nota guardada.'),
+  });
+}
+
+function recuadroProyecto(proyecto, gestiona) {
+  return recuadroFicha({
+    titulo: proyecto.titulo,
+    lineas: [nombreCorto(proyecto.responsable)],
+    acciones: gestiona ? COLUMNAS.filter((columna) => columna !== proyecto.columna).map((columna) => botonAccion(
+      `Pasar a ${NOMBRE_COLUMNA[columna]}`, () => accionEquipo({ accion: 'mover_proyecto', id: proyecto.id, columna }, 'Proyecto movido.'),
+    )) : [],
+  });
+}
+
+function nuevoProyecto() {
+  abrirVentana({
+    titulo: 'Nuevo proyecto',
+    campos: [
+      { nombre: 'titulo', etiqueta: '¿De qué se trata?', tipo: 'texto', obligatorio: true },
+      { nombre: 'responsable_id', etiqueta: '¿Quién lo lleva?', tipo: 'lista', opciones: personas('Sin responsable') },
+    ],
+    boton: 'Crear proyecto',
+    alGuardar: (datos) => accionEquipo({ ...datos, accion: 'crear_proyecto', responsable_id: numeroDe(datos.responsable_id) }, 'Proyecto creado.'),
+  });
+}
+
+function pintarProyectos({ proyectos, gestiona }) {
+  for (const columna of COLUMNAS) {
+    const fichas = proyectos.filter((proyecto) => proyecto.columna === columna).map((proyecto) => recuadroProyecto(proyecto, gestiona));
+    if (gestiona && columna === 'pendiente') fichas.push(recuadroNuevo('Agregar un proyecto', 'Algo más largo que una tarea', nuevoProyecto));
+    pintarEn(`columna-${columna}`, fichas, 'Nada por acá.');
+  }
+}
+
+function nuevaRecurrente() {
+  abrirVentana({
+    titulo: 'Tarea que se repite',
+    dibujo: dibujoDe('tareas'),
+    ayuda: 'Se crea sola cada vez que toca.',
+    campos: [
+      { nombre: 'titulo', etiqueta: '¿Qué hay que hacer?', tipo: 'texto', obligatorio: true },
+      { nombre: 'cada_dias', etiqueta: '¿Cada cuánto?', tipo: 'entero', minimo: 1, maximo: 366, unidad: 'días', obligatorio: true },
+      { nombre: 'proxima_en', etiqueta: '¿Cuándo es la primera vez?', tipo: 'fecha', obligatorio: true, valor: fechaLocal() },
+      { nombre: 'asignada_a', etiqueta: '¿Quién se encarga?', tipo: 'lista', opciones: personas('Sin responsable') },
+    ],
+    alGuardar: (datos) => accionEquipo({
+      ...datos, accion: 'crear_recurrente', cada_dias: Number(datos.cada_dias), asignada_a: numeroDe(datos.asignada_a),
+    }, 'Tarea creada.'),
+  });
 }
 
 async function cargar() {
-  const datos = await pedir('/api/equipo');
-  document.getElementById('gestion').classList.toggle('oculto', !datos.gestiona);
-  pintarFichaje(datos);
-  pintarTurnos(datos.turnos, datos.gestiona);
-  parrafosEn('notas', datos.notas.map((n) => `${momento(n.creado_en)} · ${n.autor}: ${n.texto}`), 'Todavía no hay notas.');
-  for (const columna of COLUMNAS) {
-    const proyectos = datos.proyectos.filter((p) => p.columna === columna);
-    document.getElementById(`columna-${columna}`).replaceChildren(...proyectos.map((p) => tarjetaProyecto(p, datos.gestiona)));
-  }
-  if (datos.gestiona) {
-    opcionesEn('turno-persona', datos.personas, 'email');
-    opcionesEn('proyecto-responsable', datos.personas, 'email', 'Sin responsable');
-    opcionesEn('recurrente-responsable', datos.personas, 'email', 'Sin responsable');
-    parrafosEn('recurrentes', datos.recurrentes.map((r) => `${r.titulo} · cada ${r.cada_dias} días · próxima ${fechaDia(r.proxima_en)} · ${r.responsable ?? 'Sin responsable'}`), 'Todavía no hay tareas recurrentes.');
+  actual = await pedir('/api/equipo');
+  const { gestiona } = actual;
+  pintarFichaje(actual);
+  pintarTurnos(actual);
+  pintarEn('notas', actual.notas.map((nota) => filaApunte({
+    titulo: nombreCorto(nota.autor), texto: nota.texto, pie: momento(nota.creado_en), dibujo: dibujoDe('contacto'),
+  })), 'Todavía no hay notas.');
+  pintarProyectos(actual);
+  document.getElementById('bloque-recurrentes').classList.toggle('oculto', !gestiona);
+  if (gestiona) {
+    const fichas = actual.recurrentes.map((tarea) => recuadroFicha({
+      titulo: tarea.titulo,
+      subtitulo: `Cada ${tarea.cada_dias} días`,
+      lineas: [`Próxima: ${fechaDia(tarea.proxima_en)}`, nombreCorto(tarea.responsable)],
+    }));
+    fichas.push(recuadroNuevo('Agregar una tarea que se repite', 'Riegos, limpiezas, revisiones', nuevaRecurrente));
+    pintarEn('recurrentes', fichas, '');
   }
 }
 
-const numeroDe = (valor) => (valor ? Number(valor) : null);
-
-enviarForm('form-nota', '/api/equipo', (datos) => ({ ...datos, accion: 'nota' }), cargar);
-enviarForm('form-turno', '/api/equipo', (datos) => ({ ...datos, accion: 'crear_turno', admin_id: Number(datos.admin_id) }), cargar);
-enviarForm('form-proyecto', '/api/equipo', (datos) => ({ ...datos, accion: 'crear_proyecto', responsable_id: numeroDe(datos.responsable_id) }), cargar);
-enviarForm('form-recurrente', '/api/equipo', (datos) => ({
-  ...datos, accion: 'crear_recurrente', cada_dias: Number(datos.cada_dias), asignada_a: numeroDe(datos.asignada_a),
-}), cargar);
+document.getElementById('nueva-nota').addEventListener('click', nuevaNota);
 
 arrancar(cargar);

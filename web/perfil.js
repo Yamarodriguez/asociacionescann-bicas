@@ -1,4 +1,5 @@
 const mensaje = document.getElementById('mensaje');
+let telefonoActual = '';
 
 const fechaCorta = (valor) => new Date(valor).toLocaleDateString('es-AR', { timeZone: 'UTC' });
 const fechaHora = (valor) => new Date(valor).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
@@ -34,11 +35,14 @@ function pintarCuota(perfil, cuotas) {
     const hasta = fechaCorta(perfil.cuota_vigente_hasta);
     const vigente = new Date(perfil.cuota_vigente_hasta) >= new Date(new Date().toDateString());
     estado.textContent = vigente ? `Al día hasta el ${hasta}.` : `Vencida desde el ${hasta}.`;
+    estado.classList.toggle('vencida', !vigente);
   }
   const filas = cuotas.map((cuota) => {
     const parrafo = document.createElement('p');
     parrafo.className = 'nota';
-    parrafo.textContent = `${cuota.periodo}: $ ${cuota.importe} (${cuota.metodo}, ${fechaCorta(cuota.pagado_en)})`;
+    const importe = Number(cuota.importe).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const mes = cuota.periodo.split('-').reverse().join('/');
+    parrafo.textContent = `${mes}: $ ${importe} (${cuota.metodo}, ${fechaCorta(cuota.pagado_en)})`;
     return parrafo;
   });
   document.getElementById('cuotas').replaceChildren(...filas);
@@ -51,7 +55,8 @@ function pintar(datos) {
   document.getElementById('alta').textContent = fechaCorta(perfil.alta_en);
   document.getElementById('nombre-completo').textContent = `${perfil.nombre} ${perfil.apellido}`;
   document.getElementById('correo').textContent = perfil.email;
-  document.getElementById('telefono').value = perfil.telefono ?? '';
+  telefonoActual = perfil.telefono ?? '';
+  document.getElementById('telefono-texto').textContent = telefonoActual || 'Sin cargar';
   if (datos.qr) {
     const imagen = document.getElementById('qr');
     imagen.src = datos.qr;
@@ -68,39 +73,34 @@ function pintar(datos) {
     'Todavía no hay actas.');
   if (perfil.baja_solicitada_en) {
     document.getElementById('baja-pedida').classList.remove('oculto');
-    document.getElementById('form-baja').classList.add('oculto');
+    document.getElementById('pedir-baja').classList.add('oculto');
   }
 }
 
-async function enviar(formulario, accion) {
-  const boton = formulario.querySelector('button[type=submit]');
-  boton.disabled = true;
-  try {
-    await accion();
-  } catch (error) {
-    mostrarMensaje(mensaje, error.message);
-  } finally {
-    boton.disabled = false;
-  }
-}
+document.getElementById('cambiar-telefono').addEventListener('click', () => abrirVentana({
+  titulo: 'Tu teléfono',
+  campos: [{ nombre: 'telefono', etiqueta: 'Teléfono', tipo: 'telefono', valor: telefonoActual }],
+  alGuardar: async ({ telefono }) => {
+    const respuesta = await pedir('/api/socio_portal', { telefono });
+    telefonoActual = telefono;
+    document.getElementById('telefono-texto').textContent = telefono || 'Sin cargar';
+    confirmar(respuesta.mensaje);
+  },
+}));
 
-document.getElementById('form-telefono').addEventListener('submit', (evento) => {
-  evento.preventDefault();
-  enviar(evento.target, async () => {
-    const respuesta = await pedir('/api/socio_portal', { telefono: evento.target.telefono.value });
-    mostrarMensaje(mensaje, respuesta.mensaje, 'exito');
-  });
-});
-
-document.getElementById('form-baja').addEventListener('submit', (evento) => {
-  evento.preventDefault();
-  enviar(evento.target, async () => {
-    const respuesta = await pedir('/api/socio_baja', { clave: evento.target.clave.value });
-    evento.target.classList.add('oculto');
+document.getElementById('pedir-baja').addEventListener('click', () => abrirVentana({
+  titulo: 'Pedir la baja',
+  ayuda: 'La administración va a tramitar tu pedido.',
+  campos: [{ nombre: 'clave', etiqueta: 'Confirmá con tu contraseña', tipo: 'clave', obligatorio: true }],
+  boton: 'Pedir la baja',
+  peligro: true,
+  alGuardar: async ({ clave }) => {
+    const respuesta = await pedir('/api/socio_baja', { clave });
+    document.getElementById('pedir-baja').classList.add('oculto');
     document.getElementById('baja-pedida').classList.remove('oculto');
-    mostrarMensaje(mensaje, respuesta.mensaje, 'exito');
-  });
-});
+    confirmar(respuesta.mensaje);
+  },
+}));
 
 async function iniciar() {
   const cargando = document.getElementById('cargando');

@@ -8,6 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/perfil.js" defer></script>
 </head>
 <body>
@@ -39,7 +40,7 @@
 
       <section class="tarjeta">
         <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#cuotas"></use></svg>Tu cuota</h2>
-        <p id="cuota-estado"></p>
+        <p id="cuota-estado" class="estado-cuota"></p>
         <div id="cuotas"></div>
       </section>
 
@@ -66,13 +67,8 @@
       <section class="tarjeta">
         <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#socios"></use></svg>Tus datos</h2>
         <p><span id="nombre-completo"></span><br><span id="correo"></span></p>
-        <form id="form-telefono">
-          <div class="campo">
-            <label for="telefono">Teléfono (opcional)</label>
-            <input id="telefono" name="telefono" type="tel" maxlength="30" autocomplete="tel">
-          </div>
-          <button type="submit" class="secundario">Guardar teléfono</button>
-        </form>
+        <p>Teléfono: <span id="telefono-texto"></span></p>
+        <button type="button" id="cambiar-telefono" class="secundario">Cambiar teléfono</button>
         <p class="nota espaciada">Para cambiar otro dato, escribí a la administración.</p>
         <a class="boton secundario" href="/api/socio_exportar">Descargar mis datos</a>
       </section>
@@ -80,13 +76,7 @@
       <section class="tarjeta">
         <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#bajas"></use></svg>Pedir la baja</h2>
         <p id="baja-pedida" class="oculto">Ya recibimos tu pedido de baja. La administración lo va a tramitar.</p>
-        <form id="form-baja">
-          <div class="campo">
-            <label for="baja-clave">Confirmá con tu contraseña</label>
-            <input id="baja-clave" name="clave" type="password" autocomplete="current-password" required>
-          </div>
-          <button type="submit" class="peligro">Pedir la baja</button>
-        </form>
+        <button type="button" id="pedir-baja" class="peligro">Pedir la baja</button>
       </section>
     </div>
   </main>

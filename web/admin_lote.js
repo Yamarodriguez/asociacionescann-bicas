@@ -29,6 +29,10 @@ function ultimaMedida(campo) {
   const previo = actual.registros.find((registro) => registro[campo] !== null);
   return previo ? `La última vez: ${cifra(previo[campo])}.` : undefined;
 }
+function ultimaAltura() {
+  const previa = actual.registros.find((registro) => registro.altura_cm !== null);
+  return previa ? `La última vez: ${cifra(previa.altura_cm)} cm.` : '';
+}
 const conUltima = (campo) => ({ ...campo, ayuda: [campo.ayuda, ultimaMedida(campo.nombre)].filter(Boolean).join(' ') });
 
 function productoUsado({ insumo_id: insumo, cantidad_insumo: cantidad }) {
@@ -39,6 +43,18 @@ function productoUsado({ insumo_id: insumo, cantidad_insumo: cantidad }) {
 const unir = (...partes) => partes.filter(Boolean).join('. ');
 
 const ANOTACIONES = [
+  {
+    tipo: 'crecimiento', titulo: 'Crecimiento', detalle: 'Cuánto miden y cómo se ven',
+    campos: () => [
+      {
+        nombre: 'altura_cm', etiqueta: '¿Cuánto miden?', tipo: 'decimal', maximo: 9999, unidad: 'cm', obligatorio: true,
+        ayuda: [ 'Medí una planta típica del lote, desde la tierra.', ultimaAltura() ].filter(Boolean).join(' '),
+      },
+      { nombre: 'clase', etiqueta: '¿Cómo se ven?', tipo: 'elegir', opciones: ['Muy bien', 'Bien', 'Regular', 'Mal'] },
+      NOTA,
+    ],
+    componer: (d) => unir(d.clase && `Se ven: ${d.clase.toLowerCase()}`, d.nota),
+  },
   {
     tipo: 'riego', titulo: 'Riego', detalle: 'Agua que les diste',
     campos: () => [
@@ -113,7 +129,7 @@ const ANOTACIONES = [
 function anotar(anotacion) {
   abrirVentana({
     titulo: anotacion.titulo,
-    dibujo: anotacion.tipo,
+    dibujo: dibujoCultivo(anotacion.tipo),
     ayuda: plantaCodigo ? `Queda anotado en la planta ${plantaCodigo}.` : undefined,
     campos: anotacion.campos(),
     boton: 'Anotar',
@@ -136,15 +152,9 @@ function anotar(anotacion) {
 
 function pintarAnotar() {
   document.getElementById('bloque-anotar').classList.toggle('oculto', !(activo() && anota()));
-  document.getElementById('anotar').replaceChildren(...ANOTACIONES.map((anotacion) => {
-    const boton = nuevo('button', 'anotar-recuadro');
-    boton.type = 'button';
-    boton.append(
-      dibujoCultivo(anotacion.tipo), nuevo('strong', '', anotacion.titulo), nuevo('span', 'nota', anotacion.detalle),
-    );
-    boton.addEventListener('click', () => anotar(anotacion));
-    return boton;
-  }));
+  document.getElementById('anotar').replaceChildren(...ANOTACIONES.map((anotacion) => (
+    recuadroAccion(anotacion.titulo, anotacion.detalle, dibujoCultivo(anotacion.tipo), () => anotar(anotacion))
+  )));
 }
 
 function pintarRecorrido() {
@@ -168,7 +178,7 @@ function pasarEtapa(siguiente) {
   const total = limite.florecidas + lote.cantidad_plantas;
   abrirVentana({
     titulo: `Pasar a ${siguiente.nombre}`,
-    dibujo: `etapa-${siguiente.clave}`,
+    dibujo: dibujoCultivo(`etapa-${siguiente.clave}`),
     ayuda: `${siguiente.texto}. Este paso no se puede deshacer: revisá que sea el momento.`,
     aviso: entraEnFlor && limite.autorizadas && total > limite.autorizadas
       ? `Con este lote serían ${total} plantas en floración y el certificado autoriza ${limite.autorizadas}.` : undefined,
@@ -188,7 +198,7 @@ function pasarEtapa(siguiente) {
 function ventanaAnalisis() {
   abrirVentana({
     titulo: 'Análisis de laboratorio',
-    dibujo: 'analisis',
+    dibujo: dibujoCultivo('analisis'),
     campos: [
       { nombre: 'laboratorio', etiqueta: 'Laboratorio', tipo: 'texto', largo: 120, obligatorio: true },
       { nombre: 'fecha', etiqueta: 'Fecha del análisis', tipo: 'fecha', obligatorio: true },
@@ -206,7 +216,7 @@ function ventanaAnalisis() {
 function cerrarLote() {
   abrirVentana({
     titulo: 'Cerrar el lote',
-    dibujo: 'etapa-envasado',
+    dibujo: dibujoCultivo('etapa-envasado'),
     ayuda: 'El lote queda terminado y ya no admite anotaciones.',
     boton: 'Sí, cerrar el lote',
     alGuardar: async () => {
@@ -220,7 +230,7 @@ function cerrarLote() {
 function descartarLote() {
   abrirVentana({
     titulo: 'Descartar el lote',
-    dibujo: 'destruccion',
+    dibujo: dibujoCultivo('destruccion'),
     ayuda: 'Las plantas salen del recuento y el lote ya no admite anotaciones. No se puede deshacer.',
     campos: [{ nombre: 'motivo', etiqueta: '¿Por qué se descarta?', tipo: 'largo', largo: 500, obligatorio: true }],
     boton: 'Sí, descartar',
@@ -236,7 +246,7 @@ function descartarLote() {
 function textoSiguiente(siguiente, sinAnalisis) {
   if (sinAnalisis) return 'Falta el análisis de laboratorio: sin él, el lote no se puede envasar.';
   const momentos = {
-    vegetativo: 'Cuando las plantas ya estén prendidas y creciendo.',
+    vegetativo: 'Cuando las plantas ya hayan prendido y empiecen a crecer.',
     floracion: 'Cuando empiecen a florecer. Te vamos a avisar si superás las plantas autorizadas.',
     cosecha: 'Cuando las cortes. Tené a mano la balanza: te vamos a pedir el peso húmedo.',
     secado: 'Cuando cuelgues todo a secar.',
@@ -340,7 +350,7 @@ function editarDato(campo, titulo, descripcion) {
 function corregirPeso(cual, titulo) {
   abrirVentana({
     titulo: `Corregir ${titulo.toLowerCase()}`,
-    dibujo: 'balanza',
+    dibujo: dibujoCultivo('balanza'),
     ayuda: 'El dato anterior y el motivo quedan guardados en el historial.',
     campos: [
       { nombre: 'peso_g', etiqueta: 'Peso correcto', tipo: 'decimal', maximo: 100000000, unidad: 'gramos', obligatorio: true },
@@ -420,6 +430,7 @@ const TITULOS_REGISTRO = {
 
 function medidasDe(registro) {
   return [
+    registro.altura_cm && `${cifra(registro.altura_cm)} cm de altura`,
     registro.litros && `${cifra(registro.litros)} litros`,
     registro.ph && `pH ${cifra(registro.ph)}`,
     registro.ec && `EC ${cifra(registro.ec)}`,
@@ -444,9 +455,30 @@ function apunte(registro) {
   if (registro.detalle !== titulo) cuerpo.append(nuevo('p', '', registro.detalle));
   const medidas = medidasDe(registro);
   if (medidas) cuerpo.append(nuevo('p', 'nota', medidas));
-  cuerpo.append(nuevo('p', 'nota', `${momento(registro.creado_en)} · ${quienAnoto(registro.responsable)}`));
+  cuerpo.append(nuevo('p', 'nota', `${momento(registro.creado_en)} · ${nombreCorto(registro.responsable)}`));
   fila.append(circulo, cuerpo);
   return fila;
+}
+
+function pintarCrecimiento() {
+  const mediciones = actual.registros.filter((registro) => registro.altura_cm !== null).reverse();
+  const primera = mediciones[0];
+  const ultima = mediciones[mediciones.length - 1];
+  const textos = !mediciones.length
+    ? []
+    : [
+      cajaCifra(`${cifra(ultima.altura_cm)} cm`, 'Altura actual', haceCuanto(ultima.creado_en), { dibujo: dibujoCultivo('crecimiento') }),
+      mediciones.length > 1
+        ? cajaCifra(`${cifra(Number(ultima.altura_cm) - Number(primera.altura_cm))} cm`, 'Creció en total', `En ${mediciones.length} mediciones`, { dibujo: dibujoCultivo('etapa-vegetativo') })
+        : null,
+    ].filter(Boolean);
+  document.getElementById('crecimiento-cifras').replaceChildren(...textos);
+  const contenedor = document.getElementById('crecimiento-grafico');
+  if (mediciones.length) {
+    contenedor.replaceChildren(graficoCrecimiento(mediciones));
+  } else {
+    contenedor.replaceChildren(nuevo('p', 'estado-vacio', 'Medí las plantas de vez en cuando: acá vas a ver cómo crecen.'));
+  }
 }
 
 function pintarHistorial() {
@@ -498,6 +530,7 @@ function pintar() {
   pintarLoQueSigue();
   pintarAnotar();
   pintarTareas();
+  pintarCrecimiento();
   pintarFicha();
   pintarHistorial();
 }

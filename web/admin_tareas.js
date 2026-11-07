@@ -1,30 +1,43 @@
-const accionTarea = async (datos, texto) => {
-  await pedir('/api/tareas', datos);
-  avisar(texto, 'exito');
-  await cargar();
-};
-const unicos = (valores) => [...new Set(valores.filter(Boolean))].sort();
 let estado = null;
 
-function selectorResponsable(tarea) {
-  const selector = document.createElement('select');
-  selector.setAttribute('aria-label', `Responsable de ${tarea.titulo}`);
-  const opciones = [{ id: '', email: 'Sin responsable' }, ...estado.equipo].map((persona) => {
-    const opcion = document.createElement('option');
-    opcion.value = persona.id;
-    opcion.textContent = persona.email;
-    return opcion;
+const unicos = (valores) => [...new Set(valores.filter(Boolean))].sort();
+const accionTarea = async (datos, texto) => {
+  await pedir('/api/tareas', datos);
+  confirmar(texto);
+  await cargar();
+};
+const opcionesPersonas = () => [
+  { valor: '', texto: 'Sin responsable' },
+  ...estado.equipo.map(({ id, email }) => ({ valor: String(id), texto: nombreCorto(email) })),
+];
+
+function cambiarResponsable(tarea) {
+  abrirVentana({
+    titulo: 'Cambiar responsable',
+    ayuda: tarea.titulo,
+    campos: [{
+      nombre: 'asignada_a', etiqueta: '¿Quién se encarga?', tipo: 'lista', opciones: opcionesPersonas(), valor: String(tarea.asignada_a ?? ''),
+    }],
+    alGuardar: ({ asignada_a: persona }) => accionTarea(
+      { accion: 'asignar', tarea_id: tarea.id, asignada_a: persona ? Number(persona) : null }, 'Responsable cambiado.',
+    ),
   });
-  selector.replaceChildren(...opciones);
-  selector.value = tarea.asignada_a ?? '';
-  selector.addEventListener('change', async () => {
-    try {
-      await accionTarea({ accion: 'asignar', tarea_id: tarea.id, asignada_a: selector.value ? Number(selector.value) : null }, 'Tarea reasignada.');
-    } catch (error) {
-      avisar(error.message);
-    }
+}
+
+function nuevaTarea() {
+  abrirVentana({
+    titulo: 'Nueva tarea',
+    dibujo: dibujoDe('tareas'),
+    campos: [
+      { nombre: 'titulo', etiqueta: '¿Qué hay que hacer?', tipo: 'texto', obligatorio: true },
+      { nombre: 'vence_en', etiqueta: '¿Para cuándo?', tipo: 'fecha', obligatorio: true, valor: estado.hoy },
+      { nombre: 'asignada_a', etiqueta: '¿Quién se encarga?', tipo: 'lista', opciones: opcionesPersonas() },
+    ],
+    boton: 'Crear tarea',
+    alGuardar: (datos) => accionTarea(
+      { ...datos, accion: 'crear', asignada_a: datos.asignada_a ? Number(datos.asignada_a) : null }, 'Tarea creada.',
+    ),
   });
-  return selector;
 }
 
 function puedeCompletar(tarea) {
@@ -32,33 +45,44 @@ function puedeCompletar(tarea) {
   return estado.rol === 'cultivador' && tarea.asignada_a === null;
 }
 
-function tarjeta(tarea) {
-  const articulo = document.createElement('article');
-  articulo.className = 'tarjeta';
-  const titulo = document.createElement('h2');
-  titulo.textContent = tarea.titulo;
-  const datos = document.createElement('p');
-  datos.className = 'nota';
-  const partes = [
-    `Vence: ${fechaDia(tarea.vence_en)}`, tarea.lote && `Lote: ${tarea.lote}`, tarea.sala,
-    tarea.responsable ?? 'Sin responsable',
-  ];
-  datos.textContent = partes.filter(Boolean).join(' · ');
-  articulo.append(titulo, datos);
-  if (tarea.vencida) articulo.append(etiquetaDe('vencida', true), ' ');
-  if (tarea.completada_en) {
-    articulo.append(etiquetaDe(`hecha por ${tarea.hecha_por} · ${momento(tarea.completada_en)}`));
-    return articulo;
+function recuadroTarea(tarea) {
+  const hecha = Boolean(tarea.completada_en);
+  const acciones = [];
+  if (!hecha && puedeCompletar(tarea)) {
+    acciones.push(botonAccion('Hecha', () => accionTarea({ accion: 'completar', tarea_id: tarea.id }, 'Tarea hecha.'), ''));
   }
-  if (estado.puede_crear) articulo.append(selectorResponsable(tarea));
-  if (puedeCompletar(tarea)) {
-    articulo.append(botonAccion('Marcar como hecha', () => accionTarea({ accion: 'completar', tarea_id: tarea.id }, 'Tarea hecha.'), ''));
+  if (!hecha && estado.puede_crear) {
+    const cambiar = nuevo('button', 'secundario', 'Cambiar responsable');
+    cambiar.type = 'button';
+    cambiar.addEventListener('click', () => cambiarResponsable(tarea));
+    acciones.push(cambiar);
   }
-  return articulo;
+  return recuadroFicha({
+    titulo: tarea.titulo,
+    subtitulo: hecha ? momento(tarea.completada_en) : `Para el ${fechaDia(tarea.vence_en)}`,
+    alerta: Boolean(tarea.vencida),
+    lineas: [
+      [tarea.lote && `Lote ${tarea.lote}`, tarea.sala].filter(Boolean).join(' · '),
+      hecha ? `La hizo ${nombreCorto(tarea.hecha_por)}` : nombreCorto(tarea.responsable),
+    ],
+    etiquetas: [tarea.vencida && etiquetaDe('Vencida', true)],
+    acciones,
+  });
+}
+
+function pintarCifras() {
+  const pendientes = estado.tareas.filter((tarea) => !tarea.completada_en);
+  const vencidas = pendientes.filter((tarea) => tarea.vencida);
+  const hoy = pendientes.filter((tarea) => tarea.vence_en === estado.hoy);
+  document.getElementById('cifras').replaceChildren(
+    cajaCifra(hoy.length, 'Para hoy', '', { dibujo: dibujoDe('calendario') }),
+    cajaCifra(vencidas.length, vencidas.length === 1 ? 'Vencida' : 'Vencidas', '', { dibujo: dibujoDe('alerta'), alerta: vencidas.length > 0 }),
+    cajaCifra(pendientes.length, 'Pendientes en total', '', { dibujo: dibujoDe('tareas') }),
+  );
 }
 
 function pintar() {
-  const vista = document.getElementById('vista').value;
+  const vista = valorFiltro('vista');
   const persona = document.getElementById('filtro-persona').value;
   const sala = document.getElementById('filtro-sala').value;
   const visibles = estado.tareas.filter((tarea) => {
@@ -68,31 +92,28 @@ function pintar() {
     if (persona && tarea.responsable !== persona) return false;
     return !sala || tarea.sala === sala;
   });
-  document.getElementById('lista').replaceChildren(...visibles.map(tarjeta));
-  document.getElementById('vacio').classList.toggle('oculto', visibles.length > 0);
+  const recuadros = visibles.map(recuadroTarea);
+  if (estado.puede_crear) recuadros.push(recuadroNuevo('Nueva tarea', 'Para vos o para alguien del equipo', nuevaTarea));
+  pintarEn('lista', recuadros, 'No hay tareas para mostrar.');
 }
 
 function opcionesFiltro(id, valores, vacio) {
   const actual = document.getElementById(id).value;
-  opcionesEn(id, valores.map((valor) => ({ id: valor, nombre: valor })), 'nombre', vacio);
+  opcionesEn(id, valores.map((valor) => ({ id: valor, nombre: nombreCorto(valor) })), 'nombre', vacio);
   if (valores.includes(actual)) document.getElementById(id).value = actual;
 }
 
 async function cargar() {
   estado = await pedir('/api/tareas');
-  document.getElementById('form-tarea').classList.toggle('oculto', !estado.puede_crear);
-  opcionesFiltro('filtro-persona', unicos(estado.tareas.map((t) => t.responsable)), 'Todas');
-  opcionesFiltro('filtro-sala', unicos(estado.tareas.map((t) => t.sala)), 'Todas');
-  opcionesEn('asignada_a', estado.equipo, 'email', 'Sin responsable');
+  opcionesFiltro('filtro-persona', unicos(estado.tareas.map((tarea) => tarea.responsable)), 'Todas');
+  opcionesFiltro('filtro-sala', unicos(estado.tareas.map((tarea) => tarea.sala)), 'Todas');
+  pintarCifras();
   pintar();
 }
 
-for (const id of ['vista', 'filtro-persona', 'filtro-sala']) {
-  document.getElementById(id).addEventListener('change', pintar);
-}
-
-enviarForm('form-tarea', '/api/tareas', (datos) => ({
-  ...datos, accion: 'crear', asignada_a: datos.asignada_a ? Number(datos.asignada_a) : null,
-}), cargar);
+filtroRecuadros('vistas', 'vista', [
+  { valor: 'hoy', texto: 'Para hoy' }, { valor: 'pendientes', texto: 'Todas las pendientes' }, { valor: 'hechas', texto: 'Hechas' },
+], pintar);
+for (const id of ['filtro-persona', 'filtro-sala']) document.getElementById(id).addEventListener('change', pintar);
 
 arrancar(cargar);

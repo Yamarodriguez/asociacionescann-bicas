@@ -274,6 +274,35 @@ class Cultivo(Base):
         self.assertIn("Mal escrito", apunte["detalle"])
         self.assertIn("1000", apunte["detalle"])
 
+    def test_el_crecimiento_se_mide_y_se_sigue_en_el_tiempo(self):
+        lote = self.lote()
+        datos = {"lote_id": lote, "tipo": "crecimiento"}
+        self.assertEqual(self.post("/api/cultivo_registro", datos)[0], 422)
+        self.assertEqual(self.post("/api/cultivo_registro", {**datos, "altura_cm": "0"})[0], 422)
+        self.assertEqual(self.post("/api/cultivo_registro", {**datos, "altura_cm": "12,5"})[0], 200)
+        self.assertEqual(self.post("/api/cultivo_registro", {**datos, "altura_cm": "20", "detalle": "Se ven: bien"})[0], 200)
+        detalle = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]
+        self.assertEqual([float(r["altura_cm"]) for r in detalle["registros"]], [20, 12.5])
+        fila = next(l for l in pedir("GET", "/api/cultivo", galleta=self.galleta)[1]["lotes"] if l["id"] == lote)
+        self.assertEqual(float(fila["ultima_altura"]), 20)
+
+    def test_la_altura_solo_se_guarda_en_el_crecimiento(self):
+        lote = self.lote()
+        datos = {"lote_id": lote, "tipo": "riego", "altura_cm": "50"}
+        self.assertEqual(self.post("/api/cultivo_registro", datos)[0], 200)
+        registro = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["registros"][0]
+        self.assertIsNone(registro["altura_cm"])
+
+    def test_la_etapa_se_llama_crecimiento_y_entiende_los_lotes_anteriores(self):
+        lote = self.lote()
+        self.avanzar(lote)
+        registro = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["registros"][0]
+        self.assertEqual(registro["detalle"], "Pasó a crecimiento")
+        with _db.transaccion() as cursor:
+            cursor.execute("UPDATE registros_lote SET detalle = 'Pasó a vegetativo' WHERE lote_id = %s AND tipo = 'etapa'", (lote,))
+        fechas = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["fechas_etapa"]
+        self.assertTrue(fechas["vegetativo"])
+
     def test_una_correccion_escribe_el_decimal_con_coma(self):
         lote = self.lote()
         self.hasta(lote, "cosecha")
@@ -345,8 +374,60 @@ class Textos(unittest.TestCase):
         self.assertNotIn("toLowerCase()} anotado", self.leer("web/admin_lote.js"))
 
     def test_guardar_un_recuadro_no_mueve_la_pagina(self):
-        for pantalla in ("web/admin_lote.js", "web/admin_cultivo.js"):
-            self.assertNotIn("'exito'", self.leer(pantalla), pantalla)
+        for ruta in sorted((_config.RAIZ / "web").glob("admin_*.js")):
+            if ruta.name != "admin_seguridad.js":
+                self.assertNotIn("'exito'", ruta.read_text(encoding="utf-8"), ruta.name)
+
+    def test_ninguna_pantalla_vuelve_a_tablas_ni_avisos_del_navegador(self):
+        for ruta in sorted((_config.RAIZ / "web").glob("admin_*")):
+            contenido = ruta.read_text(encoding="utf-8")
+            for patron in ("<table", "window.prompt", "window.confirm", "window.alert"):
+                self.assertNotIn(patron, contenido, ruta.name)
+
+    def test_rechazar_avisa_de_que_borra_los_datos(self):
+        self.assertIn("sus datos se eliminan", self.leer("web/admin_socios.js"))
+
+    def test_un_boton_de_peligro_se_lee_sobre_su_fondo(self):
+        self.assertIn("background: var(--danger); color: #fff;", self.leer("web/estilos.css"))
+
+    def test_el_portal_no_muestra_importes_ni_meses_crudos(self):
+        self.assertNotIn("${cuota.importe}", self.leer("web/perfil.js"))
+        self.assertNotIn("${cuota.periodo}", self.leer("web/perfil.js"))
+
+    def test_ocultar_gana_a_cualquier_estilo_de_recuadro(self):
+        self.assertIn(".oculto { display: none !important; }", self.leer("web/estilos.css"))
+
+    def test_un_ajuste_fijo_no_muestra_true_ni_false(self):
+        self.assertIn("true: 'Activado'", self.leer("web/admin_configuracion.js"))
+
+    def test_cada_pantalla_tiene_los_huecos_que_usa_su_codigo(self):
+        web = _config.RAIZ / "web"
+        for codigo in sorted(web.glob("*.js")):
+            pantalla = web / f"{codigo.stem}.html"
+            if not pantalla.exists():
+                continue
+            html = pantalla.read_text(encoding="utf-8")
+            contenido = codigo.read_text(encoding="utf-8")
+            usados = re.findall(r"getElementById\('([\w-]+)'\)", contenido)
+            usados += re.findall(r"(?:pintarEn|filtroRecuadros)\(\s*'([\w-]+)'", contenido)
+            for hueco in usados:
+                self.assertIn(f'id="{hueco}"', html, f"{codigo.name} usa {hueco}")
+
+    def test_las_piezas_comunes_cargan_antes_que_cada_pantalla(self):
+        web = _config.RAIZ / "web"
+        for pantalla in sorted(web.glob("*.html")):
+            html = pantalla.read_text(encoding="utf-8")
+            codigo = web / f"{pantalla.stem}.js"
+            if not codigo.exists():
+                continue
+            contenido = codigo.read_text(encoding="utf-8")
+            propio = html.index(f"/{pantalla.stem}.js")
+            if re.search(r"\b(abrirVentana|recuadroFicha|pintarEn|cajaCifra|filaApunte|nuevo\()", contenido):
+                self.assertIn("/recuadros.js", html, pantalla.name)
+                self.assertLess(html.index("/recuadros.js"), propio, pantalla.name)
+            if re.search(r"\b(arrancar|botonAccion|etiquetaDe|avisar|dinero|momento)\(", contenido):
+                self.assertIn("/gestion.js", html, pantalla.name)
+                self.assertLess(html.index("/gestion.js"), propio, pantalla.name)
 
     def test_cada_anotacion_y_etapa_tiene_su_dibujo(self):
         dibujos = self.leer("web/dibujos_cultivo.svg")

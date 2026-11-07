@@ -10,6 +10,7 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/cultivo_comun.js" defer></script>
   <script src="/admin_lote.js" defer></script>
 </head>
@@ -30,24 +31,30 @@
       <p id="datos" class="subtitulo-lote"></p>
       <p id="aviso-planta" class="mensaje exito oculto"></p>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>En qué etapa está</h2>
         <ol id="recorrido" class="recorrido"></ol>
         <div id="lo-que-sigue" class="lo-que-sigue"></div>
       </section>
 
-      <section id="bloque-anotar" class="bloque-cultivo oculto">
+      <section id="bloque-anotar" class="bloque oculto">
         <h2>¿Qué hiciste hoy?</h2>
         <p class="nota">Tocá un recuadro y anotalo. Solo te preguntamos lo necesario.</p>
-        <div id="anotar" class="anotar"></div>
+        <div id="anotar" class="anotar anotar-tres"></div>
       </section>
 
-      <section id="bloque-tareas" class="bloque-cultivo oculto">
+      <section id="bloque-tareas" class="bloque oculto">
         <h2>Tareas de este lote</h2>
         <div id="tareas" class="lista-tareas"></div>
       </section>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
+        <h2>Cómo crecen</h2>
+        <div id="crecimiento-cifras" class="cifras cifras-compactas"></div>
+        <div id="crecimiento-grafico" class="tarjeta"></div>
+      </section>
+
+      <section class="bloque">
         <div class="titulo-progreso">
           <h2>Ficha del lote</h2>
           <p id="progreso-texto" class="nota"></p>
@@ -56,7 +63,7 @@
         <div id="ficha" class="ficha-lote"></div>
       </section>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>Lo anotado</h2>
         <div id="historial" class="historial"></div>
         <details id="bloque-anterior" class="plegable oculto">

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/admin_contactos.js" defer></script>
 </head>
 <body>
@@ -21,8 +23,11 @@
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
-    <p id="estado-lista" class="cargando">Cargando…</p>
-    <div id="lista"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <div id="lista" class="mosaico mosaico-ancho"></div>
+    </div>
   </main>
 </body>
 </html>

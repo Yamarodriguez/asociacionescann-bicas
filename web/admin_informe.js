@@ -13,8 +13,10 @@ async function cargar() {
   const datos = await pedir('/api/informe_inspeccion');
   const { socios, auditoria } = datos;
   document.getElementById('generado').textContent = `Generado: ${momento(datos.generado_en)}`;
-  document.getElementById('socios').textContent =
-    `Activos: ${socios.activos}. Suspendidos: ${socios.suspendidos}. Pendientes: ${socios.pendientes}. Bajas: ${socios.bajas}. Equipo: ${datos.equipo_total}.`;
+  document.getElementById('socios').replaceChildren(
+    cajaCifra(socios.activos, 'Activos'), cajaCifra(socios.suspendidos, 'Suspendidos'), cajaCifra(socios.pendientes, 'Por aprobar'),
+    cajaCifra(socios.bajas, 'De baja'), cajaCifra(datos.equipo_total, 'Equipo'),
+  );
   if (datos.cultivo) pintarCultivo(datos.cultivo);
   parrafosEn('vencimientos', datos.vencimientos.map((v) => `${v.titulo} · ${nombreCultivo(v.tipo)} · ${fechaDia(v.vence_en)}${v.vencido ? ' · vencido' : ''}`), 'Sin vencimientos.');
   parrafosEn('procedimientos', datos.procedimientos.map((p) => `${p.titulo} · versión ${p.version} · ${p.lecturas} lecturas confirmadas`), 'Sin procedimientos.');

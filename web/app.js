@@ -57,7 +57,7 @@ function celdaTabla(etiqueta, texto) {
 }
 
 const NOMBRES_CULTIVO = {
-  floracion: 'floración', aplicacion: 'aplicación', medicion: 'medición', destruccion: 'destrucción',
+  origen: 'inicio', vegetativo: 'crecimiento', floracion: 'floración', aplicacion: 'aplicación', medicion: 'medición', destruccion: 'destrucción',
   etapa: 'cambio de etapa', habilitacion: 'habilitación', manana: 'mañana', en_curso: 'en curso',
 };
 const nombreCultivo = (clave) => NOMBRES_CULTIVO[clave] ?? clave;

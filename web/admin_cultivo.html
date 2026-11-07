@@ -10,6 +10,7 @@
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
   <script src="/gestion.js" defer></script>
+  <script src="/recuadros.js" defer></script>
   <script src="/cultivo_comun.js" defer></script>
   <script src="/admin_cultivo.js" defer></script>
 </head>
@@ -29,7 +30,7 @@
     <div id="contenido" class="oculto">
       <div id="cifras" class="cifras"></div>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>Lotes en marcha</h2>
         <p class="nota">Tocá un lote para anotar lo que hiciste y ver lo que sigue.</p>
         <div id="lotes" class="mosaico"></div>
@@ -39,17 +40,17 @@
         </details>
       </section>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>Salas</h2>
         <div id="salas" class="mosaico"></div>
       </section>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>Variedades</h2>
         <div id="variedades" class="lista-etiquetas"></div>
       </section>
 
-      <section class="bloque-cultivo">
+      <section class="bloque">
         <h2>Cómo rindieron</h2>
         <p class="nota">Se rellena solo cuando un lote llega al peso seco.</p>
         <div id="comparativas" class="mosaico"></div>

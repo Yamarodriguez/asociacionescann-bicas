@@ -1,150 +1,111 @@
-const mensaje = document.getElementById('mensaje');
-const estadoLista = document.getElementById('estado-lista');
-const tabla = document.getElementById('tabla');
-const filas = document.getElementById('filas');
 const buscar = document.getElementById('buscar');
 let socios = [];
 
-function celda(etiqueta, texto) {
-  const td = document.createElement('td');
-  td.dataset.etiqueta = etiqueta;
-  td.textContent = texto;
-  return td;
+const NOMBRE_ESTADO = {
+  pendiente: 'Por aprobar', activo: 'Activo', suspendido: 'Suspendido', baja: 'De baja', rechazado: 'Rechazado',
+};
+const nombreDe = (socio) => `${socio.nombre} ${socio.apellido}`;
+
+async function ejecutar(socio, accion, extra = {}) {
+  const respuesta = await pedir('/api/admin_socios', { socio_id: socio.id, accion, ...extra });
+  confirmar(respuesta.numero_socio ? `Solicitud aprobada. Número de socio: ${respuesta.numero_socio}.` : respuesta.mensaje);
+  await cargar();
 }
 
-function celdaEstado(socio) {
-  const td = document.createElement('td');
-  td.dataset.etiqueta = 'Estado';
-  const etiqueta = document.createElement('span');
-  etiqueta.className = `etiqueta ${socio.estado}`;
-  etiqueta.textContent = socio.estado;
-  td.append(etiqueta);
-  if (socio.baja_solicitada_en && socio.estado !== 'baja') {
-    const aviso = document.createElement('span');
-    aviso.className = 'etiqueta pendiente';
-    aviso.textContent = 'pidió la baja';
-    td.append(' ', aviso);
-  }
-  return td;
-}
-
-async function ejecutar(socio, accion, boton, extra = {}) {
-  boton.disabled = true;
-  try {
-    const respuesta = await pedir('/api/admin_socios', { socio_id: socio.id, accion, ...extra });
-    const texto = respuesta.numero_socio
-      ? `Solicitud aprobada. Número de socio: ${respuesta.numero_socio}.` : respuesta.mensaje;
-    mostrarMensaje(mensaje, texto, 'exito');
-    await cargar();
-  } catch (error) {
-    mostrarMensaje(mensaje, error.message);
-    boton.disabled = false;
-  }
-}
-
-function boton(texto, clase, alPulsar) {
-  const elemento = document.createElement('button');
-  elemento.type = 'button';
-  elemento.textContent = texto;
-  if (clase) elemento.className = clase;
-  elemento.addEventListener('click', () => alPulsar(elemento));
-  return elemento;
-}
-
-// Lo que se borra o da de baja pide un segundo clic.
-function botonConfirmado(texto, socio, accion) {
-  const elemento = boton(texto, 'peligro', () => {
-    if (elemento.dataset.armado) {
-      ejecutar(socio, accion, elemento);
-      return;
-    }
-    elemento.dataset.armado = 'si';
-    elemento.textContent = 'Confirmar';
+function botonAprobar(socio) {
+  return botonConfirmado('Revisar y aprobar', {
+    titulo: `Aprobar a ${nombreDe(socio)}`,
+    dibujo: dibujoDe('socios'),
+    ayuda: socio.avalista_numero_socio ? `Aval: socio ${socio.avalista_numero_socio}.` : 'Solo se aprueba después de verlo en persona.',
+    campos: [{
+      nombre: 'verificado', etiqueta: 'Verifiqué la edad y la identidad en persona', tipo: 'casilla', obligatorio: true,
+      falta: 'Para aprobar tenés que marcar la verificación en persona.',
+    }],
+    boton: 'Aprobar',
+    clase: '',
+    alGuardar: () => ejecutar(socio, 'aprobar', { identidad_verificada: true }),
   });
-  return elemento;
+}
+
+function accion(texto, socio, clave, ayuda, peligro = true) {
+  return botonConfirmado(texto, {
+    titulo: `${texto}: ${nombreDe(socio)}`,
+    ayuda,
+    boton: `Sí, ${texto.toLowerCase()}`,
+    peligro,
+    alGuardar: () => ejecutar(socio, clave),
+  });
 }
 
 function accionesDe(socio) {
-  const acciones = document.createElement('td');
-  acciones.className = 'acciones';
+  const acciones = [];
   if (socio.estado === 'pendiente') {
-    if (socio.avalista_numero_socio) {
-      const aval = document.createElement('p');
-      aval.className = 'nota';
-      aval.textContent = `Aval: socio ${socio.avalista_numero_socio}`;
-      acciones.append(aval);
-    }
-    const casilla = document.createElement('div');
-    casilla.className = 'casilla';
-    const marca = document.createElement('input');
-    marca.type = 'checkbox';
-    marca.id = `verificado-${socio.id}`;
-    const etiqueta = document.createElement('label');
-    etiqueta.htmlFor = marca.id;
-    etiqueta.textContent = 'Verifiqué la edad y la identidad en persona';
-    casilla.append(marca, etiqueta);
-    const aprobar = boton('Aprobar', '', (b) => ejecutar(socio, 'aprobar', b, { identidad_verificada: true }));
-    aprobar.disabled = true;
-    marca.addEventListener('change', () => { aprobar.disabled = !marca.checked; });
-    acciones.append(casilla, aprobar, ' ', botonConfirmado('Rechazar', socio, 'rechazar'));
+    acciones.push(botonAprobar(socio), accion('Rechazar', socio, 'rechazar', 'La solicitud se rechaza y sus datos se eliminan. No se puede deshacer.'));
   }
   if (socio.estado === 'activo') {
-    acciones.append(boton('Suspender', 'secundario', (b) => ejecutar(socio, 'suspender', b)), ' ');
+    acciones.push(accion('Suspender', socio, 'suspender', 'No va a poder usar el portal hasta que lo reactives.'));
   }
   if (socio.estado === 'suspendido') {
-    acciones.append(boton('Reactivar', 'secundario', (b) => ejecutar(socio, 'reactivar', b)), ' ');
+    acciones.push(accion('Reactivar', socio, 'reactivar', 'Vuelve a tener acceso al portal.', false));
   }
   if (socio.estado === 'activo' || socio.estado === 'suspendido') {
-    acciones.append(botonConfirmado('Dar de baja', socio, 'baja'));
+    acciones.push(accion('Dar de baja', socio, 'baja', 'Deja de ser socio. Esta acción no se puede deshacer desde acá.'));
   }
   return acciones;
 }
 
-function fila(socio) {
-  const tr = document.createElement('tr');
+function recuadroSocio(socio) {
   const hasta = socio.cuota_vigente_hasta
-    ? new Date(socio.cuota_vigente_hasta).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : '—';
-  tr.append(
-    celda('Nombre', `${socio.nombre} ${socio.apellido}`),
-    celda('Documento', `${socio.tipo_documento} ${socio.numero_documento}`),
-    celdaEstado(socio),
-    celda('Número', socio.numero_socio ?? '—'),
-    celda('Cuota hasta', hasta),
-    accionesDe(socio),
+    ? new Date(socio.cuota_vigente_hasta).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : null;
+  const clase = socio.estado === 'pendiente' ? 'etiqueta pendiente' : `etiqueta ${socio.estado}`;
+  const estado = nuevo('span', clase, NOMBRE_ESTADO[socio.estado] ?? socio.estado);
+  const pidioBaja = socio.baja_solicitada_en && socio.estado !== 'baja';
+  return recuadroFicha({
+    titulo: nombreDe(socio),
+    subtitulo: socio.numero_socio ? `Socio ${socio.numero_socio}` : 'Sin número todavía',
+    alerta: Boolean(pidioBaja),
+    dibujo: dibujoDe('socios'),
+    lineas: [`${socio.tipo_documento} ${socio.numero_documento}`, hasta && `Cuota hasta ${hasta}`],
+    etiquetas: [estado, pidioBaja && nuevo('span', 'etiqueta pendiente', 'Pidió la baja')],
+    acciones: accionesDe(socio),
+  });
+}
+
+function pintarCifras() {
+  const cuenta = (estado) => socios.filter((socio) => socio.estado === estado).length;
+  const pedidos = socios.filter((socio) => socio.baja_solicitada_en && socio.estado !== 'baja').length;
+  document.getElementById('cifras').replaceChildren(
+    cajaCifra(cuenta('activo'), 'Socios activos', '', { dibujo: dibujoDe('socios') }),
+    cajaCifra(cuenta('pendiente'), 'Por aprobar', '', { dibujo: dibujoDe('reloj'), alerta: cuenta('pendiente') > 0 }),
+    cajaCifra(pedidos, 'Pidieron la baja', '', { dibujo: dibujoDe('bajas'), alerta: pedidos > 0 }),
   );
-  return tr;
 }
 
 function pintar() {
   // La busqueda ocurre en el navegador: nada personal viaja en la direccion.
   const texto = buscar.value.trim().toLowerCase();
-  const visibles = socios.filter((s) => !texto
-    || `${s.nombre} ${s.apellido} ${s.numero_documento} ${s.numero_socio ?? ''}`.toLowerCase().includes(texto));
-  filas.replaceChildren(...visibles.map(fila));
-  tabla.classList.toggle('oculto', visibles.length === 0);
-  estadoLista.className = visibles.length ? 'oculto' : 'estado-vacio';
-  estadoLista.textContent = socios.length ? 'Ningún socio coincide con la búsqueda.' : 'Todavía no hay solicitudes.';
+  const estado = valorFiltro('estado');
+  const visibles = socios.filter((socio) => {
+    if (estado !== 'todos' && socio.estado !== estado) return false;
+    return !texto || `${socio.nombre} ${socio.apellido} ${socio.numero_documento} ${socio.numero_socio ?? ''}`.toLowerCase().includes(texto);
+  });
+  const orden = (socio) => (socio.estado === 'pendiente' ? 0 : 1);
+  pintarEn(
+    'socios', [...visibles].sort((a, b) => orden(a) - orden(b)).map(recuadroSocio),
+    socios.length ? 'Ningún socio coincide con la búsqueda.' : 'Todavía no hay solicitudes.',
+  );
 }
 
 async function cargar() {
   ({ socios } = await pedir('/api/admin_socios'));
+  pintarCifras();
   pintar();
 }
 
+filtroRecuadros('estados', 'estado', [
+  { valor: 'todos', texto: 'Todos' }, { valor: 'pendiente', texto: 'Por aprobar' }, { valor: 'activo', texto: 'Activos' },
+  { valor: 'suspendido', texto: 'Suspendidos' }, { valor: 'baja', texto: 'De baja' },
+], pintar);
 buscar.addEventListener('input', pintar);
 
-async function iniciar() {
-  try {
-    const sesion = await leerSesion();
-    if (!sesion || sesion.tipo !== 'admin') {
-      location.href = '/login.html';
-      return;
-    }
-    await cargar();
-  } catch (error) {
-    estadoLista.className = 'oculto';
-    mostrarMensaje(mensaje, error.message);
-  }
-}
-
-iniciar();
+arrancar(cargar);

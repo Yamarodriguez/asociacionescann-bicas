@@ -1,7 +1,7 @@
-// Piezas comunes del cultivo: etapas, dibujos, recuadros para elegir y ventanas para rellenar.
+// Piezas propias del cultivo: etapas y dibujos. Las pantallas internas las cargan tras recuadros.js.
 const ETAPAS_CULTIVO = [
   { clave: 'origen', nombre: 'Inicio', texto: 'Semillas o esquejes recién puestos' },
-  { clave: 'vegetativo', nombre: 'Vegetativo', texto: 'La planta crece y echa hojas' },
+  { clave: 'vegetativo', nombre: 'Crecimiento', texto: 'Las plantas crecen y echan hojas' },
   { clave: 'floracion', nombre: 'Floración', texto: 'Las plantas empiezan a florecer' },
   { clave: 'cosecha', nombre: 'Cosecha', texto: 'Se corta y se pesa' },
   { clave: 'secado', nombre: 'Secado', texto: 'Se cuelga a secar' },
@@ -11,44 +11,7 @@ const ETAPAS_CULTIVO = [
 
 const nombreEtapa = (clave) => ETAPAS_CULTIVO.find((etapa) => etapa.clave === clave)?.nombre ?? clave;
 const textoPlantas = (cantidad) => `${cantidad} ${Number(cantidad) === 1 ? 'planta' : 'plantas'}`;
-const cifra = (valor) => Number(valor).toLocaleString('es-AR', { maximumFractionDigits: 2 });
-const quienAnoto = (correo) => correo.split('@')[0];
-
-function dibujoCultivo(nombre) {
-  const espacio = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(espacio, 'svg');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  const uso = document.createElementNS(espacio, 'use');
-  uso.setAttribute('href', `/dibujos_cultivo.svg#${nombre}`);
-  svg.append(uso);
-  return svg;
-}
-
-function nuevo(etiqueta, clase, texto) {
-  const elemento = document.createElement(etiqueta);
-  if (clase) elemento.className = clase;
-  if (texto !== undefined) elemento.textContent = texto;
-  return elemento;
-}
-
-function haceCuanto(valor) {
-  if (!valor) return 'Sin anotaciones todavía';
-  const dia = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-  const dias = Math.round((dia(new Date()) - dia(new Date(valor))) / 86400000);
-  if (dias <= 0) return 'Hoy';
-  if (dias === 1) return 'Ayer';
-  return `Hace ${dias} días`;
-}
-
-// Confirma sin mover la página: quien va rellenando recuadros no pierde su sitio.
-function confirmar(texto) {
-  document.querySelector('.aviso-flotante')?.remove();
-  const aviso = nuevo('p', 'aviso-flotante', texto);
-  aviso.setAttribute('role', 'status');
-  document.body.append(aviso);
-  setTimeout(() => aviso.remove(), 4000);
-}
+const dibujoCultivo = (nombre) => dibujoDe(nombre, 'dibujos_cultivo');
 
 // Fila de siete cuadraditos: se rellenan a medida que el lote avanza.
 function pasosEtapa(etapa, cerrado = false) {
@@ -65,148 +28,57 @@ function pasosEtapa(etapa, cerrado = false) {
   return fila;
 }
 
-// Un recuadro que se elige con un toque. Por debajo es un botón de opción: funciona con teclado.
-function recuadroEleccion(grupo, valor, titulo, { detalle, dibujo, marcado = false } = {}) {
-  const etiqueta = nuevo('label', 'eleccion');
-  const entrada = document.createElement('input');
-  entrada.type = 'radio';
-  entrada.name = grupo;
-  entrada.value = valor;
-  entrada.checked = marcado;
-  const caja = nuevo('span', 'eleccion-caja');
-  if (dibujo) caja.append(dibujoCultivo(dibujo));
-  caja.append(nuevo('span', 'eleccion-titulo', titulo));
-  if (detalle) caja.append(nuevo('span', 'eleccion-detalle', detalle));
-  etiqueta.append(entrada, caja);
-  return etiqueta;
-}
+// Altura de las plantas en el tiempo: una línea con sus puntos, sin leyenda porque es una sola serie.
+function graficoCrecimiento(mediciones) {
+  const espacio = 'http://www.w3.org/2000/svg';
+  const ANCHO = 640;
+  const ALTO = 180;
+  const MARGEN = { izquierda: 16, derecha: 56, arriba: 24, abajo: 26 };
+  const crear = (etiqueta, atributos, texto) => {
+    const elemento = document.createElementNS(espacio, etiqueta);
+    for (const [clave, valor] of Object.entries(atributos)) elemento.setAttribute(clave, valor);
+    if (texto !== undefined) elemento.textContent = texto;
+    return elemento;
+  };
+  const tiempos = mediciones.map((punto) => new Date(punto.creado_en).getTime());
+  const maximo = Math.max(...mediciones.map((punto) => Number(punto.altura_cm)));
+  const inicio = tiempos[0];
+  const rango = Math.max(tiempos[tiempos.length - 1] - inicio, 1);
+  const anchoUtil = ANCHO - MARGEN.izquierda - MARGEN.derecha;
+  const altoUtil = ALTO - MARGEN.arriba - MARGEN.abajo;
+  const x = (tiempo) => MARGEN.izquierda + (mediciones.length === 1 ? anchoUtil / 2 : ((tiempo - inicio) / rango) * anchoUtil);
+  const y = (altura) => MARGEN.arriba + altoUtil - (Number(altura) / maximo) * altoUtil;
+  const fecha = (valor) => new Date(valor).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 
-function campoEleccion(campo) {
-  const grupo = document.createElement('fieldset');
-  grupo.className = 'campo grupo-eleccion';
-  grupo.append(nuevo('legend', '', campo.etiqueta));
-  const opciones = nuevo('div', 'elecciones');
-  opciones.append(...campo.opciones.map((opcion) => recuadroEleccion(campo.nombre, opcion, opcion, {
-    marcado: campo.valor === opcion,
-  })));
-  grupo.append(opciones);
-  return grupo;
-}
-
-function entradaDe(campo) {
-  if (campo.tipo === 'largo') {
-    const area = document.createElement('textarea');
-    area.rows = 3;
-    area.maxLength = campo.largo ?? 1000;
-    area.value = campo.valor ?? '';
-    return area;
-  }
-  if (campo.tipo === 'lista') {
-    const lista = document.createElement('select');
-    lista.append(...campo.opciones.map(({ valor, texto }) => {
-      const opcion = nuevo('option', '', texto);
-      opcion.value = valor;
-      return opcion;
-    }));
-    if (campo.valor !== undefined) lista.value = campo.valor;
-    return lista;
-  }
-  const entrada = document.createElement('input');
-  if (campo.tipo === 'fecha') entrada.type = 'date';
-  if (campo.tipo === 'decimal') entrada.inputMode = 'decimal';
-  if (campo.tipo === 'entero') entrada.inputMode = 'numeric';
-  if (campo.tipo === 'texto') entrada.maxLength = campo.largo ?? 200;
-  entrada.autocomplete = 'off';
-  entrada.value = campo.valor ?? '';
-  return entrada;
-}
-
-function construirCampo(campo) {
-  if (campo.tipo === 'elegir') return campoEleccion(campo);
-  const bloque = nuevo('div', 'campo');
-  const id = `ventana-${campo.nombre}`;
-  const etiqueta = nuevo('label', '', campo.obligatorio ? campo.etiqueta : `${campo.etiqueta} (opcional)`);
-  etiqueta.htmlFor = id;
-  const entrada = entradaDe(campo);
-  entrada.id = id;
-  entrada.name = campo.nombre;
-  bloque.append(etiqueta);
-  if (campo.unidad) {
-    const fila = nuevo('div', 'con-unidad');
-    fila.append(entrada, nuevo('span', '', campo.unidad));
-    bloque.append(fila);
-  } else {
-    bloque.append(entrada);
-  }
-  if (campo.ayuda) bloque.append(nuevo('p', 'nota', campo.ayuda));
-  return bloque;
-}
-
-// Devuelve el texto del problema, o null si el campo está bien.
-function problemaDe(campo, valor) {
-  const vacio = valor === undefined || valor === '';
-  if (vacio) return campo.obligatorio ? `Falta rellenar «${campo.etiqueta}».` : null;
-  if (campo.tipo === 'decimal' || campo.tipo === 'entero') {
-    const formato = campo.tipo === 'entero' ? /^\d+$/ : /^\d+([.,]\d{1,2})?$/;
-    const fueraDeRango = Number(valor.replace(',', '.')) > (campo.maximo ?? Infinity);
-    const minimo = campo.minimo ?? 0;
-    if (!formato.test(valor) || fueraDeRango || Number(valor.replace(',', '.')) < minimo) {
-      const tope = campo.maximo === undefined ? 'solo números' : `un número hasta ${campo.maximo}`;
-      return `Revisá «${campo.etiqueta}»: escribí ${tope}, sin letras ni puntos de miles.`;
-    }
-  }
-  return null;
-}
-
-// Abre una ventana con solo los campos que hacen falta. `alGuardar` recibe lo rellenado.
-function abrirVentana({ titulo, dibujo, ayuda, aviso, campos = [], boton = 'Guardar', peligro = false, alGuardar }) {
-  const ventana = nuevo('dialog', 'ventana');
-  const formulario = document.createElement('form');
-  formulario.noValidate = true;
-  const cabecera = nuevo('div', 'ventana-cabecera');
-  if (dibujo) {
-    const circulo = nuevo('span', 'ventana-dibujo');
-    circulo.append(dibujoCultivo(dibujo));
-    cabecera.append(circulo);
-  }
-  cabecera.append(nuevo('h2', '', titulo));
-  const error = nuevo('div', 'mensaje');
-  error.setAttribute('role', 'alert');
-  formulario.append(cabecera);
-  if (ayuda) formulario.append(nuevo('p', 'nota', ayuda));
-  if (aviso) formulario.append(nuevo('p', 'mensaje error', aviso));
-  formulario.append(error, ...campos.map(construirCampo));
-
-  const acciones = nuevo('div', 'acciones-aviso ventana-acciones');
-  const cancelar = nuevo('button', 'secundario', 'Cancelar');
-  cancelar.type = 'button';
-  cancelar.addEventListener('click', () => ventana.close());
-  const guardar = nuevo('button', peligro ? 'peligro' : '', boton);
-  guardar.type = 'submit';
-  acciones.append(guardar, cancelar);
-  formulario.append(acciones);
-
-  formulario.addEventListener('submit', async (evento) => {
-    evento.preventDefault();
-    const datos = Object.fromEntries(new FormData(formulario));
-    for (const clave of Object.keys(datos)) datos[clave] = datos[clave].trim();
-    const problema = campos.map((campo) => problemaDe(campo, datos[campo.nombre])).find(Boolean);
-    if (problema) {
-      mostrarMensaje(error, problema);
-      return;
-    }
-    guardar.disabled = true;
-    try {
-      await alGuardar(datos);
-      ventana.close();
-    } catch (fallo) {
-      mostrarMensaje(error, fallo.message);
-    } finally {
-      guardar.disabled = false;
-    }
+  const svg = crear('svg', {
+    class: 'grafico-crecimiento', viewBox: `0 0 ${ANCHO} ${ALTO}`, role: 'img',
+    'aria-label': `Altura de las plantas: de ${cifra(mediciones[0].altura_cm)} a ${cifra(mediciones[mediciones.length - 1].altura_cm)} centímetros`,
   });
-  ventana.addEventListener('close', () => ventana.remove());
-  ventana.append(formulario);
-  document.body.append(ventana);
-  ventana.showModal();
+  const base = ALTO - MARGEN.abajo;
+  svg.append(crear('line', { class: 'grafico-base', x1: MARGEN.izquierda, x2: ANCHO - MARGEN.derecha, y1: base, y2: base }));
+  const puntos = mediciones.map((punto, posicion) => `${x(tiempos[posicion])},${y(punto.altura_cm)}`);
+  if (mediciones.length > 1) svg.append(crear('polyline', { class: 'grafico-linea', points: puntos.join(' ') }));
+  mediciones.forEach((punto, posicion) => {
+    const grupo = crear('g', { class: 'grafico-punto' });
+    grupo.append(
+      crear('title', {}, `${fecha(punto.creado_en)}: ${cifra(punto.altura_cm)} cm`),
+      crear('circle', { class: 'grafico-zona', cx: x(tiempos[posicion]), cy: y(punto.altura_cm), r: 16 }),
+      crear('circle', { class: 'grafico-marca', cx: x(tiempos[posicion]), cy: y(punto.altura_cm), r: 5 }),
+    );
+    svg.append(grupo);
+  });
+  const ultimo = mediciones.length - 1;
+  svg.append(crear('text', {
+    class: 'grafico-valor', x: x(tiempos[ultimo]) + 12, y: y(mediciones[ultimo].altura_cm) + 5,
+  }, `${cifra(mediciones[ultimo].altura_cm)} cm`));
+  if (mediciones.length > 1) {
+    svg.append(crear('text', {
+      class: 'grafico-valor secundario-valor', x: x(tiempos[0]), y: y(mediciones[0].altura_cm) - 12, 'text-anchor': 'start',
+    }, `${cifra(mediciones[0].altura_cm)} cm`));
+    svg.append(crear('text', { class: 'grafico-eje', x: MARGEN.izquierda, y: ALTO - 6 }, fecha(mediciones[0].creado_en)));
+  }
+  svg.append(crear('text', {
+    class: 'grafico-eje', x: x(tiempos[ultimo]), y: ALTO - 6, 'text-anchor': mediciones.length > 1 ? 'end' : 'middle',
+  }, fecha(mediciones[ultimo].creado_en)));
+  return svg;
 }

@@ -17,6 +17,7 @@ async function iniciar() {
       return;
     }
     parrafo.textContent = TEXTOS[sesion.estado];
+    document.getElementById('pasos').classList.toggle('oculto', sesion.estado !== 'pendiente');
   } catch (error) {
     parrafo.className = 'error mensaje';
     parrafo.textContent = error.message;
