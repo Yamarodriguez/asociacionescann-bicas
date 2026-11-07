@@ -21,7 +21,8 @@ export function numero(datos, clave, { obligatorio = false, maximo = 1e9 } = {})
     if (obligatorio) throw new ErrorHttp(422, 'Revisá los valores numéricos.');
     return null;
   }
-  const crudo = String(valor);
+  // En Argentina el decimal se escribe con coma.
+  const crudo = String(valor).trim().replace(',', '.');
   if (!DECIMAL.test(crudo) || Number(crudo) > maximo) throw new ErrorHttp(422, 'Revisá los valores numéricos.');
   return crudo;
 }

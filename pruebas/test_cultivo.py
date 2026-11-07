@@ -194,9 +194,178 @@ class Cultivo(Base):
         self.addCleanup(self._limite_cero)
         self.assertEqual(pedir("GET", "/api/cultivo", galleta=galleta)[1]["plantas"]["autorizadas"], 30)
 
+    def test_la_coma_decimal_vale_y_los_miles_con_punto_no(self):
+        lote = self.lote()
+        datos = {"lote_id": lote, "tipo": "medicion", "ph": "6,2", "temperatura": " 24,5 "}
+        self.assertEqual(self.post("/api/cultivo_registro", datos)[0], 200)
+        registro = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["registros"][0]
+        self.assertEqual((float(registro["ph"]), float(registro["temperatura"])), (6.2, 24.5))
+        self.avanzar(lote)
+        self.avanzar(lote)
+        self.assertEqual(self.avanzar(lote, "1.250")[0], 422)
+        self.assertEqual(self.avanzar(lote, "1250,5")[0], 200)
+
+    def test_un_riego_no_obliga_a_escribir_nada(self):
+        lote = self.lote()
+        self.assertEqual(self.post("/api/cultivo_registro", {"lote_id": lote, "tipo": "riego", "litros": "20,5"})[0], 200)
+        registro = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["registros"][0]
+        self.assertEqual(registro["detalle"], "Riego")
+        self.assertEqual(float(registro["litros"]), 20.5)
+
+    def test_lo_que_necesita_explicacion_sigue_pidiendola(self):
+        lote = self.lote()
+        for tipo in ("incidencia", "aplicacion", "baja", "destruccion"):
+            self.assertEqual(self.post("/api/cultivo_registro", {"lote_id": lote, "tipo": tipo})[0], 422, tipo)
+        self.assertEqual(self.post("/api/cultivo_registro", {"lote_id": lote, "tipo": "medicion"})[0], 422)
+
+    def test_el_lote_se_crea_en_un_solo_paso_con_codigo_propuesto(self):
+        nuevo = {"accion": "crear_lote", "genetica_nombre": "Variedad nueva", "sala_nombre": "Sala nueva",
+                 "origen": "semilla", "cantidad_plantas": 3}
+        propuesto = pedir("GET", "/api/cultivo", galleta=self.galleta)[1]["siguiente_codigo"]
+        estado, cuerpo, _ = self.post("/api/cultivo", nuevo)
+        self.assertEqual(estado, 200)
+        detalle = pedir("GET", f"/api/cultivo_lote?id={cuerpo['id']}", galleta=self.galleta)[1]
+        self.assertEqual(detalle["lote"]["codigo"], propuesto)
+        self.assertEqual(detalle["lote"]["genetica"], "Variedad nueva")
+        self.assertEqual(detalle["plantas"]["total"], 3)
+        segundo = pedir("GET", "/api/cultivo", galleta=self.galleta)[1]["siguiente_codigo"]
+        self.assertTrue(segundo.endswith("-002"), segundo)
+        self.assertEqual(self.post("/api/cultivo", nuevo)[0], 200)
+
+    def test_si_el_lote_falla_no_quedan_variedad_ni_sala_sueltas(self):
+        nuevo = {"accion": "crear_lote", "genetica_nombre": "Suelta", "sala_nombre": "Suelta",
+                 "origen": "semilla", "cantidad_plantas": 0}
+        self.assertEqual(self.post("/api/cultivo", nuevo)[0], 422)
+        datos = pedir("GET", "/api/cultivo", galleta=self.galleta)[1]
+        self.assertEqual([g["nombre"] for g in datos["geneticas"] if g["nombre"] == "Suelta"], [])
+        self.assertEqual([s["nombre"] for s in datos["salas"] if s["nombre"] == "Suelta"], [])
+
+    def test_la_ficha_se_va_rellenando_y_se_puede_cambiar(self):
+        lote = self.lote()
+        rellenar = {"accion": "actualizar_lote", "lote_id": lote}
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "cosecha_prevista", "valor": "2026-12-20"})[0], 200)
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "notas", "valor": "Nota inventada"})[0], 200)
+        ficha = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["lote"]
+        self.assertEqual((ficha["cosecha_prevista"], ficha["notas"]), ("2026-12-20", "Nota inventada"))
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "cosecha_prevista", "valor": ""})[0], 200)
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "cosecha_prevista", "valor": "ayer"})[0], 422)
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "etapa", "valor": "envasado"})[0], 422)
+        self.post("/api/cultivo", {"accion": "finalizar", "lote_id": lote, "estado": "descartado", "motivo": "Inventado"})
+        self.assertEqual(self.post("/api/cultivo", {**rellenar, "campo": "notas", "valor": "Tarde"})[0], 409)
+
+    def test_un_peso_se_corrige_con_motivo_y_deja_rastro(self):
+        lote = self.lote()
+        correccion = {"accion": "corregir_peso", "lote_id": lote, "cual": "humedo", "peso_g": "900", "motivo": "Mal escrito"}
+        self.assertEqual(self.post("/api/cultivo", correccion)[0], 409)
+        self.hasta(lote, "curado")
+        self.assertEqual(self.post("/api/cultivo", {**correccion, "motivo": ""})[0], 422)
+        self.assertEqual(self.post("/api/cultivo", {**correccion, "peso_g": "100"})[0], 422)
+        self.assertEqual(self.post("/api/cultivo", {**correccion, "cual": "otro"})[0], 422)
+        self.assertEqual(self.post("/api/cultivo", {**correccion, "cual": "seco", "peso_g": "1001"})[0], 422)
+        correo, _ = crear_admin("cultivador")
+        galleta, csrf = sesion_de(correo)
+        self.assertEqual(self.post("/api/cultivo", correccion, galleta, csrf)[0], 403)
+        self.assertEqual(self.post("/api/cultivo", correccion)[0], 200)
+        detalle = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]
+        self.assertEqual(float(detalle["lote"]["peso_humedo_g"]), 900)
+        self.assertEqual(round(detalle["merma"]), 72)
+        apunte = detalle["registros"][0]
+        self.assertEqual(apunte["tipo"], "correccion")
+        self.assertIn("Mal escrito", apunte["detalle"])
+        self.assertIn("1000", apunte["detalle"])
+
+    def test_una_correccion_escribe_el_decimal_con_coma(self):
+        lote = self.lote()
+        self.hasta(lote, "cosecha")
+        datos = {"accion": "corregir_peso", "lote_id": lote, "cual": "humedo", "peso_g": "1250,50", "motivo": "Mal escrito"}
+        self.assertEqual(self.post("/api/cultivo", datos)[0], 200)
+        registro = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["registros"][0]
+        self.assertIn("de 1000 a 1250,5 g", registro["detalle"])
+
+    def test_al_cerrar_un_lote_no_le_quedan_tareas(self):
+        lote = self.lote()
+        with _db.transaccion() as cursor:
+            cursor.execute("INSERT INTO tareas (titulo, lote_id, vence_en) VALUES ('Pendiente', %s, current_date)", (lote,))
+        cierre = {"accion": "finalizar", "lote_id": lote, "estado": "descartado", "motivo": "Inventado"}
+        self.assertEqual(self.post("/api/cultivo", cierre)[0], 200)
+        self.assertEqual(pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["tareas"], [])
+
+    def test_cada_etapa_guarda_su_fecha_para_el_recorrido(self):
+        lote = self.lote()
+        self.avanzar(lote)
+        self.avanzar(lote)
+        sala = self.post("/api/cultivo", {"accion": "crear_sala", "nombre": "Otra", "tipo": "cultivo"})[1]["id"]
+        self.post("/api/cultivo", {"accion": "mover", "lote_id": lote, "sala_id": sala})
+        fechas = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=self.galleta)[1]["fechas_etapa"]
+        for etapa in ("origen", "vegetativo", "floracion"):
+            self.assertTrue(fechas[etapa], etapa)
+        self.assertIsNone(fechas["cosecha"])
+
+    def test_la_ficha_muestra_las_tareas_que_cada_uno_puede_cerrar(self):
+        lote = self.lote()
+        correo, cultivador = crear_admin("cultivador")
+        _, otro = crear_admin("cultivador", "otro.cultivador@ejemplo.test")
+        with _db.transaccion() as cursor:
+            cursor.execute(
+                "INSERT INTO tareas (titulo, lote_id, asignada_a, vence_en) VALUES "
+                "('Suya', %s, %s, current_date), ('Libre', %s, NULL, current_date), ('Ajena', %s, %s, current_date)",
+                (lote, cultivador, lote, lote, otro))
+        galleta, _ = sesion_de(correo)
+        tareas = pedir("GET", f"/api/cultivo_lote?id={lote}", galleta=galleta)[1]["tareas"]
+        self.assertEqual({t["titulo"]: t["puede_completar"] for t in tareas}, {"Suya": True, "Libre": True, "Ajena": False})
+        resumen = next(l for l in pedir("GET", "/api/cultivo", galleta=galleta)[1]["lotes"] if l["id"] == lote)
+        self.assertEqual(resumen["tareas_pendientes"], 3)
+        self.assertIsNone(resumen["ultimo_registro"])
+
 
 class Textos(unittest.TestCase):
     """Fallos vistos a ojo: palabras sin tilde, fechas crudas y "1 plantas"."""
+
+    def test_ninguna_accion_del_cultivo_se_queda_sin_boton(self):
+        servidor = self.leer("servidor/rutas_cultivo.mjs")
+        bloque = re.search(r"const ACCIONES_CULTIVO = \{(.*?)\n\};", servidor, re.S).group(1)
+        acciones = re.findall(r"^  (?:async )?(\w+)[:(]", bloque, re.M)
+        self.assertIn("finalizar", acciones)
+        pantallas = "".join(self.leer(f"web/{nombre}") for nombre in ("admin_cultivo.js", "admin_lote.js", "admin_lote_nuevo.js"))
+        for accion in acciones:
+            if accion in ("crear_sala", "crear_genetica", "crear_lote"):
+                self.assertIn(f"accion: '{accion}'", pantallas)
+            elif accion != "avanzar":
+                self.assertIn(f"accionCultivo('{accion}'", pantallas)
+        self.assertIn("accionCultivo('avanzar'", pantallas)
+        # Sin el tipo, el servidor rechaza cualquier anotación.
+        self.assertIn("tipo: anotacion.tipo", pantallas)
+
+    def test_los_avisos_del_cultivo_estan_bien_escritos(self):
+        comun = self.leer("web/cultivo_comun.js")
+        # Las preguntas terminan en interrogación: un punto detrás se lee mal.
+        self.assertNotIn("${campo.etiqueta}.", comun)
+        self.assertNotIn("${campo.etiqueta}:", comun)
+        # El título puede ser femenino: «aplicación anotado» sería un error.
+        self.assertNotIn("toLowerCase()} anotado", self.leer("web/admin_lote.js"))
+
+    def test_guardar_un_recuadro_no_mueve_la_pagina(self):
+        for pantalla in ("web/admin_lote.js", "web/admin_cultivo.js"):
+            self.assertNotIn("'exito'", self.leer(pantalla), pantalla)
+
+    def test_cada_anotacion_y_etapa_tiene_su_dibujo(self):
+        dibujos = self.leer("web/dibujos_cultivo.svg")
+        servidor = self.leer("servidor/rutas_cultivo.mjs")
+        tipos = re.findall(r"'(\w+)'", re.search(r"const TIPOS_REGISTRO = \[(.*?)\]", servidor).group(1))
+        etapas = re.findall(r"'(\w+)'", re.search(r"const ETAPAS = \[(.*?)\]", servidor).group(1))
+        for nombre in [*tipos, "correccion", *(f"etapa-{e}" for e in etapas)]:
+            self.assertIn(f'id="{nombre}"', dibujos)
+        comun = self.leer("web/cultivo_comun.js")
+        for etapa in etapas:
+            self.assertIn(f"clave: '{etapa}'", comun)
+        # Un estilo dentro del archivo no llega a un dibujo usado desde otra página.
+        self.assertNotIn("<style", dibujos)
+
+    def test_la_web_publica_no_carga_los_dibujos_del_cultivo(self):
+        for ruta in sorted((_config.RAIZ / "web").glob("*.html")):
+            if not ruta.name.startswith("admin"):
+                self.assertNotIn("cultivo_comun", ruta.read_text(encoding="utf-8"), ruta.name)
+                self.assertNotIn("dibujos_cultivo", ruta.read_text(encoding="utf-8"), ruta.name)
 
     @staticmethod
     def leer(ruta):

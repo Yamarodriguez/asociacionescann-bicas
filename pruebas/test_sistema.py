@@ -932,7 +932,7 @@ class Servidor(Base):
             "/", "/login.html", "/estado.html", "/perfil.html", "/admin.html", "/admin_socios.html",
             "/admin_contactos.html", "/legal.html", "/portada.js", "/recuperar.html", "/admin_cuotas.html",
             "/admin_comunicados.html", "/admin_configuracion.html", "/admin_seguridad.html",
-            "/admin_auditoria.html", "/admin_cultivo.html", "/admin_lote.html",
+            "/admin_auditoria.html", "/admin_cultivo.html", "/admin_lote.html", "/admin_lote_nuevo.html",
             "/admin_tareas.html", "/admin_inventario.html", "/admin_finanzas.html", "/admin_mora.html",
             "/admin_cumplimiento.html", "/admin_informe.html", "/admin_equipo.html", "/admin_calendario.html",
             "/admin_abastecimiento.html", "/admin_etiquetas.html",

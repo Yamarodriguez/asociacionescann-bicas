@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nuevo lote · Prototipo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/estilos.css">
+  <script src="/app.js" defer></script>
+  <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/cultivo_comun.js" defer></script>
+  <script src="/admin_lote_nuevo.js" defer></script>
+</head>
+<body>
+  <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
+  <main class="pagina">
+    <div class="cabecera">
+      <h1>Empezar un lote</h1>
+      <div>
+        <a class="boton secundario" href="/admin_cultivo.html">Volver a cultivo</a>
+        <button type="button" id="salir" class="secundario">Salir</button>
+      </div>
+    </div>
+    <div id="mensaje" class="mensaje" role="alert"></div>
+    <p id="cargando" class="cargando">Cargando…</p>
+
+    <div id="contenido" class="oculto">
+      <p>Un lote es un grupo de plantas que empiezan juntas. Rellená estos cuatro recuadros: lo demás se puede completar después.</p>
+
+      <form id="formulario" novalidate>
+        <fieldset id="paso-variedad" class="paso-lote">
+          <legend><span class="paso-numero">1</span> ¿Qué variedad vas a cultivar?</legend>
+          <div id="variedades" class="elecciones"></div>
+          <div id="campo-variedad" class="campo oculto">
+            <label for="genetica_nombre">Nombre de la variedad</label>
+            <input id="genetica_nombre" name="genetica_nombre" maxlength="100" autocomplete="off">
+          </div>
+        </fieldset>
+
+        <fieldset id="paso-sala" class="paso-lote">
+          <legend><span class="paso-numero">2</span> ¿En qué sala van a estar?</legend>
+          <div id="salas" class="elecciones"></div>
+          <div id="campo-sala" class="campo oculto">
+            <label for="sala_nombre">Nombre de la sala</label>
+            <input id="sala_nombre" name="sala_nombre" maxlength="100" autocomplete="off">
+          </div>
+        </fieldset>
+
+        <fieldset id="paso-origen" class="paso-lote">
+          <legend><span class="paso-numero">3</span> ¿Cómo empiezan?</legend>
+          <div id="origenes" class="elecciones elecciones-grandes"></div>
+        </fieldset>
+
+        <fieldset id="paso-plantas" class="paso-lote">
+          <legend><span class="paso-numero">4</span> ¿Cuántas plantas son?</legend>
+          <div class="contador">
+            <button type="button" id="menos" class="secundario" aria-label="Una planta menos">−</button>
+            <label for="cantidad_plantas" class="oculto-visual">Cantidad de plantas</label>
+            <input id="cantidad_plantas" name="cantidad_plantas" inputmode="numeric" autocomplete="off">
+            <button type="button" id="mas" class="secundario" aria-label="Una planta más">+</button>
+          </div>
+          <p class="nota">Cada planta recibe su propio código para las etiquetas.</p>
+        </fieldset>
+
+        <fieldset class="paso-lote paso-opcional">
+          <legend>¿Cuándo calculás cosechar? <span class="nota">(opcional, se puede dejar para después)</span></legend>
+          <label for="cosecha_prevista" class="oculto-visual">Fecha prevista de cosecha</label>
+          <input id="cosecha_prevista" name="cosecha_prevista" type="date">
+        </fieldset>
+
+        <section class="resumen-lote">
+          <p id="nombre-lote" class="nota"></p>
+          <details class="plegable">
+            <summary>Prefiero ponerle otro nombre</summary>
+            <div class="campo">
+              <label for="codigo">Nombre del lote</label>
+              <input id="codigo" name="codigo" maxlength="40" autocomplete="off">
+            </div>
+          </details>
+          <p id="falta" class="falta" aria-live="polite"></p>
+          <button type="submit" id="crear">Empezar el lote</button>
+        </section>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

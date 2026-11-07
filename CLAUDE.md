@@ -77,6 +77,18 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 - Reservas y dispensa siguen sin construir: dependen de las preguntas 1 a 6 al abogado.
 - `plantas_autorizadas` avisa pero no bloquea, y sale del certificado. Sin notas de efecto, por la regla 7.
 - Sin fotos, sensores, WhatsApp ni IA por ahora.
+- `numero()` admite coma decimal en todo el sistema. Los puntos de miles se rechazan a propósito: «1.250» podría leerse como 1,25.
+
+## Cultivo por recuadros
+
+- 2026-11-07: la responsable pidió el cultivo con recuadros que se vayan rellenando, para que lo use una persona normal. Tres pantallas: `admin_cultivo` (lotes en recuadros), `admin_lote_nuevo` (cuatro preguntas) y `admin_lote` (etapas, qué se anota y ficha). Piezas comunes en `web/cultivo_comun.js`.
+- En pantalla se dice «variedad», no «genética». Las tablas siguen con el nombre técnico.
+- `web/dibujos_cultivo.svg` es solo de la zona interna (regla 2). Nada de `<style>` dentro de un archivo de dibujos: no se aplica con `<use>` externo.
+- Las opciones de poda, problema, baja y destrucción son propuestas mías, no vienen del encargo: pendientes de validar con quien cultiva. La EC y el pH no llevan rangos recomendados: serían datos inventados.
+- Pasar de etapa no se deshace. Un peso sí se corrige, con motivo, y queda en el historial y la auditoría. Los apuntes no se editan.
+- Cerrar o descartar un lote cierra sus tareas pendientes.
+- Las pruebas contra el servidor no ven si la pantalla envía bien los datos: el fallo de que no se guardaba ninguna anotación solo salió al recorrer la pantalla de verdad. Tras tocar una pantalla, recorrerla.
+- Tras guardar, `confirmar` no mueve la página; `avisar` sí, y solo queda para errores.
 
 ## Gestión interna
 

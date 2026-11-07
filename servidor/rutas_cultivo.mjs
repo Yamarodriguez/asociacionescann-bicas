@@ -3,7 +3,7 @@
 import { auditar, configuracion, transaccion } from './db.mjs';
 import { ErrorHttp, exigirSesion, json, leerJson } from './http.mjs';
 import { dataUriQr } from './rutas_socio.mjs';
-import { entero, esId, fecha, fechaOpcional, numero, texto } from './validar.mjs';
+import { entero, esId, fecha, fechaOpcional, numero, positivo, texto } from './validar.mjs';
 
 const COORDINA = ['coordinador_cultivo'];
 const REGISTRA = ['coordinador_cultivo', 'cultivador'];
@@ -16,6 +16,10 @@ const TIPOS_SALA = ['cultivo', 'secado', 'curado'];
 const ORIGENES = ['semilla', 'esqueje'];
 const MOVIMIENTOS = ['ingreso', 'consumo', 'ajuste'];
 const MAXIMO_PLANTAS = 500;
+// Lo que ya dice el propio recuadro: un riego no obliga a escribir nada.
+const DETALLE_POR_DEFECTO = { riego: 'Riego', nutrientes: 'Nutrientes', poda: 'Poda', medicion: 'Medición' };
+const gramos = (valor) => String(Number(valor)).replace('.', ',');
+const textoEtapa = (etapa) => `Pasó a ${etapa === 'floracion' ? 'floración' : etapa}`;
 
 export async function moduloActivo() {
   return transaccion(async (q) => (await configuracion(q, 'modulo_cultivo_activo')) === 'true');
@@ -32,6 +36,17 @@ async function resumenPlantas(q) {
      WHERE etapa = 'floracion' AND estado = 'activo'`,
   );
   return { autorizadas, florecidas, excede: autorizadas > 0 && florecidas > autorizadas };
+}
+
+// Código propuesto para el lote siguiente, por año. Quien coordina puede poner otro.
+async function siguienteCodigo(q) {
+  const [{ codigo }] = await q(
+    `WITH anio AS (SELECT to_char(now() AT TIME ZONE 'America/Argentina/Buenos_Aires', 'YYYY') AS valor)
+     SELECT 'L-' || a.valor || '-' || lpad(
+       (coalesce(max(substring(l.codigo FROM '^L-[0-9]{4}-([0-9]{1,6})$')::int), 0) + 1)::text, 3, '0') AS codigo
+     FROM anio a LEFT JOIN lotes l ON l.codigo LIKE 'L-' || a.valor || '-%' GROUP BY a.valor`,
+  );
+  return codigo;
 }
 
 // Sin tareas programadas en el servidor: lo que toca se crea al consultar.
@@ -80,12 +95,15 @@ export async function verCultivo(c) {
   await exigirSesion(c, 'admin', { roles: VE_CULTIVO });
   const datos = await transaccion(async (q) => ({
     plantas: await resumenPlantas(q),
+    siguiente_codigo: await siguienteCodigo(q),
     salas: await q('SELECT id, nombre, tipo FROM salas ORDER BY nombre'),
     geneticas: await q('SELECT id, nombre, notas FROM geneticas ORDER BY nombre'),
     lotes: await q(
       `SELECT l.id, l.codigo, l.etapa, l.estado, l.cantidad_plantas, l.origen, l.creado_en, l.cosecha_prevista, l.sala_id,
-       g.nombre AS genetica, s.nombre AS sala FROM lotes l
-       JOIN geneticas g ON g.id = l.genetica_id JOIN salas s ON s.id = l.sala_id
+       g.nombre AS genetica, s.nombre AS sala,
+       (SELECT max(r.creado_en) FROM registros_lote r WHERE r.lote_id = l.id) AS ultimo_registro,
+       (SELECT count(*)::int FROM tareas t WHERE t.lote_id = l.id AND t.completada_en IS NULL) AS tareas_pendientes
+       FROM lotes l JOIN geneticas g ON g.id = l.genetica_id JOIN salas s ON s.id = l.sala_id
        ORDER BY l.estado = 'activo' DESC, l.creado_en DESC LIMIT 300`,
     ),
     por_genetica: await q(
@@ -108,7 +126,7 @@ export async function verCultivo(c) {
 
 export async function verLote(c) {
   await exigirModulo();
-  await exigirSesion(c, 'admin', { roles: VE_CULTIVO });
+  const admin = await exigirSesion(c, 'admin', { roles: VE_CULTIVO });
   const id = Number(c.url.searchParams.get('id'));
   if (!Number.isInteger(id) || id < 1) throw new ErrorHttp(422, 'Pedido inválido.');
   const datos = await transaccion(async (q) => {
@@ -120,8 +138,9 @@ export async function verLote(c) {
     return {
       lote,
       registros: await q(
-        `SELECT r.id, r.tipo, r.detalle, r.ph, r.ec, r.temperatura, r.humedad, r.plantas, r.testigos, r.creado_en,
-         a.email AS responsable FROM registros_lote r JOIN admins a ON a.id = r.creado_por
+        `SELECT r.id, r.tipo, r.detalle, r.ph, r.ec, r.temperatura, r.humedad, r.litros, r.plantas, r.testigos, r.creado_en,
+         a.email AS responsable, p.codigo AS planta FROM registros_lote r JOIN admins a ON a.id = r.creado_por
+         LEFT JOIN plantas p ON p.id = r.planta_id
          WHERE r.lote_id = $1 ORDER BY r.creado_en DESC, r.id DESC LIMIT 500`, [id],
       ),
       analisis: await q(
@@ -132,12 +151,23 @@ export async function verLote(c) {
       ))[0],
       insumos: await q('SELECT id, nombre, unidad FROM insumos ORDER BY nombre LIMIT 500'),
       salas: await q('SELECT id, nombre FROM salas ORDER BY nombre'),
+      limite: await resumenPlantas(q),
+      tareas: await q(
+        `SELECT id, titulo, vence_en, vence_en < current_date AS vencida,
+         ($2::boolean OR asignada_a = $3 OR ($4::boolean AND asignada_a IS NULL)) AS puede_completar
+         FROM tareas WHERE lote_id = $1 AND completada_en IS NULL ORDER BY vence_en, id LIMIT 50`,
+        [id, GESTIONA_TAREAS.includes(admin.rol), admin.id, admin.rol === 'cultivador'],
+      ),
     };
   });
+  const fechasEtapa = Object.fromEntries(ETAPAS.map((etapa) => [
+    etapa, datos.registros.find((r) => r.tipo === 'etapa' && r.detalle === textoEtapa(etapa))?.creado_en ?? null,
+  ]));
+  fechasEtapa.origen = datos.lote.creado_en;
   const { peso_humedo_g: humedo, peso_seco_g: seco } = datos.lote;
   const merma = humedo && seco ? Math.round((1 - Number(seco) / Number(humedo)) * 10000) / 100 : null;
   const qr = await dataUriQr(`${c.url.origin}/admin_lote.html?id=${id}`);
-  return json(200, { ...datos, merma, qr });
+  return json(200, { ...datos, fechas_etapa: fechasEtapa, merma, qr });
 }
 
 async function crearTareasDeEtapa(q, loteId, etapa, adminId) {
@@ -173,7 +203,7 @@ async function avanzarEtapa(q, admin, datos) {
   await q('UPDATE lotes SET etapa = $1 WHERE id = $2', [siguiente, datos.lote_id]);
   await q(
     "INSERT INTO registros_lote (lote_id, tipo, detalle, creado_por) VALUES ($1, 'etapa', $2, $3)",
-    [datos.lote_id, `Pasó a ${siguiente === 'floracion' ? 'floración' : siguiente}`, admin.id],
+    [datos.lote_id, textoEtapa(siguiente), admin.id],
   );
   await crearTareasDeEtapa(q, datos.lote_id, siguiente, admin.id);
   await auditar(q, 'lote_avanzado', 'lote', { entidadId: datos.lote_id, adminId: admin.id, detalle: siguiente });
@@ -215,24 +245,37 @@ const ACCIONES_CULTIVO = {
       'INSERT INTO geneticas (nombre, notas) VALUES ($1, $2) ON CONFLICT (nombre) DO NOTHING RETURNING id',
       [texto(datos, 'nombre', 100), texto(datos, 'notas', 1000, false)],
     );
-    if (!filas.length) throw new ErrorHttp(409, 'Ya existe una genética con ese nombre.');
+    if (!filas.length) throw new ErrorHttp(409, 'Ya existe una variedad con ese nombre.');
     await auditar(q, 'genetica_creada', 'genetica', { entidadId: filas[0].id, adminId: admin.id });
     return { id: filas[0].id };
   },
   async crear_lote(q, admin, datos) {
-    if (!esId(datos.genetica_id) || !esId(datos.sala_id)) throw new ErrorHttp(422, 'Elegí genética y sala.');
     if (!ORIGENES.includes(datos.origen)) throw new ErrorHttp(422, 'Revisá el origen.');
+    // Variedad y sala nuevas se crean junto con el lote: si algo falla, no queda nada a medias.
+    const geneticaId = datos.genetica_nombre
+      ? (await q(
+        'INSERT INTO geneticas (nombre) VALUES ($1) ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre RETURNING id',
+        [texto(datos, 'genetica_nombre', 100)],
+      ))[0].id
+      : datos.genetica_id;
+    const salaId = datos.sala_nombre
+      ? (await q(
+        "INSERT INTO salas (nombre, tipo) VALUES ($1, 'cultivo') ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre RETURNING id",
+        [texto(datos, 'sala_nombre', 100)],
+      ))[0].id
+      : datos.sala_id;
+    if (!esId(geneticaId) || !esId(salaId)) throw new ErrorHttp(422, 'Elegí variedad y sala.');
     const [{ existe }] = await q(
       `SELECT EXISTS (SELECT 1 FROM geneticas WHERE id = $1) AND EXISTS (SELECT 1 FROM salas WHERE id = $2) AS existe`,
-      [datos.genetica_id, datos.sala_id],
+      [geneticaId, salaId],
     );
-    if (!existe) throw new ErrorHttp(422, 'Elegí genética y sala.');
+    if (!existe) throw new ErrorHttp(422, 'Elegí variedad y sala.');
     const cantidad = entero(datos, 'cantidad_plantas', 1, MAXIMO_PLANTAS);
-    const codigo = texto(datos, 'codigo', 40);
+    const codigo = texto(datos, 'codigo', 40, false) ?? await siguienteCodigo(q);
     const filas = await q(
       `INSERT INTO lotes (codigo, genetica_id, sala_id, sala_inicial_id, origen, cantidad_plantas, cosecha_prevista, creado_por)
        VALUES ($1, $2, $3, $3, $4, $5, $6, $7) ON CONFLICT (codigo) DO NOTHING RETURNING id`,
-      [codigo, datos.genetica_id, datos.sala_id, datos.origen, cantidad, fechaOpcional(datos, 'cosecha_prevista'), admin.id],
+      [codigo, geneticaId, salaId, datos.origen, cantidad, fechaOpcional(datos, 'cosecha_prevista'), admin.id],
     );
     if (!filas.length) throw new ErrorHttp(409, 'Ya existe un lote con ese código.');
     await q(
@@ -245,6 +288,45 @@ const ACCIONES_CULTIVO = {
     return { id: filas[0].id };
   },
   avanzar: avanzarEtapa,
+  async actualizar_lote(q, admin, datos) {
+    if (!esId(datos.lote_id)) throw new ErrorHttp(422, 'Pedido inválido.');
+    const cambios = {
+      notas: () => [texto(datos, 'valor', 1000, false), "UPDATE lotes SET notas = $1 WHERE id = $2 AND estado = 'activo' RETURNING id"],
+      cosecha_prevista: () => [fechaOpcional(datos, 'valor'), "UPDATE lotes SET cosecha_prevista = $1 WHERE id = $2 AND estado = 'activo' RETURNING id"],
+    };
+    if (!Object.hasOwn(cambios, datos.campo ?? '')) throw new ErrorHttp(422, 'Pedido inválido.');
+    const [valor, sql] = cambios[datos.campo]();
+    const filas = await q(sql, [valor, datos.lote_id]);
+    if (!filas.length) throw new ErrorHttp(409, 'Este lote ya no está activo.');
+    await auditar(q, 'lote_actualizado', 'lote', { entidadId: datos.lote_id, adminId: admin.id, detalle: datos.campo });
+    return { ok: true };
+  },
+  // Un peso mal escrito se corrige con motivo y queda en el historial y en la auditoría.
+  async corregir_peso(q, admin, datos) {
+    if (!esId(datos.lote_id) || !['humedo', 'seco'].includes(datos.cual)) throw new ErrorHttp(422, 'Pedido inválido.');
+    const peso = positivo(datos, 'peso_g', { maximo: 1e8 });
+    const motivo = texto(datos, 'motivo', 500);
+    const [lote] = await q('SELECT estado, peso_humedo_g, peso_seco_g FROM lotes WHERE id = $1 FOR UPDATE', [datos.lote_id]);
+    if (!lote) throw new ErrorHttp(404, 'No encontrado.');
+    if (lote.estado !== 'activo') throw new ErrorHttp(409, 'Este lote ya no está activo.');
+    const humedo = datos.cual === 'humedo';
+    const anterior = humedo ? lote.peso_humedo_g : lote.peso_seco_g;
+    if (anterior === null) throw new ErrorHttp(409, 'Ese peso todavía no está cargado.');
+    const seco = humedo ? lote.peso_seco_g : peso;
+    if (seco !== null && Number(seco) > Number(humedo ? peso : lote.peso_humedo_g)) {
+      throw new ErrorHttp(422, 'El peso seco no puede superar al húmedo.');
+    }
+    await q(
+      humedo ? 'UPDATE lotes SET peso_humedo_g = $1 WHERE id = $2' : 'UPDATE lotes SET peso_seco_g = $1 WHERE id = $2',
+      [peso, datos.lote_id],
+    );
+    await q(
+      "INSERT INTO registros_lote (lote_id, tipo, detalle, creado_por) VALUES ($1, 'correccion', $2, $3)",
+      [datos.lote_id, `Peso ${humedo ? 'húmedo' : 'seco'} de ${gramos(anterior)} a ${gramos(peso)} g. Motivo: ${motivo}`, admin.id],
+    );
+    await auditar(q, 'peso_corregido', 'lote', { entidadId: datos.lote_id, adminId: admin.id, detalle: datos.cual });
+    return { ok: true };
+  },
   async mover(q, admin, datos) {
     if (!esId(datos.lote_id) || !esId(datos.sala_id)) throw new ErrorHttp(422, 'Elegí una sala.');
     const [sala] = await q('SELECT nombre FROM salas WHERE id = $1', [datos.sala_id]);
@@ -286,6 +368,11 @@ const ACCIONES_CULTIVO = {
     }
     const motivo = estado === 'descartado' ? texto(datos, 'motivo', 500) : 'Lote finalizado';
     await q('UPDATE lotes SET estado = $1 WHERE id = $2', [estado, datos.lote_id]);
+    // Un lote cerrado ya no tiene trabajo pendiente.
+    await q(
+      'UPDATE tareas SET completada_en = now(), completada_por = $1 WHERE lote_id = $2 AND completada_en IS NULL',
+      [admin.id, datos.lote_id],
+    );
     await q(
       "INSERT INTO registros_lote (lote_id, tipo, detalle, creado_por) VALUES ($1, 'etapa', $2, $3)",
       [datos.lote_id, motivo, admin.id],
@@ -308,11 +395,16 @@ export async function registrar(c) {
   const admin = await exigirSesion(c, 'admin', { roles: REGISTRA, csrf: true });
   const datos = leerJson(c);
   if (!esId(datos.lote_id) || !TIPOS_REGISTRO.includes(datos.tipo)) throw new ErrorHttp(422, 'Pedido inválido.');
-  const detalle = texto(datos, 'detalle', 1000);
+  const detalle = texto(datos, 'detalle', 1000, false) ?? DETALLE_POR_DEFECTO[datos.tipo];
+  if (!detalle) throw new ErrorHttp(422, 'Contá brevemente qué pasó.');
+  const litros = datos.tipo === 'riego' ? numero(datos, 'litros', { maximo: 100000 }) : null;
   const medidas = [
     numero(datos, 'ph', { maximo: 14 }), numero(datos, 'ec', { maximo: 100 }),
     numero(datos, 'temperatura', { maximo: 100 }), numero(datos, 'humedad', { maximo: 100 }),
   ];
+  if (datos.tipo === 'medicion' && medidas.every((medida) => medida === null)) {
+    throw new ErrorHttp(422, 'Anotá al menos una medida.');
+  }
   const codigoPlanta = texto(datos, 'planta_codigo', 60, false);
   const plantas = datos.tipo === 'baja' ? (codigoPlanta ? 1 : entero(datos, 'plantas')) : null;
   const testigos = datos.tipo === 'destruccion' ? texto(datos, 'testigos', 300) : null;
@@ -339,9 +431,9 @@ export async function registrar(c) {
       );
     }
     const filas = await q(
-      `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, temperatura, humedad, plantas, testigos, planta_id, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-      [datos.lote_id, datos.tipo, detalle, ...medidas, plantas, testigos, plantaId, admin.id],
+      `INSERT INTO registros_lote (lote_id, tipo, detalle, ph, ec, temperatura, humedad, litros, plantas, testigos, planta_id, creado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+      [datos.lote_id, datos.tipo, detalle, ...medidas, litros, plantas, testigos, plantaId, admin.id],
     );
     if (gasto) {
       await moverStock(q, admin.id, {

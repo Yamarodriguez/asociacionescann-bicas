@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/armazon.js" defer></script>
+  <script src="/gestion.js" defer></script>
+  <script src="/cultivo_comun.js" defer></script>
   <script src="/admin_cultivo.js" defer></script>
 </head>
 <body>
@@ -17,103 +19,41 @@
     <div class="cabecera">
       <h1>Cultivo</h1>
       <div>
+        <a id="nuevo-lote" class="boton oculto" href="/admin_lote_nuevo.html">Empezar un lote</a>
         <button type="button" id="salir" class="secundario">Salir</button>
       </div>
     </div>
     <div id="mensaje" class="mensaje" role="alert"></div>
-    <p id="plantas" class="tarjeta"></p>
+    <p id="cargando" class="cargando">Cargando…</p>
 
-    <section class="tarjeta">
-      <h2>Mapa de salas</h2>
-      <div id="mapa" class="tablero"></div>
-    </section>
+    <div id="contenido" class="oculto">
+      <div id="cifras" class="cifras"></div>
 
-    <section class="tarjeta">
-      <h2>Lotes</h2>
-      <p id="estado-lista" class="cargando">Cargando…</p>
-      <table id="tabla" class="oculto">
-        <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Genética</th>
-            <th scope="col">Sala</th>
-            <th scope="col">Etapa</th>
-            <th scope="col">Plantas</th>
-            <th scope="col">Estado</th>
-          </tr>
-        </thead>
-        <tbody id="filas"></tbody>
-      </table>
-    </section>
+      <section class="bloque-cultivo">
+        <h2>Lotes en marcha</h2>
+        <p class="nota">Tocá un lote para anotar lo que hiciste y ver lo que sigue.</p>
+        <div id="lotes" class="mosaico"></div>
+        <details id="bloque-cerrados" class="plegable oculto">
+          <summary>Lotes cerrados</summary>
+          <div id="cerrados" class="mosaico"></div>
+        </details>
+      </section>
 
-    <section class="tarjeta">
-      <h2>Rendimiento</h2>
-      <p class="nota">Gramos secos por planta y merma media de los lotes con peso seco.</p>
-      <div id="comparativas"></div>
-    </section>
+      <section class="bloque-cultivo">
+        <h2>Salas</h2>
+        <div id="salas" class="mosaico"></div>
+      </section>
 
-    <div id="gestion" class="oculto">
-      <form id="form-lote" class="tarjeta">
-        <h2>Nuevo lote</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="codigo">Código</label>
-            <input id="codigo" name="codigo" maxlength="40" required>
-          </div>
-          <div class="campo">
-            <label for="genetica_id">Genética</label>
-            <select id="genetica_id" name="genetica_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="sala_id">Sala</label>
-            <select id="sala_id" name="sala_id" required></select>
-          </div>
-          <div class="campo">
-            <label for="origen">Origen</label>
-            <select id="origen" name="origen">
-              <option value="esqueje">Esqueje</option>
-              <option value="semilla">Semilla</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label for="cantidad_plantas">Plantas</label>
-            <input id="cantidad_plantas" name="cantidad_plantas" type="number" min="1" max="500" required>
-          </div>
-          <div class="campo">
-            <label for="cosecha_prevista">Cosecha prevista</label>
-            <input id="cosecha_prevista" name="cosecha_prevista" type="date">
-          </div>
-        </div>
-        <button type="submit">Crear lote</button>
-      </form>
+      <section class="bloque-cultivo">
+        <h2>Variedades</h2>
+        <div id="variedades" class="lista-etiquetas"></div>
+      </section>
 
-      <form id="form-sala" class="tarjeta">
-        <h2>Nueva sala</h2>
-        <div class="rejilla-campos">
-          <div class="campo">
-            <label for="sala-nombre">Nombre</label>
-            <input id="sala-nombre" name="nombre" maxlength="100" required>
-          </div>
-          <div class="campo">
-            <label for="sala-tipo">Tipo</label>
-            <select id="sala-tipo" name="tipo">
-              <option value="cultivo">Cultivo</option>
-              <option value="secado">Secado</option>
-              <option value="curado">Curado</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="secundario">Crear sala</button>
-      </form>
-
-      <form id="form-genetica" class="tarjeta">
-        <h2>Nueva genética</h2>
-        <div class="campo">
-          <label for="genetica-nombre">Nombre</label>
-          <input id="genetica-nombre" name="nombre" maxlength="100" required>
-        </div>
-        <button type="submit" class="secundario">Crear genética</button>
-      </form>
+      <section class="bloque-cultivo">
+        <h2>Cómo rindieron</h2>
+        <p class="nota">Se rellena solo cuando un lote llega al peso seco.</p>
+        <div id="comparativas" class="mosaico"></div>
+      </section>
     </div>
   </main>
 </body>

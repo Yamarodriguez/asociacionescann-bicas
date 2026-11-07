@@ -19,7 +19,7 @@ const armazon = (() => {
       { titulo: 'Contacto', detalle: 'Mensajes recibidos', enlace: '/admin_contactos.html', dibujo: 'contacto', tono: 'azul', clave: 'mensajes', aviso: true },
     ] },
     { titulo: 'Producción', secciones: [
-      { titulo: 'Cultivo', detalle: 'Lotes activos', enlace: '/admin_cultivo.html', otras: ['/admin_lote.html', '/admin_etiquetas.html'], dibujo: 'cultivo', tono: 'verde', clave: 'lotes_activos' },
+      { titulo: 'Cultivo', detalle: 'Lotes activos', enlace: '/admin_cultivo.html', otras: ['/admin_lote.html', '/admin_lote_nuevo.html', '/admin_etiquetas.html'], dibujo: 'cultivo', tono: 'verde', clave: 'lotes_activos' },
       { titulo: 'Tareas', detalle: 'Para hoy o vencidas', enlace: '/admin_tareas.html', dibujo: 'tareas', tono: 'azul', clave: 'tareas_hoy', aviso: true },
       { titulo: 'Inventario', detalle: 'Insumos por reponer', enlace: '/admin_inventario.html', dibujo: 'inventario', tono: 'dorado', clave: 'stock_bajo', aviso: true },
       { titulo: 'Abastecimiento', enlace: '/admin_abastecimiento.html', dibujo: 'abastecimiento', tono: 'azul', requiere: 'stock_bajo' },

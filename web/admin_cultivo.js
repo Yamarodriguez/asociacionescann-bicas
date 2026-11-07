@@ -1,131 +1,166 @@
-const mensaje = document.getElementById('mensaje');
-const estadoLista = document.getElementById('estado-lista');
+let coordina = false;
 
-function opciones(id, lista) {
-  document.getElementById(id).replaceChildren(...lista.map((item) => {
-    const opcion = document.createElement('option');
-    opcion.value = item.id;
-    opcion.textContent = item.nombre;
-    return opcion;
-  }));
+function cajaCifra(numero, titulo, detalle, { dibujo, alerta = false, enlace } = {}) {
+  const caja = nuevo(enlace ? 'a' : 'div', alerta ? 'cifra-caja alerta' : 'cifra-caja');
+  if (enlace) caja.href = enlace;
+  const circulo = nuevo('span', 'cifra-dibujo');
+  circulo.append(dibujoCultivo(dibujo));
+  const textos = nuevo('div');
+  textos.append(nuevo('p', 'cifra-numero', numero), nuevo('p', 'cifra-titulo', titulo));
+  if (detalle) textos.append(nuevo('p', 'nota', detalle));
+  caja.append(circulo, textos);
+  return caja;
 }
 
-function fila(lote) {
-  const tr = document.createElement('tr');
-  const enlace = document.createElement('a');
-  enlace.href = `/admin_lote.html?id=${lote.id}`;
-  enlace.textContent = lote.codigo;
-  const primera = celdaTabla('Código', '');
-  primera.append(enlace);
-  tr.append(
-    primera,
-    celdaTabla('Genética', lote.genetica),
-    celdaTabla('Sala', lote.sala),
-    celdaTabla('Etapa', nombreCultivo(lote.etapa)),
-    celdaTabla('Plantas', lote.cantidad_plantas),
-    celdaTabla('Estado', lote.estado),
+function pintarCifras(plantas, lotes) {
+  const activos = lotes.filter((lote) => lote.estado === 'activo');
+  const pendientes = activos.reduce((total, lote) => total + lote.tareas_pendientes, 0);
+  const detallePlantas = plantas.autorizadas
+    ? `De ${plantas.autorizadas} autorizadas${plantas.excede ? ': se superó el límite' : ''}`
+    : 'Falta cargar el límite del certificado';
+  document.getElementById('cifras').replaceChildren(
+    cajaCifra(activos.length, activos.length === 1 ? 'Lote en marcha' : 'Lotes en marcha', '', { dibujo: 'etapa-vegetativo' }),
+    cajaCifra(plantas.florecidas, 'Plantas en floración', detallePlantas, { dibujo: 'etapa-floracion', alerta: plantas.excede }),
+    cajaCifra(pendientes, 'Tareas de cultivo', 'Ver lo que falta hacer', { dibujo: 'hecho', enlace: '/admin_tareas.html' }),
   );
-  return tr;
 }
 
-function pintarPlantas({ autorizadas, florecidas, excede }) {
-  const aviso = document.getElementById('plantas');
-  if (!autorizadas) {
-    aviso.textContent = `Plantas en floración: ${florecidas}. Falta cargar el límite del certificado.`;
-  } else {
-    aviso.textContent = `Plantas en floración: ${florecidas} de ${autorizadas} autorizadas.`;
+function tarjetaLote(lote) {
+  const cerrado = lote.estado !== 'activo';
+  const tarjeta = nuevo('a', cerrado ? 'lote-recuadro cerrado' : 'lote-recuadro');
+  tarjeta.href = `/admin_lote.html?id=${lote.id}`;
+  const cabeza = nuevo('div', 'lote-cabeza');
+  const circulo = nuevo('span', 'lote-dibujo');
+  circulo.append(dibujoCultivo(`etapa-${lote.etapa}`));
+  const nombres = nuevo('div');
+  nombres.append(nuevo('h3', '', lote.genetica), nuevo('p', 'nota', lote.codigo));
+  cabeza.append(circulo, nombres);
+
+  const estado = cerrado
+    ? (lote.estado === 'descartado' ? 'Descartado' : 'Finalizado')
+    : nombreEtapa(lote.etapa);
+  const etapa = nuevo('p', 'lote-etapa', estado);
+  const lugar = nuevo('p', 'nota', `${lote.sala} · ${textoPlantas(lote.cantidad_plantas)}`);
+  const ultimo = nuevo('p', 'nota', `Última anotación: ${haceCuanto(lote.ultimo_registro).toLowerCase()}`);
+  tarjeta.append(cabeza, etapa, pasosEtapa(lote.etapa, cerrado), lugar, ultimo);
+  if (lote.tareas_pendientes) {
+    const tareas = lote.tareas_pendientes === 1 ? '1 tarea pendiente' : `${lote.tareas_pendientes} tareas pendientes`;
+    tarjeta.append(etiquetaDe(tareas, true));
   }
-  aviso.classList.toggle('error', excede);
+  return tarjeta;
 }
 
-function pintarMapa(salas, lotes) {
-  document.getElementById('mapa').replaceChildren(...salas.map((sala) => {
-    const bloque = document.createElement('article');
-    const titulo = document.createElement('h3');
-    titulo.textContent = sala.nombre;
-    const contenido = lotes.filter((l) => l.sala_id === sala.id && l.estado === 'activo');
-    const detalle = document.createElement('p');
-    detalle.className = 'nota';
-    detalle.textContent = contenido.length
-      ? contenido.map((l) => `${l.codigo}: ${l.cantidad_plantas} plantas, ${nombreCultivo(l.etapa)}`).join(' · ')
-      : 'Vacía';
-    bloque.append(titulo, detalle);
-    return bloque;
-  }));
+function recuadroNuevo(titulo, detalle, alPulsar) {
+  const elemento = nuevo(typeof alPulsar === 'string' ? 'a' : 'button', 'recuadro-nuevo');
+  if (typeof alPulsar === 'string') {
+    elemento.href = alPulsar;
+  } else {
+    elemento.type = 'button';
+    elemento.addEventListener('click', alPulsar);
+  }
+  const mas = nuevo('span', 'recuadro-mas');
+  mas.append(dibujoCultivo('mas'));
+  elemento.append(mas, nuevo('strong', '', titulo), nuevo('span', 'nota', detalle));
+  return elemento;
+}
+
+function pintarLotes(lotes) {
+  const activos = lotes.filter((lote) => lote.estado === 'activo');
+  const cerrados = lotes.filter((lote) => lote.estado !== 'activo');
+  const tarjetas = activos.map(tarjetaLote);
+  if (coordina) tarjetas.push(recuadroNuevo('Empezar un lote', 'Te guiamos paso a paso', '/admin_lote_nuevo.html'));
+  if (!tarjetas.length) tarjetas.push(nuevo('p', 'estado-vacio', 'Todavía no hay lotes en marcha.'));
+  document.getElementById('lotes').replaceChildren(...tarjetas);
+  document.getElementById('cerrados').replaceChildren(...cerrados.map(tarjetaLote));
+  document.getElementById('bloque-cerrados').classList.toggle('oculto', cerrados.length === 0);
+}
+
+const NOMBRE_TIPO_SALA = { cultivo: 'Sala de cultivo', secado: 'Sala de secado', curado: 'Sala de curado' };
+
+function ventanaSala() {
+  abrirVentana({
+    titulo: 'Nueva sala',
+    campos: [
+      { nombre: 'nombre', etiqueta: 'Nombre de la sala', tipo: 'texto', largo: 100, obligatorio: true },
+      { nombre: 'tipo', etiqueta: 'Para qué se usa', tipo: 'elegir', opciones: ['Cultivo', 'Secado', 'Curado'], obligatorio: true },
+    ],
+    alGuardar: async ({ nombre, tipo }) => {
+      await pedir('/api/cultivo', { accion: 'crear_sala', nombre, tipo: tipo.toLowerCase() });
+      confirmar('Sala creada.');
+      await cargar();
+    },
+  });
+}
+
+function pintarSalas(salas, lotes) {
+  const recuadros = salas.map((sala) => {
+    const contenido = lotes.filter((lote) => lote.sala_id === sala.id && lote.estado === 'activo');
+    const caja = nuevo('article', contenido.length ? 'sala-recuadro' : 'sala-recuadro libre');
+    caja.append(nuevo('h3', '', sala.nombre), nuevo('p', 'nota', NOMBRE_TIPO_SALA[sala.tipo]));
+    if (!contenido.length) caja.append(nuevo('p', 'sala-libre', 'Libre'));
+    for (const lote of contenido) {
+      const enlace = nuevo('a', 'sala-lote', `${lote.codigo} · ${textoPlantas(lote.cantidad_plantas)} · ${nombreEtapa(lote.etapa)}`);
+      enlace.href = `/admin_lote.html?id=${lote.id}`;
+      caja.append(enlace);
+    }
+    return caja;
+  });
+  if (coordina) recuadros.push(recuadroNuevo('Agregar una sala', 'De cultivo, secado o curado', ventanaSala));
+  if (!recuadros.length) recuadros.push(nuevo('p', 'estado-vacio', 'Todavía no hay salas.'));
+  document.getElementById('salas').replaceChildren(...recuadros);
+}
+
+function pintarVariedades(geneticas) {
+  const etiquetas = geneticas.map((genetica) => etiquetaDe(genetica.nombre));
+  if (!etiquetas.length) etiquetas.push(nuevo('p', 'estado-vacio', 'Todavía no hay variedades.'));
+  if (coordina) {
+    const boton = nuevo('button', 'secundario', 'Agregar una variedad');
+    boton.type = 'button';
+    boton.addEventListener('click', () => abrirVentana({
+      titulo: 'Nueva variedad',
+      campos: [{ nombre: 'nombre', etiqueta: 'Nombre de la variedad', tipo: 'texto', largo: 100, obligatorio: true }],
+      alGuardar: async ({ nombre }) => {
+        await pedir('/api/cultivo', { accion: 'crear_genetica', nombre });
+        confirmar('Variedad creada.');
+        await cargar();
+      },
+    }));
+    etiquetas.push(boton);
+  }
+  document.getElementById('variedades').replaceChildren(...etiquetas);
 }
 
 function pintarComparativas(geneticas, salas) {
-  const linea = (fila) => {
-    const parrafo = document.createElement('p');
-    parrafo.className = 'nota';
-    parrafo.textContent = `${fila.nombre} · ${fila.lotes} lotes · ${fila.gramos_por_planta} g por planta · merma ${fila.merma} %`;
-    return parrafo;
+  const recuadro = (fila, clase) => {
+    const caja = nuevo('article', 'sala-recuadro');
+    const lotes = Number(fila.lotes);
+    caja.append(
+      nuevo('p', 'nota', clase),
+      nuevo('h3', '', fila.nombre),
+      nuevo('p', 'cifra-numero', `${cifra(fila.gramos_por_planta)} g`),
+      nuevo('p', 'nota', 'por planta, en seco'),
+      nuevo('p', 'nota', `Pierde ${cifra(fila.merma)} % al secar · ${lotes} ${lotes === 1 ? 'lote' : 'lotes'}`),
+    );
+    return caja;
   };
-  const lineas = [...geneticas, ...salas].map(linea);
-  if (!lineas.length) {
-    const nada = document.createElement('p');
-    nada.className = 'estado-vacio';
-    nada.textContent = 'Todavía no hay lotes con peso seco.';
-    lineas.push(nada);
-  }
-  document.getElementById('comparativas').replaceChildren(...lineas);
+  const recuadros = [
+    ...geneticas.map((fila) => recuadro(fila, 'Variedad')),
+    ...salas.map((fila) => recuadro(fila, 'Sala')),
+  ];
+  if (!recuadros.length) recuadros.push(nuevo('p', 'estado-vacio', 'Todavía no hay lotes con peso seco.'));
+  document.getElementById('comparativas').replaceChildren(...recuadros);
 }
 
 async function cargar() {
   const datos = await pedir('/api/cultivo');
-  pintarPlantas(datos.plantas);
-  pintarMapa(datos.salas, datos.lotes);
+  pintarCifras(datos.plantas, datos.lotes);
+  pintarLotes(datos.lotes);
+  pintarSalas(datos.salas, datos.lotes);
+  pintarVariedades(datos.geneticas);
   pintarComparativas(datos.por_genetica, datos.por_sala);
-  document.getElementById('filas').replaceChildren(...datos.lotes.map(fila));
-  document.getElementById('tabla').classList.toggle('oculto', datos.lotes.length === 0);
-  estadoLista.className = datos.lotes.length ? 'oculto' : 'estado-vacio';
-  estadoLista.textContent = 'Todavía no hay lotes.';
-  opciones('genetica_id', datos.geneticas);
-  opciones('sala_id', datos.salas);
 }
 
-function enviar(id, preparar) {
-  const formulario = document.getElementById(id);
-  formulario.addEventListener('submit', async (evento) => {
-    evento.preventDefault();
-    const boton = formulario.querySelector('button[type=submit]');
-    boton.disabled = true;
-    try {
-      await pedir('/api/cultivo', preparar(Object.fromEntries(new FormData(formulario))));
-      formulario.reset();
-      mostrarMensaje(mensaje, 'Guardado.', 'exito');
-      await cargar();
-    } catch (error) {
-      mostrarMensaje(mensaje, error.message);
-    } finally {
-      boton.disabled = false;
-    }
-  });
-}
-
-enviar('form-lote', (datos) => ({
-  ...datos,
-  accion: 'crear_lote',
-  genetica_id: Number(datos.genetica_id),
-  sala_id: Number(datos.sala_id),
-  cantidad_plantas: Number(datos.cantidad_plantas),
-}));
-enviar('form-sala', (datos) => ({ ...datos, accion: 'crear_sala' }));
-enviar('form-genetica', (datos) => ({ ...datos, accion: 'crear_genetica' }));
-
-async function iniciar() {
-  try {
-    const sesion = await leerSesion();
-    if (!sesion || sesion.tipo !== 'admin') {
-      location.href = '/login.html';
-      return;
-    }
-    document.getElementById('gestion').classList.toggle('oculto', sesion.rol !== 'coordinador_cultivo');
-    await cargar();
-  } catch (error) {
-    estadoLista.className = 'oculto';
-    mostrarMensaje(mensaje, error.message);
-  }
-}
-
-iniciar();
+arrancar(cargar, (sesion) => {
+  coordina = sesion.rol === 'coordinador_cultivo';
+  document.getElementById('nuevo-lote').classList.toggle('oculto', !coordina);
+});

@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Dibujos del cultivo. Solo para la zona interna: la web pública no los carga (regla 2). -->
+  <!-- Etapas -->
+  <symbol id="etapa-origen" viewBox="0 0 24 24">
+    <ellipse fill="currentColor" fill-opacity=".18" stroke="none" cx="12" cy="14" rx="5" ry="6.5"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 7.5c3 0 5 3 5 6.5S15 20.5 12 20.5 7 17.5 7 14s2-6.5 5-6.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 7.5c0-2 1-3.5 3-4M12 11v5"/>
+  </symbol>
+  <symbol id="etapa-vegetativo" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M12 13C7 13 4 10 4 5.5 9 5.5 12 8 12 13Zm0 2c0-4 3-6.5 8-6.5 0 4.5-3 6.5-8 6.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8M12 13C7 13 4 10 4 5.5 9 5.5 12 8 12 13Zm0 2c0-4 3-6.5 8-6.5 0 4.5-3 6.5-8 6.5ZM7 21h10"/>
+  </symbol>
+  <symbol id="etapa-floracion" viewBox="0 0 24 24">
+    <circle fill="currentColor" fill-opacity=".18" stroke="none" cx="12" cy="9" r="6"/>
+    <circle fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" cx="12" cy="9" r="2.2"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 6.8C10.5 5 11 2.8 12 2.5c1 .3 1.5 2.5 0 4.3Zm2.1 1.5c1.5-1.6 3.7-1.5 4.2-.6-.2 1-2.3 2-4.2 .6ZM9.9 8.3C8.4 6.7 6.2 6.8 5.7 7.7c.2 1 2.3 2 4.2 .6Zm.7 2.4c-1 1.9-.2 3.9 .8 4 .9-.4 1-2.7-.8-4Zm2.8 0c1 1.9 .2 3.9-.8 4-.9-.4-1-2.7 .8-4ZM12 15.5V22"/>
+  </symbol>
+  <symbol id="etapa-cosecha" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M5 11h14l-1.5 9.5h-11Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M4 11h16M5 11l1.5 9.5h11L19 11M8 11l3-7M16 11l-3-7M10 15v2.5M14 15v2.5"/>
+  </symbol>
+  <symbol id="etapa-secado" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M6 9h4l1 9H5Zm8 0h4l1 9h-6Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M2.5 5h19M8 5v4M16 5v4M6 9h4l1 9H5ZM14 9h4l1 9h-6Z"/>
+  </symbol>
+  <symbol id="etapa-curado" viewBox="0 0 24 24">
+    <rect fill="currentColor" fill-opacity=".18" stroke="none" x="6" y="8" width="12" height="13" rx="2.5"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M8.5 3.5h7v3h-7ZM7.5 6.5h9c1.2 1 2 2 2 3.5v8.5a2.5 2.5 0 0 1-2.5 2.5H8a2.5 2.5 0 0 1-2.5-2.5V10c0-1.5 .8-2.5 2-3.5ZM6 13h12"/>
+  </symbol>
+  <symbol id="etapa-envasado" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M3.5 8 12 12.5 20.5 8v9.5L12 22l-8.5-4.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7ZM3.5 7 12 11.5 20.5 7M12 11.5v10"/>
+  </symbol>
+
+  <!-- Lo que se anota -->
+  <symbol id="riego" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M12 3c4 4.7 6.5 7.8 6.5 11a6.5 6.5 0 0 1-13 0C5.5 10.8 8 7.7 12 3Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 3c4 4.7 6.5 7.8 6.5 11a6.5 6.5 0 0 1-13 0C5.5 10.8 8 7.7 12 3ZM9 14.5A3 3 0 0 0 12 17.5"/>
+  </symbol>
+  <symbol id="nutrientes" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M6.5 14h11l1.5 4.5a2 2 0 0 1-2 2.5H7a2 2 0 0 1-2-2.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9.5 3h5M10.5 3v6.5L5 18.5A2 2 0 0 0 7 21h10a2 2 0 0 0 2-2.5L13.5 9.5V3M7.5 14h9"/>
+  </symbol>
+  <symbol id="poda" viewBox="0 0 24 24">
+    <circle fill="currentColor" fill-opacity=".18" stroke="none" cx="6.5" cy="17.5" r="3"/><circle fill="currentColor" fill-opacity=".18" stroke="none" cx="17.5" cy="17.5" r="3"/>
+    <circle fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" cx="6.5" cy="17.5" r="3"/><circle fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" cx="17.5" cy="17.5" r="3"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M8.3 15.1 16.5 3M15.7 15.1 7.5 3"/>
+  </symbol>
+  <symbol id="aplicacion" viewBox="0 0 24 24">
+    <rect fill="currentColor" fill-opacity=".18" stroke="none" x="6" y="10" width="11" height="11" rx="2"/>
+    <rect fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" x="6" y="10" width="11" height="11" rx="2"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9 10V6.5h5V10M8 6.5V4h8M19 3.5h.01M21.5 6h.01M19 8.5h.01"/>
+  </symbol>
+  <symbol id="medicion" viewBox="0 0 24 24">
+    <circle fill="currentColor" fill-opacity=".18" stroke="none" cx="12" cy="17" r="4"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9.5 13.7V5a2.5 2.5 0 0 1 5 0v8.7a4 4 0 1 1-5 0ZM12 8.5V17M17 6h3M17 10h2"/>
+  </symbol>
+  <symbol id="incidencia" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M12 3.5 22 20.5H2Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 3.5 22 20.5H2ZM12 10v5M12 17.5v.01"/>
+  </symbol>
+  <symbol id="baja" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M6.5 14h11l-1.5 7H8Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M6.5 14h11l-1.5 7H8ZM12 14V9M12 9c-3 0-4.5-1.5-4.5-4 3 0 4.5 1.5 4.5 4ZM4 3.5l16 17"/>
+  </symbol>
+  <symbol id="destruccion" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M6.5 8h11l-1 13h-9Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M9 6V3.5h6V6M6.5 6l1 15h9l1-15M10 10.5v6.5M14 10.5v6.5"/>
+  </symbol>
+  <symbol id="correccion" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="m4 16 11-11 4 4-11 11H4Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="m4 16 11-11 4 4-11 11H4ZM13 7l4 4"/>
+  </symbol>
+
+  <!-- Datos de la ficha -->
+  <symbol id="balanza" viewBox="0 0 24 24">
+    <rect fill="currentColor" fill-opacity=".18" stroke="none" x="3.5" y="7" width="17" height="14" rx="3"/>
+    <rect fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" x="3.5" y="7" width="17" height="14" rx="3"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9 7a3 3 0 0 1 6 0M12 12l2-2.5"/>
+  </symbol>
+  <symbol id="analisis" viewBox="0 0 24 24">
+    <path fill="currentColor" fill-opacity=".18" stroke="none" d="M7.5 15h9l1.5 3a2 2 0 0 1-1.8 3H7.8A2 2 0 0 1 6 18Z"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v7l-4.2 8.2A2 2 0 0 0 7.6 21h8.8a2 2 0 0 0 1.8-2.8L14 10V3"/>
+  </symbol>
+  <symbol id="hecho" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/>
+  </symbol>
+  <symbol id="candado" viewBox="0 0 24 24">
+    <rect fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" x="5" y="11" width="14" height="10" rx="2"/>
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M8 11V7.5a4 4 0 0 1 8 0V11"/>
+  </symbol>
+  <symbol id="mas" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+  </symbol>
+</svg>
