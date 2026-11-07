@@ -6,6 +6,8 @@
 [build.environment]
   NPM_FLAGS = "--omit=dev"
   NODE_VERSION = "24"
+  # Ajustes de configuracion, no secretos: el escaner no debe frenar el despliegue por ellos.
+  SECRETS_SCAN_OMIT_KEYS = "ENTORNO,CORREO_MODO"
 
 [functions]
   node_bundler = "esbuild"
