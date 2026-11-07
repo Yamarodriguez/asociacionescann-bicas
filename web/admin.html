@@ -5,20 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Panel · Prototipo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
+  <script src="/armazon.js" defer></script>
   <script src="/admin.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
   <main class="pagina pagina-ancha">
-    <div class="cabecera">
-      <h1>Panel</h1>
-      <button type="button" id="salir" class="secundario">Salir</button>
-    </div>
+    <button type="button" id="salir" class="secundario">Salir</button>
+    <section class="saludo">
+      <div>
+        <p id="saludo-fecha" class="saludo-fecha"></p>
+        <h1>¡Hola!</h1>
+        <p id="saludo-resumen" class="saludo-resumen">Estamos preparando tu resumen del día.</p>
+      </div>
+      <img class="saludo-dibujo" src="/bienvenida.svg" alt="" width="360" height="200">
+    </section>
+
     <div id="error" class="mensaje" role="alert"></div>
     <p id="cargando" class="cargando">Cargando…</p>
-    <div id="menu" class="menu-panel"></div>
+
+    <section id="bloque-hoy" class="oculto" aria-labelledby="titulo-hoy">
+      <h2 id="titulo-hoy">Cómo viene todo</h2>
+      <div id="menu" class="mosaico"></div>
+    </section>
+
     <section id="bloque-sin-permisos" class="tarjeta oculto">
       <p>Tu rol todavía no tiene pantallas en este prototipo.</p>
     </section>

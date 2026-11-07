@@ -63,10 +63,19 @@ const NOMBRES_CULTIVO = {
 const nombreCultivo = (clave) => NOMBRES_CULTIVO[clave] ?? clave;
 const fechaDia = (valor) => valor.split('-').reverse().join('/');
 
+function olvidarResumen() {
+  try {
+    sessionStorage.removeItem('resumen-panel');
+  } catch {
+    // Sin almacenamiento no hay nada que olvidar.
+  }
+}
+
 function activarSalir() {
   const boton = document.getElementById('salir');
   if (!boton) return;
   boton.addEventListener('click', async () => {
+    olvidarResumen();
     boton.disabled = true;
     try {
       await pedir('/api/logout', {});
@@ -88,6 +97,7 @@ async function cargarSitio() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (location.pathname === '/login.html') olvidarResumen();
   activarSalir();
   cargarSitio();
 });

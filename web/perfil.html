@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Mi portal · Prototipo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/perfil.js" defer></script>
@@ -12,17 +13,24 @@
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
   <main class="pagina">
-    <div class="cabecera">
-      <h1>Hola, <span id="nombre">socio</span></h1>
+    <div class="barra-portal">
+      <a class="marca" href="/perfil.html" data-sitio="nombre">Asociación</a>
       <button type="button" id="salir" class="secundario">Salir</button>
     </div>
+    <section class="saludo">
+      <div>
+        <h1>Hola, <span id="nombre">socio</span></h1>
+        <p class="saludo-resumen">Acá tenés tu carné, tu cuota y las novedades de la asociación.</p>
+      </div>
+      <img class="saludo-dibujo saludo-chico" src="/acceso.svg" alt="" width="360" height="260">
+    </section>
     <div id="mensaje" class="mensaje" role="alert"></div>
     <p id="cargando" class="cargando">Cargando…</p>
 
-    <div id="contenido" class="oculto">
-      <section class="tarjeta carne">
+    <div id="contenido" class="oculto portal-rejilla">
+      <section class="tarjeta carne ancho-total">
         <div>
-          <h2>Tu carné</h2>
+          <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#carne"></use></svg>Tu carné</h2>
           <p>Número de socio: <strong id="numero"></strong></p>
           <p>Alta: <span id="alta"></span></p>
         </div>
@@ -30,33 +38,33 @@
       </section>
 
       <section class="tarjeta">
-        <h2>Tu cuota</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#cuotas"></use></svg>Tu cuota</h2>
         <p id="cuota-estado"></p>
         <div id="cuotas"></div>
       </section>
 
       <section class="tarjeta">
-        <h2>Comunicados</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#publicaciones"></use></svg>Comunicados</h2>
         <div id="comunicados"></div>
       </section>
 
       <section class="tarjeta">
-        <h2>Documentos</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#informe"></use></svg>Documentos</h2>
         <div id="documentos"></div>
       </section>
 
       <section class="tarjeta">
-        <h2>Asambleas</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#equipo"></use></svg>Asambleas</h2>
         <div id="asambleas"></div>
       </section>
 
       <section class="tarjeta">
-        <h2>Actas</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#procedimientos"></use></svg>Actas</h2>
         <div id="actas"></div>
       </section>
 
       <section class="tarjeta">
-        <h2>Tus datos</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#socios"></use></svg>Tus datos</h2>
         <p><span id="nombre-completo"></span><br><span id="correo"></span></p>
         <form id="form-telefono">
           <div class="campo">
@@ -70,7 +78,7 @@
       </section>
 
       <section class="tarjeta">
-        <h2>Pedir la baja</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#bajas"></use></svg>Pedir la baja</h2>
         <p id="baja-pedida" class="oculto">Ya recibimos tu pedido de baja. La administración lo va a tramitar.</p>
         <form id="form-baja">
           <div class="campo">

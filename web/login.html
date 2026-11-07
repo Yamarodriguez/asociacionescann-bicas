@@ -5,13 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Ingresar · Prototipo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/login.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="acceso">
+    <aside class="acceso-lateral">
+      <a class="marca" href="/" data-sitio="nombre">Asociación</a>
+      <img src="/acceso.svg" alt="" width="360" height="260">
+      <p>Entrá a tu cuenta para ver tu carné, tu cuota y las novedades de la asociación.</p>
+    </aside>
+    <div class="acceso-contenido">
     <h1>Portal de socios</h1>
     <div class="pestanas">
       <button type="button" id="ver-ingreso">Ingresar</button>
@@ -95,6 +102,7 @@
       </div>
       <button type="submit">Enviar solicitud</button>
     </form>
+  </div>
   </main>
 </body>
 </html>

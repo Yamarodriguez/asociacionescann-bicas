@@ -32,7 +32,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 - Hecho: base de datos, sesiones, solicitud, aprobación manual, panel, portal, cultivo con tareas e inventario, web pública con contacto, legales en borrador y `npm run todo`.
 - Fase 4 hecha con contenido pendiente: los textos reales dependen de la ficha y del abogado. La retención de contactos (30 días) y la edad (18) son valores provisionales en `configuracion`.
-- Publicado en Netlify (`asociacionescannabis`) tras contraseña de sitio. 2026-11-06: la responsable entró con la cuenta de coordinación, así que las variables están importadas y los datos inventados cargados.
+- Publicado en Netlify (`asociacionescannabis`) tras contraseña de sitio. 2026-11-07: la captura de Netlify muestra cero variables de entorno. Sin ellas no existen las cuentas de prueba y no se puede entrar. Pendiente: importar `.dev/variables-netlify.env` y volver a desplegar. La entrada anterior con la cuenta de coordinación fue un error de lectura.
 - Seguridad hecha en local (Fase 7). Falta repetir la restauración en la base publicada.
 - Falta de la asociación: ficha, checklist rellenado y respuestas del abogado.
 
@@ -45,6 +45,8 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 ## Diseño
 
 - 2026-11-06: se eligió el diseño A, Institución cercana: crema y verde, con detalles dorados, en Fraunces y DM Sans. Las demás propuestas quedan en `diseno/`.
+- 2026-11-07: la responsable pidió un aspecto más amigable y profesional, con dibujos. Se mantienen los colores y letras del diseño A y se añaden menú lateral, fichas y dibujos propios. No llegó a verse la aplicación de ejemplo que mencionó.
+- La web pública y la entrada solo llevan dibujos neutros: las macetas de `web/bienvenida.svg` son solo de la zona interna (regla 2 del encargo).
 - El gris secundario es `#5f645a`, más oscuro que el del encargo, porque aquel no llegaba al contraste AA.
 - Las letras van en `web/fuentes/`, con su licencia. No se cargan desde servicios externos.
 
@@ -88,7 +90,7 @@ El encargo completo está en `Prompt_proyecto_asociacion.md`, fuera de Git. Sus 
 
 ## Estructura tras pasar a Netlify
 
-- `web/`: pantallas, con piezas comunes en `web/gestion.js`. `servidor/`: lógica en JavaScript, con las comprobaciones de datos en `servidor/validar.mjs`. `netlify/functions/api.mjs`: función que atiende `/api/*`.
+- `web/`: pantallas, con piezas comunes en `web/gestion.js` y el menú lateral y las secciones en `web/armazon.js`. Una pantalla de gestión nueva debe cargar `armazon.js` y añadirse a `GRUPOS`. Los iconos están en `web/dibujos.svg`. `servidor/`: lógica en JavaScript, con las comprobaciones de datos en `servidor/validar.mjs`. `netlify/functions/api.mjs`: función que atiende `/api/*`.
 - `netlify/database/migrations/`: migraciones que Netlify aplica al publicar.
 - `scripts/servidor_local.mjs` imita Netlify en local. `herramientas/` y `pruebas/` siguen en Python: atacan al servidor desde fuera y comparten formato de hash, sesiones y cifrado.
 - Una ruta nueva debe añadirse a `servidor/app.mjs` y clasificarse en `pruebas/test_seguridad.py`.

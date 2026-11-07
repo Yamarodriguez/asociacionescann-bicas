@@ -8,6 +8,7 @@
   <meta name="description" content="Información institucional de la asociación.">
   <link rel="preload" href="/fuentes/fraunces.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fuentes/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/portada.js" defer></script>
@@ -38,32 +39,35 @@
   </nav>
 
   <section class="portada">
-    <h1 data-sitio="nombre">Asociación</h1>
-    <p>Acá va la presentación que apruebe la asociación, con sus fines según los estatutos.</p>
+    <div>
+      <h1 data-sitio="nombre">Asociación</h1>
+      <p>Acá va la presentación que apruebe la asociación, con sus fines según los estatutos.</p>
+    </div>
+    <img src="/comunidad.svg" alt="" width="420" height="300">
   </section>
 
   <main id="contenido" class="contenido">
     <div class="bloques">
       <section class="bloque" id="quienes">
-        <h2>Quiénes somos</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#socios"></use></svg>Quiénes somos</h2>
         <p data-sitio="forma_juridica"></p>
         <p data-sitio="numero_registro"></p>
         <p data-sitio="fines"></p>
       </section>
       <section class="bloque" id="requisitos">
-        <h2>Requisitos para asociarse</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#tareas"></use></svg>Requisitos para asociarse</h2>
         <p data-sitio="requisitos"></p>
         <p>El alta tiene dos pasos: enviás tu solicitud y verificamos tu identidad en persona.</p>
       </section>
       <section class="bloque" id="horario">
-        <h2>Horario y dirección</h2>
+        <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#mora"></use></svg>Horario y dirección</h2>
         <p data-sitio="direccion"></p>
         <p data-sitio="horario"></p>
       </section>
     </div>
 
     <section class="seccion" id="normativa">
-      <h2>Normativa</h2>
+      <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#procedimientos"></use></svg>Normativa</h2>
       <p class="borrador">BORRADOR: revisar con asesoría legal</p>
       <ul>
         <li><a rel="noopener noreferrer" href="https://servicios.infoleg.gob.ar/infolegInternet/anexos/270000-274999/273801/norma.htm">Ley 27.350</a></li>
@@ -76,12 +80,12 @@
     </section>
 
     <section class="seccion" id="reduccion">
-      <h2>Reducción de daños</h2>
+      <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#seguridad"></use></svg>Reducción de daños</h2>
       <p class="borrador">Contenido pendiente de la revisión legal.</p>
     </section>
 
     <section class="seccion" id="contacto">
-      <h2>Contacto</h2>
+      <h2 class="con-dibujo"><svg class="icono" aria-hidden="true" viewBox="0 0 24 24"><use href="/dibujos.svg#contacto"></use></svg>Contacto</h2>
       <p>También podés escribirnos a <span data-sitio="contacto"></span>.</p>
       <form id="form-contacto" class="tarjeta">
         <div id="contacto-mensaje" class="mensaje" role="alert"></div>

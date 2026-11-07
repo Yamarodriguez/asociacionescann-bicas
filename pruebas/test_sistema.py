@@ -4,6 +4,7 @@ import datetime as dt
 import http.client
 import json
 import os
+import pathlib
 import re
 import subprocess
 import threading
@@ -22,6 +23,7 @@ from scripts import purgar_bajas  # noqa: E402
 PUERTO = 8091
 ORIGEN = f"http://127.0.0.1:{PUERTO}"
 CLAVE = "clave-de-prueba-1"
+RAIZ = pathlib.Path(__file__).resolve().parent.parent
 HASH_CLAVE = None
 _servidor = None
 
@@ -857,6 +859,22 @@ class Servidor(Base):
             self.assertIn("noindex", cabeceras["X-Robots-Tag"])
             self.assertIsNone(cabeceras["Access-Control-Allow-Origin"])
             self.assertIn("default-src 'self'", cabeceras["Content-Security-Policy"])
+
+    def test_la_web_publica_no_usa_el_dibujo_de_las_macetas(self):
+        for archivo in ("index.html", "login.html", "recuperar.html", "legal.html"):
+            self.assertNotIn("bienvenida.svg", (RAIZ / "web" / archivo).read_text(encoding="utf-8"), archivo)
+
+    def test_toda_pantalla_de_gestion_lleva_el_armazon(self):
+        for archivo in sorted((RAIZ / "web").glob("admin*.html")):
+            self.assertIn('src="/armazon.js"', archivo.read_text(encoding="utf-8"), archivo.name)
+            self.assertIn('id="salir"', archivo.read_text(encoding="utf-8"), archivo.name)
+
+    def test_los_dibujos_salen_del_propio_sistema(self):
+        for ruta in ("/dibujos.svg", "/bienvenida.svg", "/comunidad.svg", "/acceso.svg", "/vacio.svg", "/favicon.svg"):
+            estado, cuerpo, cabeceras = pedir("GET", ruta)
+            self.assertEqual(estado, 200, ruta)
+            self.assertIn("image/svg+xml", cabeceras.get("Content-Type", ""))
+            self.assertNotIn("http://", cuerpo.replace("http://www.w3.org/2000/svg", ""))
 
     def test_los_errores_no_muestran_detalles_internos(self):
         conexion = http.client.HTTPConnection("127.0.0.1", PUERTO, timeout=10)

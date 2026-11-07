@@ -6,13 +6,20 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
   <title>Recuperar contraseña · Prototipo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/estilos.css">
   <script src="/app.js" defer></script>
   <script src="/recuperar.js" defer></script>
 </head>
 <body>
   <p class="aviso-prototipo">Prototipo: todos los datos son inventados.</p>
-  <main class="pagina">
+  <main class="acceso">
+    <aside class="acceso-lateral">
+      <a class="marca" href="/" data-sitio="nombre">Asociación</a>
+      <img src="/acceso.svg" alt="" width="360" height="260">
+      <p>Te mandamos un enlace para que elijas una contraseña nueva.</p>
+    </aside>
+    <div class="acceso-contenido">
     <h1>Recuperar contraseña</h1>
     <div id="mensaje" class="mensaje" role="alert"></div>
 
@@ -33,6 +40,7 @@
     </form>
 
     <a href="/login.html">Volver a ingresar</a>
+  </div>
   </main>
 </body>
 </html>
